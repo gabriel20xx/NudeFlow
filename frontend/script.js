@@ -9,7 +9,7 @@ window.addEventListener('scroll', () => {
 
 function loadMoreContent(page) {
     let picture = String(index).padStart(5, '0');
-    fetch(`http://xxxtok.gfranz.ch/api/webp?url=${video.url}`)
+    fetch(`https://xxxtok.gfranz.ch/api/webp?url=${video.url}`)
       .then(response => response.json())
       .then(data => {
         const videoContainer = document.getElementById('video-container');
