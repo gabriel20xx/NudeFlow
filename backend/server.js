@@ -16,9 +16,8 @@ mongoose.connect('mongodb://192.168.2.94:27017/xxxtok', { useNewUrlParser: true,
 
 // Route to serve compressed WebP images dynamically
 app.get('/api/webp', async (req, res) => {
-  const { url, width = 600, quality = 80 } = req.query; // Default values
+    const { url, width = 600, quality = 80 } = req.query; // Default values
 
-  try {
     // Fetch image file (assuming local storage, but can be a remote fetch)
     const prefix = 'ComfyUI_'
     const suffix = '_.webp'
@@ -29,17 +28,18 @@ app.get('/api/webp', async (req, res) => {
         return res.status(404).send('Image not found');
     }
 
+    try {
     // Convert & compress WebP dynamically
     const imageBuffer = await sharp(imagePath)
-      .resize(parseInt(width))
-      .webp({ quality: parseInt(quality) })
-      .toBuffer();
+        .resize(parseInt(width))
+        .webp({ quality: parseInt(quality) })
+        .toBuffer();
 
     res.set('Content-Type', 'image/webp');
     res.send(imageBuffer);
-  } catch (error) {
-    res.status(500).send('Error processing image');
-  }
+    } catch (error) {
+        res.status(500).send('Error processing image');
+    }
 });
 
 // API to fetch videos
