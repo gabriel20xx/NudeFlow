@@ -31,6 +31,26 @@ function loadMoreContent(page) {
       })
       .catch(error => console.error('Error loading images:', error));
   }
+
+// Function to auto-scroll when WebP animation ends
+function startAutoScroll() {
+    const images = document.querySelectorAll('.animated-webp');
+  
+    function scrollToNext() {
+      if (currentIndex >= images.length) {
+        currentIndex = 0; // Restart from the first image if at the end
+      }
+  
+      images[currentIndex].scrollIntoView({ behavior: 'smooth' });
+  
+      setTimeout(() => {
+        currentIndex++;
+        scrollToNext();
+      }, animationDuration);
+    }
+  
+    scrollToNext();
+  }
   
 
 // Load the first batch of videos (WebP images)
