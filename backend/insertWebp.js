@@ -34,7 +34,7 @@ async function insertWebpImages() {
 
     const videoDocs = files.map(file => ({
       url: `${file}`,  // Modify if using another path for serving files
-      description: `WebP image ${file}`,
+      description: `${file}`,
       duration: 3000  // Default 3 seconds, modify as needed
     }));
 

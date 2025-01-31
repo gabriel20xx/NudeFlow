@@ -21,7 +21,10 @@ app.get('/api/webp', async (req, res) => {
   try {
     // Fetch image file (assuming local storage, but can be a remote fetch)
     const imagePath = path.resolve(__dirname, 'media', url); 
-    if (!fs.existsSync(imagePath)) return res.status(404).send('Image not found');
+    console.log('Image Path:', imagePath);
+    if (!fs.existsSync(imagePath)) {
+        return res.status(404).send('Image not found');
+    }
 
     // Convert & compress WebP dynamically
     const imageBuffer = await sharp(imagePath)
