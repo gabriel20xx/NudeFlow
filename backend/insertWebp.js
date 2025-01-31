@@ -20,7 +20,7 @@ const VideoSchema = new mongoose.Schema({
 const Video = mongoose.model('Video', VideoSchema);
 
 // Folder containing WebP images
-const webpFolder = path.join('..', 'backend', 'media');  // Change this to your folder
+const webpFolder = path.resolve(__dirname, 'media');
 
 // Function to insert images into the database
 async function insertWebpImages() {
