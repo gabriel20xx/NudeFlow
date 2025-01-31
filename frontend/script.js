@@ -1,5 +1,5 @@
 // frontend/script.js
-let page = 1; // Track the current page
+let index = 1; // Track the current page
 
 window.addEventListener('scroll', () => {
   if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 100) {
@@ -8,7 +8,7 @@ window.addEventListener('scroll', () => {
 });
 
 function loadMoreContent(page) {
-    fetch(`http://xxxtok.gfranz.ch/api/webp?url=${video.url}`)
+    fetch(`http://xxxtok.gfranz.ch/api/webp?index=${index}`)
       .then(response => response.json())
       .then(data => {
         const videoContainer = document.getElementById('video-container');
@@ -22,15 +22,15 @@ function loadMoreContent(page) {
           videoContainer.appendChild(imgElement);
         });
   
-        if (page === 1) {
+        if (index === 1) {
           startAutoScroll();
         }
   
-        page++;
+        index++;
       })
       .catch(error => console.error('Error loading images:', error));
   }
   
 
 // Load the first batch of videos (WebP images)
-loadMoreContent(page);
+loadMoreContent(index);

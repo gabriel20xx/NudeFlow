@@ -20,7 +20,10 @@ app.get('/api/webp', async (req, res) => {
 
   try {
     // Fetch image file (assuming local storage, but can be a remote fetch)
-    const imagePath = path.resolve(__dirname, 'media', url); 
+    const prefix = 'ComfyUI_'
+    const suffix = '_.webp'
+    const modifiedUrl = prefix + url + suffix;
+    const imagePath = path.resolve(__dirname, 'media', modifiedUrl); 
     console.log('Image Path:', imagePath);
     if (!fs.existsSync(imagePath)) {
         return res.status(404).send('Image not found');
