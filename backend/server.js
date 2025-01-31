@@ -25,7 +25,7 @@ app.get('/api/webp', async (req, res) => {
     const imagePath = path.resolve(__dirname, 'media', modifiedUrl); 
     console.log('Image Path:', imagePath);
     if (!fs.existsSync(imagePath)) {
-        return res.status(404).send('Image not found');
+        return res.status(404).send('Image not found. Image Path: ' + imagePath);
         }
 
     try {
