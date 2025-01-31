@@ -16,6 +16,11 @@ mongoose.connect('mongodb://192.168.2.94:27017/xxxtok', { useNewUrlParser: true,
 
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
+// Fallback to index.html for SPA
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
+});
+
 app.get('/', async (req, res) => {
     res.status(200).send('Webpage is running');
 })
