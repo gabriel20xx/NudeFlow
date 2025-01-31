@@ -5,8 +5,8 @@ FROM node:latest
 WORKDIR /app
 
 RUN git clone https://github.com/gabriel20xx/XXXTok.git .
-RUN chmod -r 777 ./
-RUN chown -r user:user ./
+RUN chmod -R 777 /app
+RUN chown -R user:user /app
 
 # Install dependencies
 RUN npm install express mongoose sharp path cors fs
