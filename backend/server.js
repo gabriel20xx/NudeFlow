@@ -16,17 +16,17 @@ mongoose.connect('mongodb://192.168.2.94:27017/xxxtok', { useNewUrlParser: true,
 
 // Route to serve compressed WebP images dynamically
 app.get('/api/webp', async (req, res) => {
-    const { url, width = 600, quality = 80 } = req.query; // Default values
+    const { index, width = 600, quality = 80 } = req.query; // Default values
 
     // Fetch image file (assuming local storage, but can be a remote fetch)
     const prefix = 'ComfyUI_'
     const suffix = '_.webp'
-    const modifiedUrl = prefix + url + suffix;
+    const modifiedUrl = prefix + index + suffix;
     const imagePath = path.resolve(__dirname, 'media', modifiedUrl); 
     console.log('Image Path:', imagePath);
     if (!fs.existsSync(imagePath)) {
         return res.status(404).send('Image not found');
-    }
+        }
 
     try {
     // Convert & compress WebP dynamically
