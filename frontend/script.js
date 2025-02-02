@@ -3,6 +3,7 @@ let currentIndex = 0;
 let isTransitioning = false;
 const webpContainer = document.getElementById("webp-container");
 
+// Load images dynamically
 function loadMoreContent(page) {
   let number = String(page).padStart(5, "0");
   fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
@@ -56,7 +57,7 @@ function showNextImage() {
 
   if (currentIndex < images.length) {
     images.forEach((img, i) => {
-      img.style.transform = `translateY(-${100 * (currentIndex)}vh)`;
+      img.style.transform = `translateY(-${100 * currentIndex}vh)`;
     });
 
     if (currentIndex === images.length - 1) {

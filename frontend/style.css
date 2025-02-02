@@ -7,23 +7,28 @@
 body, html {
   width: 100%;
   height: 100%;
-  overflow: hidden; /* Prevent default scrolling */
+  overflow: hidden; /* Prevents default scrolling */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: black;
 }
 
 #webp-container {
   width: 100%;
   height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   overflow: hidden;
   position: relative;
 }
 
 .webp {
-  width: 100%;
-  height: 100%;
-  object-fit: contain; /* Ensures the whole image is visible */
+  max-width: 100vw; /* Ensures full width */
+  max-height: 100vh; /* Ensures full height */
+  object-fit: contain; /* Keeps full image visible */
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   transition: transform 0.5s ease-in-out;
 }
