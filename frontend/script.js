@@ -4,9 +4,10 @@ let isTransitioning = false; // Flag for transition state
 let isLoading = false; // Flag to prevent multiple fetches at once
 const webpContainer = document.getElementById("webp-container");
 
-// Load the first image
+// Load the first image and preload the next one
 loadMoreContent(page);
 
+// Function to load content
 function loadMoreContent(page) {
   if (isLoading) return; // Prevent fetching while loading
   isLoading = true;
@@ -31,14 +32,14 @@ function loadMoreContent(page) {
 
       webpContainer.appendChild(imgElement);
 
-      // Preload next image in the background (next page)
+      // Preload the next image
       preloadNextImage(page + 1);
 
       // Scroll to the newly added image
       imgElement.scrollIntoView({ behavior: "smooth" });
 
-      // Increment page after loading the image
-      page++; // Increment page only after the image has been loaded
+      // Increment page only after the image has been loaded
+      page++;
 
       // Allow further interaction once the image is loaded
       isLoading = false;
@@ -51,8 +52,6 @@ function loadMoreContent(page) {
 
 // Function to preload the next image without showing it
 function preloadNextImage(nextPage) {
-  if (isLoading) return; // Prevent multiple preloads
-
   let number = String(nextPage).padStart(5, "0");
   fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
     .then(response => {
@@ -106,7 +105,8 @@ function showNextImage() {
 
     // Scroll to the next image immediately
     images[currentIndex].scrollIntoView({ behavior: "smooth" });
-    loadMoreContent(page+1); // Load the next image if available
+  } else {
+    loadMoreContent(page); // Load the next image if available
   }
 
   setTimeout(() => {
