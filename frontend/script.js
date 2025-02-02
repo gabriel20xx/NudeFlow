@@ -1,5 +1,5 @@
 let page = 1; // Track the page number for fetching images
-let currentIndex = 0; // Track the current visible image
+let currentIndex = 1; // Track the current visible image
 let isTransitioning = false;
 const webpContainer = document.getElementById("webp-container");
 
