@@ -106,8 +106,7 @@ function showNextImage() {
 
     // Scroll to the next image immediately
     images[currentIndex].scrollIntoView({ behavior: "smooth" });
-  } else {
-    loadMoreContent(page); // Load the next image if available
+    loadMoreContent(page+1); // Load the next image if available
   }
 
   setTimeout(() => {
