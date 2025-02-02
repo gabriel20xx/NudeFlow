@@ -4,10 +4,10 @@ let isTransitioning = false;
 const webpContainer = document.getElementById("webp-container");
 
 // Load the first image
-loadInitialContent();
+loadInitialContent(page);
 
-function loadInitialContent {
-  let number = 00001;
+function loadInitialContent(page) {
+  let number = String(page).padStart(5, "0");
   fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
     .then(response => {
       if (!response.ok) throw new Error("Failed to load image");
