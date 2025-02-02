@@ -1,18 +1,13 @@
 let page = 1; // Track the page number for fetching images
 let currentIndex = 0; // Track the current visible image
-let isTransitioning = false; // Flag for transition state
-let isLoading = false; // Flag to prevent multiple fetches at once
+let isTransitioning = false;
 const webpContainer = document.getElementById("webp-container");
-const images = [];
 
-// Load the first image and preload the next one
+// Load the first image
 loadMoreContent(page);
+loadMoreContent(page+1);
 
-// Function to load content
 function loadMoreContent(page) {
-  if (isLoading) return; // Prevent fetching while loading
-  isLoading = true;
-
   let number = String(page).padStart(5, "0");
   fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
     .then(response => {
@@ -26,45 +21,14 @@ function loadMoreContent(page) {
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
 
-      // Add the image to the images array
-      images.push(imgElement);
+      // Add the first image as visible
+      if (webpContainer.children.length === 0) {
+        imgElement.classList.add("active"); // First image should be visible
+      }
 
-      // Append the first image to the container
       webpContainer.appendChild(imgElement);
-
-      // Preload the next image
-      preloadNextImage(page + 1);
-
-      // Increment page after the image has been loaded
-      page++;
-
-      // Allow further interaction once the image is loaded
-      isLoading = false;
     })
-    .catch(error => {
-      console.error("Error loading images:", error);
-      isLoading = false;
-    });
-}
-
-// Function to preload the next image without showing it
-function preloadNextImage(nextPage) {
-  let number = String(nextPage).padStart(5, "0");
-  fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
-    .then(response => {
-      if (!response.ok) throw new Error("Failed to preload next image");
-      return response.blob();
-    })
-    .then(blob => {
-      const objectURL = URL.createObjectURL(blob);
-      const imgElement = document.createElement("img");
-      imgElement.src = objectURL;
-      imgElement.classList.add("webp", "preload");
-      webpContainer.appendChild(imgElement); // Preload image in background
-    })
-    .catch(error => {
-      console.error("Error preloading next image:", error);
-    });
+    .catch(error => console.error("Error loading images:", error));
 }
 
 // Handle swipe & scroll
@@ -88,36 +52,23 @@ window.addEventListener("wheel", e => {
 });
 
 function showNextImage() {
-  if (isTransitioning || isLoading) return; // Prevent interaction during transition or fetch
-
+  if (isTransitioning) return;
   isTransitioning = true;
 
-  // Hide current active image (if any)
-  const currentImage = images[currentIndex];
-  if (currentImage) {
-    currentImage.classList.remove("active");
-  }
+  const images = document.querySelectorAll(".webp");
 
-  // Increment to show next image
-  currentIndex++;
-  
-  if (currentIndex >= images.length) {
-    // If we're at the last image, load the next image
+  // If there are more images loaded, show the next one
+  if (currentIndex < images.length - 1) {
+    images[currentIndex].classList.remove("active");
+    currentIndex++;
+    images[currentIndex].classList.add("active");
+  } else {
+    // Load the next image and increment the page number
+    page++; // Increment the page number after loading the next image
     loadMoreContent(page);
-  }
-
-  // Show the next image
-  const nextImage = images[currentIndex];
-  if (nextImage) {
-    nextImage.classList.add("active");
-  }
-
-  // Scroll to the next image immediately
-  if (nextImage) {
-    nextImage.scrollIntoView({ behavior: "smooth" });
   }
 
   setTimeout(() => {
     isTransitioning = false;
-  }, 500); // Duration of the transition
+  }, 500);
 }
