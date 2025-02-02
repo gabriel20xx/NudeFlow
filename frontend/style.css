@@ -31,9 +31,15 @@ body, html {
   transform: translate(-50%, -50%) scale(1);
   transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
   opacity: 0;
+  display: none;
 }
 
 .webp.active {
+  display: block;
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
+}
+
+.webp.preload {
+  display: none; /* Hide preloaded images until activated */
 }

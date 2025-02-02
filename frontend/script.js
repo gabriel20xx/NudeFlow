@@ -29,11 +29,7 @@ function loadMoreContent(page) {
       // Add the image to the images array
       images.push(imgElement);
 
-      // Append the first image to the container
-      if (webpContainer.children.length === 0) {
-        imgElement.classList.add("active");
-      }
-
+      // Append the image to the container
       webpContainer.appendChild(imgElement);
 
       // Preload the next image
@@ -42,7 +38,7 @@ function loadMoreContent(page) {
       // Scroll to the newly added image
       imgElement.scrollIntoView({ behavior: "smooth" });
 
-      // Increment page only after the image has been loaded
+      // Increment page after the image has been loaded
       page++;
 
       // Allow further interaction once the image is loaded
@@ -67,7 +63,8 @@ function preloadNextImage(nextPage) {
       const imgElement = document.createElement("img");
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
-      webpContainer.appendChild(imgElement); // No need to hide it, just load it
+      imgElement.classList.add("preload");
+      webpContainer.appendChild(imgElement); // Preload image in background
     })
     .catch(error => {
       console.error("Error preloading next image:", error);
@@ -99,21 +96,30 @@ function showNextImage() {
 
   isTransitioning = true;
 
-  // Hide current active image
-  images[currentIndex].classList.remove("active");
+  // Hide current active image (if any)
+  const currentImage = images[currentIndex];
+  if (currentImage) {
+    currentImage.classList.remove("active");
+  }
 
   // Increment to show next image
   currentIndex++;
+  
   if (currentIndex >= images.length) {
     // If we're at the last image, load the next image
     loadMoreContent(page);
   }
 
   // Show the next image
-  images[currentIndex].classList.add("active");
+  const nextImage = images[currentIndex];
+  if (nextImage) {
+    nextImage.classList.add("active");
+  }
 
   // Scroll to the next image immediately
-  images[currentIndex].scrollIntoView({ behavior: "smooth" });
+  if (nextImage) {
+    nextImage.scrollIntoView({ behavior: "smooth" });
+  }
 
   setTimeout(() => {
     isTransitioning = false;
