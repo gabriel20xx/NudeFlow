@@ -5,11 +5,19 @@ const sharp = require("sharp");
 const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
-const Video = require("./models/video");
+const SMB2 = require("smb2");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Configure SMB connection
+const smb2Client = new SMB2({
+  share: '\\\\192.168.2.5\\Generated', // SMB share path
+  username: 'gabriel',
+  password: 'KingPong31:)',
+  domain: '', // Leave blank for no domain
+});
 
 mongoose
   .connect("mongodb://192.168.2.94:27017/xxxtok")
@@ -29,12 +37,15 @@ app.use(express.static(path.join(__dirname, "..", "frontend")));
 // Route to serve a specific WebP image
 app.get('/image/:name', (req, res) => {
   const imageName = req.params.name + '.webp';
-  const imagePath = path.join(__dirname, '..', '..', 'media', imageName);
+  const smbPath = '\\' + 'ComfyUI' + imageName;  // Path to the file on the SMB share
 
-  res.sendFile(imagePath, (err) => {
+  smb2Client.readFile(smbPath, (err, fileData) => {
     if (err) {
-      res.status(404).send('Image not found');
+      return res.status(404).send('Image not found');
     }
+
+    res.set('Content-Type', 'image/webp');
+    res.send(fileData); // Send the file data from SMB share
   });
 });
 
