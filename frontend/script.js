@@ -29,14 +29,11 @@ function loadMoreContent(page) {
       // Add the image to the images array
       images.push(imgElement);
 
-      // Append the image to the container
+      // Append the first image to the container
       webpContainer.appendChild(imgElement);
 
       // Preload the next image
       preloadNextImage(page + 1);
-
-      // Scroll to the newly added image
-      imgElement.scrollIntoView({ behavior: "smooth" });
 
       // Increment page after the image has been loaded
       page++;
@@ -62,8 +59,7 @@ function preloadNextImage(nextPage) {
       const objectURL = URL.createObjectURL(blob);
       const imgElement = document.createElement("img");
       imgElement.src = objectURL;
-      imgElement.classList.add("webp");
-      imgElement.classList.add("preload");
+      imgElement.classList.add("webp", "preload");
       webpContainer.appendChild(imgElement); // Preload image in background
     })
     .catch(error => {
