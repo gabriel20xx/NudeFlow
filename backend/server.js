@@ -18,11 +18,6 @@ mongoose
 
 app.use(express.static(path.join(__dirname, "..", "frontend")));
 
-// Fallback to index.html for SPA
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
-});
-
 app.get('/', (req, res) => {
   res.status(200).send('Webpage is running');
 })
