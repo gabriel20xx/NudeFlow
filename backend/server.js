@@ -29,10 +29,10 @@ app.get('/', (req, res) => {
 
 // Route to serve compressed WebP images dynamically
 app.get('/api/webp', async (req, res) => {
-  const { url, width = 600, quality = 80 } = req.query;
+  const { number, width = 600, quality = 80 } = req.query;
   const prefix = 'ComfyUI_';
   const suffix = '_.webp';
-  const modifiedUrl = prefix + url + suffix;
+  const modifiedUrl = prefix + number + suffix;
   const imagePath = path.resolve(__dirname, 'media', modifiedUrl);
   console.log('Image Path:', imagePath);
 
@@ -49,6 +49,7 @@ app.get('/api/webp', async (req, res) => {
     res.set('Content-Type', 'image/webp');
     res.send(imageBuffer);
   } catch (error) {
+    console.error('Error processing image:', error);
     res.status(500).send('Error processing image');
   }
 });

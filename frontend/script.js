@@ -9,7 +9,7 @@ window.addEventListener('scroll', () => {
 
 function loadMoreContent(page) {
   let number = String(page).padStart(5, '0');
-  fetch(`https://xxxtok.gfranz.ch/api/webp?url=${number}`)
+  fetch(`https://xxxtok.gfranz.ch/api/webp?number=${number}`)
     .then(response => {
       if (response.ok) {
         return response.json(); // Parse JSON if the response is OK
@@ -18,15 +18,15 @@ function loadMoreContent(page) {
       }
     })
     .then(data => {
-      const videoContainer = document.getElementById('video-container');
+      const webpContainer = document.getElementById('webp-container');
 
-      data.videos.forEach(video => {
+      data.webp.forEach(webp => {
         const imgElement = document.createElement('img');
-        imgElement.src = number;
+        imgElement.src = `https://xxxtok.gfranz.ch/api/webp?number=${number}&width=600`; // Dynamically setting the image URL
         imgElement.classList.add('animated-webp');
-        imgElement.dataset.duration = video.duration; // Use server-provided duration
+        imgElement.dataset.duration = webp.duration; // Use server-provided duration
 
-        videoContainer.appendChild(imgElement);
+        webpContainer.appendChild(imgElement);
       });
 
       if (page === 1) {
