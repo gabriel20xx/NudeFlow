@@ -16,6 +16,8 @@ else
   git pull origin master
 fi
 
+npm install express mongoose path sharp cors fs smb2
+
 # Check if the server.js file exists before starting
 if [ -f "backend/server.js" ]; then
   node backend/server.js
