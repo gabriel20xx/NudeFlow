@@ -18,7 +18,7 @@ fi
 
 # Check if package.json exists before running npm install
 if [ -f "package.json" ]; then
-  npm install express mongoose path sharp cors fs smb2
+  npm install express mongoose path sharp cors fs smb2-client
 else
   echo "package.json not found, skipping npm install"
 fi
