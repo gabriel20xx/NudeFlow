@@ -62,7 +62,6 @@ function showNextImage() {
     images[currentIndex].classList.remove("active");
     currentIndex++;
     images[currentIndex].classList.add("active");
-  } else {
     // Load the next image and increment the page number
     page++; // Increment the page number after loading the next image
     loadMoreContent(page);
