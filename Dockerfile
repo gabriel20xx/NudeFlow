@@ -5,11 +5,14 @@ FROM node:latest
 WORKDIR /app
 
 RUN useradd -ms /bin/bash user
-
-RUN git clone https://github.com/gabriel20xx/XXXTok.git .
-RUN git pull origin master
 RUN chmod -R 777 /app
 RUN chown -R user:user /app
+
+# Copy the script.sh into the container
+COPY script.sh /app/script.sh
+
+# Make the script executable
+RUN chmod +x /app/script.sh
 
 # Install dependencies
 RUN npm install express mongoose sharp path cors fs
@@ -17,5 +20,5 @@ RUN npm install express mongoose sharp path cors fs
 # Expose the port the app runs on
 EXPOSE 5000
 
-# Command to start the server
-CMD ["node", "backend/server.js"]
+# Run the script when the container starts
+CMD ["./script.sh"]
