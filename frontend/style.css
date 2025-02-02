@@ -5,13 +5,13 @@ body {
     padding: 0;
   }
   
-  #video-container {
+  #webp-container {
     display: flex;
     flex-direction: column;
     align-items: center;
   }
   
-  .video {
+  .webp {
     width: 100%;
     max-width: 640px;
     margin: 20px 0;
