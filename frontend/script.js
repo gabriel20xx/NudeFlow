@@ -3,6 +3,7 @@ let currentIndex = 0; // Track the current visible image
 let isTransitioning = false; // Flag for transition state
 let isLoading = false; // Flag to prevent multiple fetches at once
 const webpContainer = document.getElementById("webp-container");
+const images = [];
 
 // Load the first image and preload the next one
 loadMoreContent(page);
@@ -25,7 +26,10 @@ function loadMoreContent(page) {
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
 
-      // Add the first image as visible
+      // Add the image to the images array
+      images.push(imgElement);
+
+      // Append the first image to the container
       if (webpContainer.children.length === 0) {
         imgElement.classList.add("active");
       }
@@ -63,7 +67,7 @@ function preloadNextImage(nextPage) {
       const imgElement = document.createElement("img");
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
-      webpContainer.appendChild(imgElement); // Don't hide this image, let it be ready
+      webpContainer.appendChild(imgElement); // No need to hide it, just load it
     })
     .catch(error => {
       console.error("Error preloading next image:", error);
@@ -94,19 +98,22 @@ function showNextImage() {
   if (isTransitioning || isLoading) return; // Prevent interaction during transition or fetch
 
   isTransitioning = true;
-  const images = document.querySelectorAll(".webp");
 
-  // Check if we are at the last image
-  if (currentIndex < images.length - 1) {
-    images[currentIndex].classList.remove("active");
-    currentIndex++;
-    images[currentIndex].classList.add("active");
+  // Hide current active image
+  images[currentIndex].classList.remove("active");
 
-    // Scroll to the next image immediately
-    images[currentIndex].scrollIntoView({ behavior: "smooth" });
-  } else {
-    loadMoreContent(page); // Load the next image if available
+  // Increment to show next image
+  currentIndex++;
+  if (currentIndex >= images.length) {
+    // If we're at the last image, load the next image
+    loadMoreContent(page);
   }
+
+  // Show the next image
+  images[currentIndex].classList.add("active");
+
+  // Scroll to the next image immediately
+  images[currentIndex].scrollIntoView({ behavior: "smooth" });
 
   setTimeout(() => {
     isTransitioning = false;
