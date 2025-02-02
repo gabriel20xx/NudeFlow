@@ -5,18 +5,17 @@ const sharp = require("sharp");
 const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
-const SMB2 = require("smb2-client");
+const SambaClient = require('samba-client');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 // Configure SMB connection
-const smb2Client = new SMB2({
-  share: '\\\\192.168.2.5\\Generated', // SMB share path
+let client = new SambaClient({
+  address: '//192.168.2.5/Generated', // SMB share path
   username: 'gabriel',
   password: 'KingPong31:)',
-  domain: '', // Leave blank for no domain
 });
 
 mongoose
@@ -35,19 +34,26 @@ app.use('/media', express.static(path.join(__dirname, 'media')));
 app.use(express.static(path.join(__dirname, "..", "frontend")));
 
 // Route to serve a specific WebP image
-app.get('/media/:name', (req, res) => {
+app.get('/media/:name', async (req, res) => {
   const imageName = req.params.name + '.webp';
-  const smbPath = '\\\\192.168.2.5\\Generated\\ComfyUI\\' + imageName;  // Path to the file on the SMB share
+  const smbPath = 'ComfyUI/' + imageName;  // Path to the file on the SMB share
 
-  smb2Client.readFile(smbPath, (err, fileData) => {
-    if (err) {
-      console.error('Error reading file from SMB share:', err);
-      return res.status(404).send('Image not found');
-    }
+  try {
+    // Fetch the file from the SMB share
+    const localPath = path.join(__dirname, 'tmp', imageName); // Temporary local path to save the file
+    await client.getFile(smbPath, localPath); // Download the file to local disk
 
+    // Read the file and send it as a response
+    const fileData = fs.readFileSync(localPath);
     res.set('Content-Type', 'image/webp');
-    res.send(fileData); // Send the file data from SMB share
-  });
+    res.send(fileData); // Send the image data from the local disk
+
+    // Clean up the temporary file after sending it
+    fs.unlinkSync(localPath);
+  } catch (err) {
+    console.error('Error retrieving file from SMB share:', err);
+    res.status(404).send('Image not found');
+  }
 });
 
 // Start the server
