@@ -29,7 +29,7 @@ app.use(express.static(path.join(__dirname, "..", "frontend")));
 // Route to serve a specific WebP image
 app.get('/image/:name', (req, res) => {
   const imageName = req.params.name + '.webp';
-  const imagePath = path.join(__dirname, 'media', imageName);
+  const imagePath = path.join(__dirname, '..', '..', 'media', imageName);
 
   res.sendFile(imagePath, (err) => {
     if (err) {
