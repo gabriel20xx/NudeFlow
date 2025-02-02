@@ -32,6 +32,9 @@ function loadMoreContent(page) {
       webpContainer.appendChild(imgElement);
       page++; // Increment page after loading the image
 
+      // Scroll to the newly added image
+      imgElement.scrollIntoView({ behavior: "smooth" });
+
       // Allow further interaction once the image is loaded
       isLoading = false;
     })
@@ -74,7 +77,6 @@ function showNextImage() {
   } else {
     page++; // Increment the page number after loading the image
     loadMoreContent(page); // Load the next image if available
-     
   }
 
   setTimeout(() => {
