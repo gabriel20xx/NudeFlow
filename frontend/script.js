@@ -1,67 +1,66 @@
-// frontend/script.js
-let page = 1; // Track the current page
+let page = 1;
+let currentIndex = 0;
+const webpContainer = document.getElementById("webp-container");
 
-window.addEventListener('scroll', () => {
-  if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 100) {
-    loadMoreContent(page);
+function loadMoreContent(page) {
+  let number = String(page).padStart(5, "0");
+  fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
+    .then(response => {
+      if (!response.ok) throw new Error("Failed to load image");
+      return response.blob();
+    })
+    .then(blob => {
+      const objectURL = URL.createObjectURL(blob);
+      const imgElement = document.createElement("img");
+
+      imgElement.src = objectURL;
+      imgElement.classList.add("webp");
+      imgElement.style.transform = `translateY(${100 * (currentIndex)}vh)`;
+      
+      webpContainer.appendChild(imgElement);
+      currentIndex++;
+      page++;
+    })
+    .catch(error => console.error("Error loading images:", error));
+}
+
+// Load the first image
+loadMoreContent(page);
+
+// Handle swipe up to switch to the next image
+let startY = 0;
+
+window.addEventListener("touchstart", e => {
+  startY = e.touches[0].clientY;
+});
+
+window.addEventListener("touchend", e => {
+  let endY = e.changedTouches[0].clientY;
+  if (startY - endY > 50) { // Detect swipe up
+    showNextImage();
   }
 });
 
-function loadMoreContent(page) {
-  let number = String(page).padStart(5, '0');
-  fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
-    .then(response => {
-      if (response.ok) {
-        return response.blob(); // Parse the response as a Blob (for image data)
-      } else {
-        return response.text(); // Otherwise, return raw text (for debugging)
-      }
-    })
-    .then(data => {
-      const webpContainer = document.getElementById('webp-container');
+// Handle keyboard arrow down and mouse scroll
+window.addEventListener("keydown", e => {
+  if (e.key === "ArrowDown") showNextImage();
+});
+window.addEventListener("wheel", e => {
+  if (e.deltaY > 0) showNextImage();
+});
 
-      // Check if the response is a blob (image)
-      if (data instanceof Blob) {
-        const objectURL = URL.createObjectURL(data); // Create an object URL from the blob
-        const imgElement = document.createElement('img');
-        imgElement.src = objectURL; // Set the image source to the object URL (image buffer)
+function showNextImage() {
+  const images = document.querySelectorAll(".webp");
+  
+  if (currentIndex < images.length) {
+    images.forEach((img, i) => {
+      img.style.transform = `translateY(-${100 * (currentIndex)}vh)`;
+    });
 
-        imgElement.classList.add('animated-webp');
-        webpContainer.appendChild(imgElement); // Append the image to the container
-      } else {
-        console.error("Expected image data, but received:", data);
-      }
-
-      if (page === 1) {
-        // startAutoScroll();
-      }
-
-      page++;
-    })
-    .catch(error => console.error('Error loading images:', error));
-}
-
-
-// Function to auto-scroll when WebP animation ends
-function startAutoScroll() {
-  const images = document.querySelectorAll('.animated-webp');
-
-  function scrollToNext() {
-    if (currentIndex >= images.length) {
-      currentIndex = 0; // Restart from the first image if at the end
+    if (currentIndex === images.length - 1) {
+      loadMoreContent(page);
     }
 
-    images[currentIndex].scrollIntoView({ behavior: 'smooth' });
-
-    setTimeout(() => {
-      currentIndex++;
-      scrollToNext();
-    }, animationDuration);
+    currentIndex++;
   }
-
-  scrollToNext();
 }
-
-
-// Load the first batch of videos (WebP images)
-loadMoreContent(page);
