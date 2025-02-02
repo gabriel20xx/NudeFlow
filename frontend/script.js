@@ -4,8 +4,33 @@ let isTransitioning = false;
 const webpContainer = document.getElementById("webp-container");
 
 // Load the first image
-loadMoreContent(page);
-loadMoreContent(page+1);
+loadInitialContent();
+
+function loadInitialContent {
+  let number = 00001
+
+fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
+    .then(response => {
+      if (!response.ok) throw new Error("Failed to load image");
+      return response.blob();
+    })
+    .then(blob => {
+      const objectURL = URL.createObjectURL(blob);
+      const imgElement = document.createElement("img");
+
+      imgElement.src = objectURL;
+      imgElement.classList.add("webp");
+
+      // Add the first image as visible
+      if (webpContainer.children.length === 0) {
+        imgElement.classList.add("active"); // First image should be visible
+      }
+
+      webpContainer.appendChild(imgElement);
+      loadMoreContent(page+1);
+    })
+    .catch(error => console.error("Error loading images:", error));
+}
 
 function loadMoreContent(page) {
   let number = String(page).padStart(5, "0");
