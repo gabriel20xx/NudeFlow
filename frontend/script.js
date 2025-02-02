@@ -25,7 +25,6 @@ function loadMoreContent(page) {
       }
 
       webpContainer.appendChild(imgElement);
-      page++;
     })
     .catch(error => console.error("Error loading images:", error));
 }
@@ -60,7 +59,8 @@ function showNextImage() {
     currentIndex++;
     images[currentIndex].classList.add("active");
   } else {
-    loadMoreContent(page + 1);
+    page++;
+    loadMoreContent(page);
   }
 
   setTimeout(() => {
