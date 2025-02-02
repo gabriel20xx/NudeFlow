@@ -27,6 +27,21 @@ app.get('/', (req, res) => {
   res.status(200).send('Webpage is running');
 })
 
+// Serve WebP images from the 'media' folder
+app.use('/media', express.static(path.join(__dirname, 'media')));
+
+// Route to serve a specific WebP image
+app.get('/image/:name', (req, res) => {
+  const imageName = req.params.name + '.webp';
+  const imagePath = path.join(__dirname, 'media', imageName);
+
+  res.sendFile(imagePath, (err) => {
+    if (err) {
+      res.status(404).send('Image not found');
+    }
+  });
+});
+
 // Route to serve compressed WebP images dynamically
 app.get('/api/webp', async (req, res) => {
   const { width = 600, quality = 80 } = req.query;
