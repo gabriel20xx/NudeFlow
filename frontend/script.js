@@ -25,28 +25,32 @@ function loadInitialContent(page) {
 
       webpContainer.appendChild(imgElement);
       page++;
-      loadMoreContent(page);
+      loadMoreContent(page, 2); // Preload two images after the first one
     })
     .catch(error => console.error("Error loading images:", error));
 }
 
-function loadMoreContent(page) {
-  let number = String(page).padStart(5, "0");
-  fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
-    .then(response => {
-      if (!response.ok) throw new Error("Failed to load image");
-      return response.blob();
-    })
-    .then(blob => {
-      const objectURL = URL.createObjectURL(blob);
-      const imgElement = document.createElement("img");
+// Modify loadMoreContent to preload multiple images
+function loadMoreContent(page, numImages = 1) {
+  for (let i = 0; i < numImages; i++) {
+    let number = String(page).padStart(5, "0");
+    fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
+      .then(response => {
+        if (!response.ok) throw new Error("Failed to load image");
+        return response.blob();
+      })
+      .then(blob => {
+        const objectURL = URL.createObjectURL(blob);
+        const imgElement = document.createElement("img");
 
-      imgElement.src = objectURL;
-      imgElement.classList.add("webp");
+        imgElement.src = objectURL;
+        imgElement.classList.add("webp");
 
-      webpContainer.appendChild(imgElement);
-    })
-    .catch(error => console.error("Error loading images:", error));
+        webpContainer.appendChild(imgElement);
+        page++; // Increment the page number after each image
+      })
+      .catch(error => console.error("Error loading images:", error));
+  }
 }
 
 // Handle swipe & scroll
@@ -76,13 +80,12 @@ function showNextImage() {
   const images = document.querySelectorAll(".webp");
 
   // If there are more images loaded, show the next one
-  if (currentIndex < images.length - 1) {
+  if (currentIndex < images.length - 2) {
     images[currentIndex].classList.remove("active");
     currentIndex++;
     images[currentIndex].classList.add("active");
-    // Load the next image and increment the page number
-    page++; // Increment the page number after loading the next image
-    loadMoreContent(page);
+    // Load the next two images and increment the page number
+    loadMoreContent(page, 1); // Preload two images after the current one
   }
 
   setTimeout(() => {
