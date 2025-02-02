@@ -63,8 +63,7 @@ function preloadNextImage(nextPage) {
       const imgElement = document.createElement("img");
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
-      imgElement.style.display = "none"; // Keep it hidden until needed
-      webpContainer.appendChild(imgElement);
+      webpContainer.appendChild(imgElement); // Don't hide this image, let it be ready
     })
     .catch(error => {
       console.error("Error preloading next image:", error);
