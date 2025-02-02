@@ -11,19 +11,12 @@ app.use(cors());
 app.use(express.json());
 
 mongoose
-  .connect("mongodb://192.168.2.94:27017/xxxtok", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect("mongodb://192.168.2.94:27017/xxxtok")
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.log("Failed to connect to MongoDB", err));
 
 app.use(express.static(path.join(__dirname, "..", "frontend")));
 
-<<<<<<< HEAD
-app.get("/", async (req, res) => {
-  res.status(200).send("Webpage is running");
-=======
 // Fallback to index.html for SPA
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
@@ -59,7 +52,6 @@ app.get('/api/webp', async (req, res) => {
     } catch (error) {
         res.status(500).send('Error processing image');
     }
->>>>>>> de851f394aae9e30871d2ff233da3a3add1207dc
 });
 
 // Route to serve compressed WebP images dynamically
