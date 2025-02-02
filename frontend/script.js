@@ -3,6 +3,9 @@ let currentIndex = 0;
 let isTransitioning = false;
 const webpContainer = document.getElementById("webp-container");
 
+// Load the first image
+loadMoreContent(page);
+
 function loadMoreContent(page) {
   let number = String(page).padStart(5, "0");
   fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
@@ -16,19 +19,17 @@ function loadMoreContent(page) {
 
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
-      imgElement.style.transform = `translateY(${100 * currentIndex}vh)`;
+
+      if (webpContainer.children.length === 0) {
+        imgElement.classList.add("active"); // First image should be visible
+      }
 
       webpContainer.appendChild(imgElement);
-      currentIndex++;
-      page++;
     })
     .catch(error => console.error("Error loading images:", error));
 }
 
-// Load the first image
-loadMoreContent(page);
-
-// Swipe & Scroll Handling
+// Handle swipe & scroll
 let startY = 0;
 
 window.addEventListener("touchstart", e => {
@@ -37,7 +38,7 @@ window.addEventListener("touchstart", e => {
 
 window.addEventListener("touchend", e => {
   let endY = e.changedTouches[0].clientY;
-  if (startY - endY > 50) showNextImage(); // Swipe up
+  if (startY - endY > 50) showNextImage(); // Swipe up detected
 });
 
 window.addEventListener("keydown", e => {
@@ -49,21 +50,16 @@ window.addEventListener("wheel", e => {
 });
 
 function showNextImage() {
-  if (isTransitioning) return; // Prevent spam clicks
+  if (isTransitioning) return;
   isTransitioning = true;
 
   const images = document.querySelectorAll(".webp");
-
-  if (currentIndex < images.length) {
-    images.forEach((img, i) => {
-      img.style.transform = `translateY(-${100 * currentIndex}vh)`;
-    });
-
-    if (currentIndex === images.length - 1) {
-      loadMoreContent(page);
-    }
-
+  if (currentIndex < images.length - 1) {
+    images[currentIndex].classList.remove("active");
     currentIndex++;
+    images[currentIndex].classList.add("active");
+  } else {
+    loadMoreContent(page);
   }
 
   setTimeout(() => {
