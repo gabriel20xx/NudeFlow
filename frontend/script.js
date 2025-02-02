@@ -80,7 +80,7 @@ function showNextImage() {
   const images = document.querySelectorAll(".webp");
 
   // If there are more images loaded, show the next one
-  if (currentIndex < images.length - 2) {
+  if (currentIndex + 1 < images.length - 1) {
     images[currentIndex].classList.remove("active");
     currentIndex++;
     images[currentIndex].classList.add("active");
