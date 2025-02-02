@@ -7,12 +7,10 @@
 body, html {
   width: 100%;
   height: 100%;
-  overflow: hidden; /* Prevents normal scrolling */
+  overflow: hidden; /* Prevent default scrolling */
 }
 
 #webp-container {
-  display: flex;
-  flex-direction: column;
   width: 100%;
   height: 100vh;
   overflow: hidden;
@@ -21,10 +19,11 @@ body, html {
 
 .webp {
   width: 100%;
-  height: 100vh; /* Full screen height */
-  object-fit: cover; /* Ensures images fill screen */
+  height: 100%;
+  object-fit: contain; /* Ensures the whole image is visible */
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   transition: transform 0.5s ease-in-out;
 }

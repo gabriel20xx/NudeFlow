@@ -1,5 +1,6 @@
 let page = 1;
 let currentIndex = 0;
+let isTransitioning = false;
 const webpContainer = document.getElementById("webp-container");
 
 function loadMoreContent(page) {
@@ -15,8 +16,8 @@ function loadMoreContent(page) {
 
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
-      imgElement.style.transform = `translateY(${100 * (currentIndex)}vh)`;
-      
+      imgElement.style.transform = `translateY(${100 * currentIndex}vh)`;
+
       webpContainer.appendChild(imgElement);
       currentIndex++;
       page++;
@@ -27,7 +28,7 @@ function loadMoreContent(page) {
 // Load the first image
 loadMoreContent(page);
 
-// Handle swipe up to switch to the next image
+// Swipe & Scroll Handling
 let startY = 0;
 
 window.addEventListener("touchstart", e => {
@@ -36,22 +37,23 @@ window.addEventListener("touchstart", e => {
 
 window.addEventListener("touchend", e => {
   let endY = e.changedTouches[0].clientY;
-  if (startY - endY > 50) { // Detect swipe up
-    showNextImage();
-  }
+  if (startY - endY > 50) showNextImage(); // Swipe up
 });
 
-// Handle keyboard arrow down and mouse scroll
 window.addEventListener("keydown", e => {
   if (e.key === "ArrowDown") showNextImage();
 });
+
 window.addEventListener("wheel", e => {
   if (e.deltaY > 0) showNextImage();
 });
 
 function showNextImage() {
+  if (isTransitioning) return; // Prevent spam clicks
+  isTransitioning = true;
+
   const images = document.querySelectorAll(".webp");
-  
+
   if (currentIndex < images.length) {
     images.forEach((img, i) => {
       img.style.transform = `translateY(-${100 * (currentIndex)}vh)`;
@@ -63,4 +65,8 @@ function showNextImage() {
 
     currentIndex++;
   }
+
+  setTimeout(() => {
+    isTransitioning = false;
+  }, 500);
 }
