@@ -37,7 +37,7 @@ app.use(express.static(path.join(__dirname, "..", "frontend")));
 // Route to serve a specific WebP image
 app.get('/image/:name', (req, res) => {
   const imageName = req.params.name + '.webp';
-  const smbPath = '\\' + 'ComfyUI' + imageName;  // Path to the file on the SMB share
+  const smbPath = '\\\\' + 'ComfyUI' + '\\' + imageName;  // Path to the file on the SMB share
 
   smb2Client.readFile(smbPath, (err, fileData) => {
     if (err) {
