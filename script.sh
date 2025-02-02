@@ -1,5 +1,8 @@
 #!/bin/bash
 
+mkdir XXXTok
+cd XXXTok
+
 # Clone the repository
 git clone https://github.com/gabriel20xx/XXXTok.git .
 
