@@ -80,12 +80,12 @@ function showNextImage() {
   const images = document.querySelectorAll(".webp");
 
   // If there are more images loaded, show the next one
-  if (currentIndex + 1 < images.length - 1) {
+  if (currentIndex < images.length - 1) {
     images[currentIndex].classList.remove("active");
     currentIndex++;
     images[currentIndex].classList.add("active");
     // Load the next two images and increment the page number
-    loadMoreContent(page, 1); // Preload two images after the current one
+    loadMoreContent(page, 2); // Preload two images after the current one
   }
 
   setTimeout(() => {
