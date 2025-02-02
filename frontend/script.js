@@ -33,7 +33,7 @@ function loadMoreContent(page) {
       }
 
       if (page === 1) {
-        startAutoScroll();
+        // startAutoScroll();
       }
 
       page++;
