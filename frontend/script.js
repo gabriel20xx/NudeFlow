@@ -45,11 +45,6 @@ function loadMoreContent(page) {
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
 
-      // Add the first image as visible
-      if (webpContainer.children.length === 0) {
-        imgElement.classList.add("active"); // First image should be visible
-      }
-
       webpContainer.appendChild(imgElement);
     })
     .catch(error => console.error("Error loading images:", error));
