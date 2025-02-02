@@ -29,11 +29,8 @@ app.get('/', (req, res) => {
 
 // Route to serve compressed WebP images dynamically
 app.get('/api/webp', async (req, res) => {
-  const { number, width = 600, quality = 80 } = req.query;
-  const prefix = 'ComfyUI_';
-  const suffix = '_.webp';
-  const modifiedUrl = prefix + number + suffix;
-  const imagePath = path.resolve(__dirname, 'media', modifiedUrl);
+  const { width = 600, quality = 80 } = req.query;
+  const imagePath = path.resolve(__dirname, 'media', 'ComfyUI_00044_.webp');
   console.log('Image Path:', imagePath);
 
   if (!fs.existsSync(imagePath)) {

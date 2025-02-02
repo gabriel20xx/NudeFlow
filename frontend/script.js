@@ -22,11 +22,15 @@ function loadMoreContent(page) {
 
       data.webp.forEach(webp => {
         const imgElement = document.createElement('img');
-        imgElement.src = `https://xxxtok.gfranz.ch/api/webp?number=${number}&width=600`; // Dynamically setting the image URL
+
+        // Directly use the image URL (already processed on the server)
+        const imageURL = `https://xxxtok.gfranz.ch/api/webp?number=${number}&width=600`;
+        imgElement.src = imageURL; // Set the image source to the URL
+
         imgElement.classList.add('animated-webp');
         imgElement.dataset.duration = webp.duration; // Use server-provided duration
 
-        webpContainer.appendChild(imgElement);
+        webpContainer.appendChild(imgElement); // Append the image to the container
       });
 
       if (page === 1) {
@@ -37,6 +41,8 @@ function loadMoreContent(page) {
     })
     .catch(error => console.error('Error loading images:', error));
 }
+
+
 
 // Function to auto-scroll when WebP animation ends
 function startAutoScroll() {
