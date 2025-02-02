@@ -1,12 +1,16 @@
-let page = 1;
-let currentIndex = 0;
-let isTransitioning = false;
+let page = 1; // Track the page number for fetching images
+let currentIndex = 0; // Track the current visible image
+let isTransitioning = false; // Flag for transition state
+let isLoading = false; // Flag to prevent multiple fetches at once
 const webpContainer = document.getElementById("webp-container");
 
 // Load the first image
 loadMoreContent(page);
 
 function loadMoreContent(page) {
+  if (isLoading) return; // Prevent fetching while loading
+  isLoading = true;
+
   let number = String(page).padStart(5, "0");
   fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
     .then(response => {
@@ -20,13 +24,21 @@ function loadMoreContent(page) {
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
 
+      // Add the first image as visible
       if (webpContainer.children.length === 0) {
-        imgElement.classList.add("active"); // First image should be visible
+        imgElement.classList.add("active");
       }
 
       webpContainer.appendChild(imgElement);
+      page++; // Increment page after loading the image
+
+      // Allow further interaction once the image is loaded
+      isLoading = false;
     })
-    .catch(error => console.error("Error loading images:", error));
+    .catch(error => {
+      console.error("Error loading images:", error);
+      isLoading = false;
+    });
 }
 
 // Handle swipe & scroll
@@ -50,20 +62,22 @@ window.addEventListener("wheel", e => {
 });
 
 function showNextImage() {
-  if (isTransitioning) return;
-  isTransitioning = true;
+  if (isTransitioning || isLoading) return; // Prevent interaction during transition or fetch
 
+  isTransitioning = true;
   const images = document.querySelectorAll(".webp");
+
   if (currentIndex < images.length - 1) {
     images[currentIndex].classList.remove("active");
     currentIndex++;
     images[currentIndex].classList.add("active");
   } else {
-    page++;
-    loadMoreContent(page);
+    page++; // Increment the page number after loading the image
+    loadMoreContent(page); // Load the next image if available
+     
   }
 
   setTimeout(() => {
     isTransitioning = false;
-  }, 500);
+  }, 500); // Duration of the transition
 }
