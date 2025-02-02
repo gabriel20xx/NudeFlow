@@ -7,9 +7,8 @@ const webpContainer = document.getElementById("webp-container");
 loadInitialContent();
 
 function loadInitialContent {
-  let number = 00001
-
-fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
+  let number = 00001;
+  fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
     .then(response => {
       if (!response.ok) throw new Error("Failed to load image");
       return response.blob();
