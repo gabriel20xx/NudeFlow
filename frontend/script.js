@@ -30,10 +30,15 @@ function loadMoreContent(page) {
       }
 
       webpContainer.appendChild(imgElement);
-      page++; // Increment page after loading the image
+
+      // Preload next image in the background (next page)
+      preloadNextImage(page + 1);
 
       // Scroll to the newly added image
       imgElement.scrollIntoView({ behavior: "smooth" });
+
+      // Increment page after loading the image
+      page++; // Increment page only after the image has been loaded
 
       // Allow further interaction once the image is loaded
       isLoading = false;
@@ -41,6 +46,29 @@ function loadMoreContent(page) {
     .catch(error => {
       console.error("Error loading images:", error);
       isLoading = false;
+    });
+}
+
+// Function to preload the next image without showing it
+function preloadNextImage(nextPage) {
+  if (isLoading) return; // Prevent multiple preloads
+
+  let number = String(nextPage).padStart(5, "0");
+  fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
+    .then(response => {
+      if (!response.ok) throw new Error("Failed to preload next image");
+      return response.blob();
+    })
+    .then(blob => {
+      const objectURL = URL.createObjectURL(blob);
+      const imgElement = document.createElement("img");
+      imgElement.src = objectURL;
+      imgElement.classList.add("webp");
+      imgElement.style.display = "none"; // Keep it hidden until needed
+      webpContainer.appendChild(imgElement);
+    })
+    .catch(error => {
+      console.error("Error preloading next image:", error);
     });
 }
 
@@ -70,12 +98,15 @@ function showNextImage() {
   isTransitioning = true;
   const images = document.querySelectorAll(".webp");
 
+  // Check if we are at the last image
   if (currentIndex < images.length - 1) {
     images[currentIndex].classList.remove("active");
     currentIndex++;
     images[currentIndex].classList.add("active");
+
+    // Scroll to the next image immediately
+    images[currentIndex].scrollIntoView({ behavior: "smooth" });
   } else {
-    page++; // Increment the page number after loading the image
     loadMoreContent(page); // Load the next image if available
   }
 
