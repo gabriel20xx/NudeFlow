@@ -8,7 +8,7 @@ window.addEventListener('scroll', () => {
 });
 
 function loadMoreContent(page) {
-    let number = String(index).padStart(5, '0');
+    let number = String(page).padStart(5, '0');
     fetch(`https://xxxtok.gfranz.ch/api/webp?url=${number}`)
       .then(response => response.json())
       .then(data => {
@@ -54,4 +54,4 @@ function startAutoScroll() {
   
 
 // Load the first batch of videos (WebP images)
-loadMoreContent(index);
+loadMoreContent(page);
