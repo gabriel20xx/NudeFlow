@@ -12,7 +12,7 @@ function loadMoreContent(page) {
   fetch(`https://xxxtok.gfranz.ch/api/webp?number=${number}`)
     .then(response => {
       if (response.ok) {
-        return response.json(); // Parse JSON if the response is OK
+        return response.blob(); // Parse the response as a Blob (for image data)
       } else {
         return response.text(); // Otherwise, return raw text (for debugging)
       }
@@ -20,18 +20,17 @@ function loadMoreContent(page) {
     .then(data => {
       const webpContainer = document.getElementById('webp-container');
 
-      data.webp.forEach(webp => {
+      // Check if the response is a blob (image)
+      if (data instanceof Blob) {
+        const objectURL = URL.createObjectURL(data); // Create an object URL from the blob
         const imgElement = document.createElement('img');
-
-        // Directly use the image URL (already processed on the server)
-        const imageURL = `https://xxxtok.gfranz.ch/api/webp?number=${number}&width=600`;
-        imgElement.src = imageURL; // Set the image source to the URL
+        imgElement.src = objectURL; // Set the image source to the object URL (image buffer)
 
         imgElement.classList.add('animated-webp');
-        imgElement.dataset.duration = webp.duration; // Use server-provided duration
-
         webpContainer.appendChild(imgElement); // Append the image to the container
-      });
+      } else {
+        console.error("Expected image data, but received:", data);
+      }
 
       if (page === 1) {
         startAutoScroll();
@@ -41,7 +40,6 @@ function loadMoreContent(page) {
     })
     .catch(error => console.error('Error loading images:', error));
 }
-
 
 
 // Function to auto-scroll when WebP animation ends
