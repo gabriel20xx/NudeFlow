@@ -60,7 +60,7 @@ function showNextImage() {
     currentIndex++;
     images[currentIndex].classList.add("active");
   } else {
-    loadMoreContent(page);
+    loadMoreContent(page + 1);
   }
 
   setTimeout(() => {
