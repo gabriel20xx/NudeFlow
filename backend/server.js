@@ -24,12 +24,9 @@ mongoose
   .catch((err) => console.log("Failed to connect to MongoDB", err));
 
 
-app.get('/', (req, res) => {
+/*app.get('/', (req, res) => {
   res.status(200).send('Webpage is running');
-})
-
-// Serve WebP images from the 'media' folder
-app.use('/media', express.static(path.join(__dirname, 'media')));
+})*/
 
 app.use(express.static(path.join(__dirname, "..", "frontend")));
 

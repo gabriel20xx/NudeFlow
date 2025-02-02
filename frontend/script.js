@@ -9,7 +9,7 @@ window.addEventListener('scroll', () => {
 
 function loadMoreContent(page) {
   let number = String(page).padStart(5, '0');
-  fetch(`https://xxxtok.gfranz.ch/api/webp?number=${number}`)
+  fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
     .then(response => {
       if (response.ok) {
         return response.blob(); // Parse the response as a Blob (for image data)
