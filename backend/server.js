@@ -40,7 +40,7 @@ app.get('/media/:name', async (req, res) => {
 
   try {
     // Fetch the file from the SMB share
-    const localPath = path.join(__dirname, 'tmp', imageName); // Temporary local path to save the file
+    const localPath = path.join(__dirname, 'media', imageName); // Temporary local path to save the file
     await client.getFile(smbPath, localPath); // Download the file to local disk
 
     // Read the file and send it as a response
