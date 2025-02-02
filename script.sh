@@ -1,13 +1,24 @@
 #!/bin/bash
 
-mkdir XXXTok
-cd XXXTok
+# Check if the directory exists and remove it if needed
+if [ -d "xxxtok" ]; then
+  rm -rf xxxtok
+fi
 
-# Clone the repository
-git clone https://github.com/gabriel20xx/XXXTok.git .
+# Create directory and enter it
+mkdir xxxtok
+cd xxxtok
 
-# Pull the latest changes from the master branch
-git pull origin master
+# Clone the repository if it's not already a Git repo
+if [ ! -d ".git" ]; then
+  git clone https://github.com/gabriel20xx/XXXTok.git .
+else
+  git pull origin master
+fi
 
-# Start the server
-node backend/server.js
+# Check if the server.js file exists before starting
+if [ -f "backend/server.js" ]; then
+  node backend/server.js
+else
+  echo "server.js not found in backend/"
+fi

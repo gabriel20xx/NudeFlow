@@ -14,9 +14,6 @@ COPY script.sh /app/script.sh
 # Make the script executable
 RUN chmod +x /app/script.sh
 
-# Install dependencies
-RUN npm install express mongoose sharp path cors fs
-
 # Expose the port the app runs on
 EXPOSE 5000
 
