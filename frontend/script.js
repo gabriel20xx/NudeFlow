@@ -25,6 +25,7 @@ function loadMoreContent(page) {
       }
 
       webpContainer.appendChild(imgElement);
+      page++;
     })
     .catch(error => console.error("Error loading images:", error));
 }
