@@ -6,20 +6,6 @@ const webpContainer = document.getElementById("webp-container");
 // Load the first image
 loadInitialContent(page);
 
-function setBlurredBackground(imgElement) {
-    // Wait for the image to load
-    if (imgElement.complete) {
-        applyBlur(imgElement);
-    } else {
-        imgElement.onload = () => applyBlur(imgElement);
-    }
-}
-
-function applyBlur(imgElement) {
-    const blurredBg = document.getElementById("blurred-bg");
-    blurredBg.style.backgroundImage = `url(${imgElement.src})`;
-}
-
 function loadInitialContent(page) {
   let number = String(page).padStart(5, "0");
   fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
@@ -83,34 +69,23 @@ window.addEventListener("wheel", e => {
   if (e.deltaY > 0) showNextImage();
 });
 
-// Call this when setting a new image
 function showNextImage() {
-    if (isTransitioning || isLoading) return;
+  if (isTransitioning) return;
+  isTransitioning = true;
 
-    isTransitioning = true;
-    
-    const currentImage = images[currentIndex];
-    if (currentImage) {
-        currentImage.classList.remove("active");
-    }
+  const images = document.querySelectorAll(".webp");
 
+  // If there are more images loaded, show the next one
+  if (currentIndex < images.length - 1) {
+    images[currentIndex].classList.remove("active");
     currentIndex++;
-    
-    if (currentIndex >= images.length) {
-        loadMoreContent(page);
-    }
+    images[currentIndex].classList.add("active");
+    // Load the next image and increment the page number
+    page++; // Increment the page number after loading the next image
+    loadMoreContent(page);
+  }
 
-    const nextImage = images[currentIndex];
-    if (nextImage) {
-        nextImage.classList.add("active");
-        setBlurredBackground(nextImage); // Update the blurred background
-    }
-
-    if (nextImage) {
-        nextImage.scrollIntoView({ behavior: "smooth" });
-    }
-
-    setTimeout(() => {
-        isTransitioning = false;
-    }, 500);
+  setTimeout(() => {
+    isTransitioning = false;
+  }, 500);
 }
