@@ -31,9 +31,10 @@ routes.forEach(route => {
 });
 
 // Route to serve a specific WebP image
-app.get('/media/:name', async (req, res) => {
+app.get('/media/:category/:name', async (req, res) => {
+  const category = req.params.category;
   const imageName = req.params.name + '.webp';
-  const smbPath = 'ComfyUI/' + imageName;  // Path to the file on the SMB share
+  const smbPath = path.join('ComfyUI', category, imageName);  // Path to the file on the SMB share
 
   try {
     // Fetch the file from the SMB share
@@ -54,10 +55,9 @@ app.get('/media/:name', async (req, res) => {
 });
 
 // Route to serve a specific WebP image
-app.get('/media/:category/:name', async (req, res) => {
-  const category = req.params.category;
+app.get('/media/:name', async (req, res) => {
   const imageName = req.params.name + '.webp';
-  const smbPath = path.join('ComfyUI', category, imageName);  // Path to the file on the SMB share
+  const smbPath = 'ComfyUI/' + imageName;  // Path to the file on the SMB share
 
   try {
     // Fetch the file from the SMB share
