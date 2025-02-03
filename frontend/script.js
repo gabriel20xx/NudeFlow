@@ -3,14 +3,15 @@ let currentIndex = 0; // Track the current visible image
 let isTransitioning = false;
 const webpContainer = document.getElementById("webp-container");
 
-
+// Load the first image
+loadInitialContent(page);
 
 function getUrl(page) {
   const currentUrl = window.location.href;
   const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
   const categoryPattern = /^https:\/\/[a-zA-Z0-9.-]+\/([a-zA-Z0-9.-]+)\/$/;
+  let number = String(page).padStart(5, "0");
   if (domainPattern.test(currentUrl)) {
-    let number = String(page).padStart(5, "0"); // Example number
     let url = `https://xxxtok.gfranz.ch/media/ComfyUI_${number}`;
     console.log("This is the homepage");
     return url;
@@ -18,17 +19,16 @@ function getUrl(page) {
     const match = currentUrl.match(categoryPattern);
     if (match && match[1]) {
         let category = match[1];
-        let number = String(page).padStart(5, "0"); // Example number
         let url = `https://xxxtok.gfranz.ch/media/${category}/${category}_${number}_`;
         console.log("This is a category page");
         return url;
     }
   } else {
+    let url = `https://xxxtok.gfranz.ch/media/ComfyUI_${number}`;
     console.log("This is another page");
+    return url;
   }
-
-// Load the first image
-loadInitialContent(1); // Start with page 1
+}
 
 function loadInitialContent(page) {
     url = getUrl(page);
