@@ -3,11 +3,12 @@ let currentIndex = 0; // Track the current visible image
 let isTransitioning = false;
 const webpContainer = document.getElementById("webp-container");
 
-const currentUrl = window.location.href;
-const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
-const categoryPattern = /^https:\/\/[a-zA-Z0-9.-]+\/([a-zA-Z0-9.-]+)\/$/;
+
 
 function getUrl(page) {
+  const currentUrl = window.location.href;
+  const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
+  const categoryPattern = /^https:\/\/[a-zA-Z0-9.-]+\/([a-zA-Z0-9.-]+)\/$/;
   if (domainPattern.test(currentUrl)) {
     let number = String(page).padStart(5, "0"); // Example number
     let url = `https://xxxtok.gfranz.ch/media/ComfyUI_${number}`;
