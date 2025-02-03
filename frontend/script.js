@@ -23,7 +23,6 @@ function getUrl(page) {
         let url = `https://xxxtok.gfranz.ch/media/ComfyUI_${number}`;
         console.log("This is the homepage");
         return url;
-    }
   } else {
     let url = `https://xxxtok.gfranz.ch/media/ComfyUI_${number}`;
     console.log("This is another page");
