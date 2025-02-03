@@ -23,7 +23,12 @@ mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.log("Failed to connect to MongoDB", err));
 
-app.use(express.static(path.join(__dirname, "..", "frontend"), { extensions: ["html"] }));
+const staticPath = path.join(__dirname, "..", "frontend");
+const routes = ["/", "/three_breasts", "/Br34st_3xpan5ion_v1", "/Top_Off", "/tittydrop_v1"];
+
+routes.forEach(route => {
+  app.use(route, express.static(staticPath, { extensions: ["html"] }));
+});
 
 // Route to serve a specific WebP image
 app.get('/media/:name', async (req, res) => {
