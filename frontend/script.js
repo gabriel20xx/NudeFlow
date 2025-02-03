@@ -11,16 +11,17 @@ function getUrl(page) {
   const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
   const categoryPattern = /^https:\/\/[a-zA-Z0-9.-]+\/([a-zA-Z0-9.-]+)\/$/;
   let number = String(page).padStart(5, "0");
-  if (domainPattern.test(currentUrl)) {
-    let url = `https://xxxtok.gfranz.ch/media/ComfyUI_${number}`;
-    console.log("This is the homepage");
-    return url;
-  } else if (categoryPattern.test(currentUrl)) {
+  if (categoryPattern.test(currentUrl)) {
     const match = currentUrl.match(categoryPattern);
     if (match && match[1]) {
         let category = match[1];
         let url = `https://xxxtok.gfranz.ch/media/${category}/${category}_${number}_`;
         console.log("This is a category page");
+        return url;
+    }
+  } else if (domainPattern.test(currentUrl)) {
+        let url = `https://xxxtok.gfranz.ch/media/ComfyUI_${number}`;
+        console.log("This is the homepage");
         return url;
     }
   } else {
