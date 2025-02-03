@@ -3,12 +3,27 @@ let currentIndex = 0; // Track the current visible image
 let isTransitioning = false;
 const webpContainer = document.getElementById("webp-container");
 
+const currentUrl = window.location.href;
+const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
+const categoryPattern = /^https:\/\/[a-zA-Z0-9.-]+\/[a-zA-Z0-9.-]+\/$/;
+
+if (domainPattern.test(currentUrl)) {
+    let url = `https://xxxtok.gfranz.ch/media/ComfyUI_${number}`
+    console.log("This is the homepage");
+} else if (categoryPattern.test(currentUrl)) {
+    const category = match[1]
+    let url = `https://xxxtok.gfranz.ch/media/${category}/${category}_${number}_`
+    console.log("This is a category page");
+} else {
+    console.log("This is another page");
+}
+
 // Load the first image
 loadInitialContent(page);
 
 function loadInitialContent(page) {
   let number = String(page).padStart(5, "0");
-  fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
+  fetch(url)
     .then(response => {
       if (!response.ok) throw new Error("Failed to load image");
       return response.blob();
@@ -32,7 +47,7 @@ function loadInitialContent(page) {
 
 function loadMoreContent(page) {
   let number = String(page).padStart(5, "0");
-  fetch(`https://xxxtok.gfranz.ch/media/ComfyUI_${number}`)
+  fetch(url)
     .then(response => {
       if (!response.ok) throw new Error("Failed to load image");
       return response.blob();
