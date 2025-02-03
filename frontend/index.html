@@ -5,9 +5,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>XXXTok</title>
+   <script>
+        function redirectToOption() {
+            var dropdown = document.getElementById("myDropdown");
+            var selectedOption = dropdown.value;
+            if (selectedOption) {
+                window.location.href = "/" + selectedOption + "/";
+            }
+        }
+   </script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <label for="myDropdown">Choose an option:</label>
+    <select id="myDropdown" name="options" onchange="redirectToOption()">
+        <option value="">Select an option</option>
+        <option value="option1">Option 1</option>
+        <option value="option2">Option 2</option>
+        <option value="option3">Option 3</option>
+        <option value="option4">Option 4</option>
+    </select>
   <div id="webp-container"></div>
   <script src="script.js"></script>
 </body>
