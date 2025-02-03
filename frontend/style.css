@@ -5,7 +5,7 @@
   box-sizing: border-box;
 }
 
-html, body {
+body {
   overflow: hidden; /* Prevent scrolling */
   display: flex;
   justify-content: center;
