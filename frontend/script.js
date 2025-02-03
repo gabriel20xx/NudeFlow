@@ -4,45 +4,58 @@ let isTransitioning = false;
 const webpContainer = document.getElementById("webp-container");
 
 const currentUrl = window.location.href;
+const currentUrl = window.location.href;
 const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
-const categoryPattern = /^https:\/\/[a-zA-Z0-9.-]+\/[a-zA-Z0-9.-]+\/$/;
+const categoryPattern = /^https:\/\/[a-zA-Z0-9.-]+\/([a-zA-Z0-9.-]+)\/$/;
+
+let url = "";
+let category = "";
 
 if (domainPattern.test(currentUrl)) {
-    let url = `https://xxxtok.gfranz.ch/media/ComfyUI_${number}`
+    let number = String(1).padStart(5, "0"); // Example number
+    url = `https://xxxtok.gfranz.ch/media/ComfyUI_${number}`;
     console.log("This is the homepage");
 } else if (categoryPattern.test(currentUrl)) {
-    const category = match[1]
-    let url = `https://xxxtok.gfranz.ch/media/${category}/${category}_${number}_`
-    console.log("This is a category page");
+    const match = currentUrl.match(categoryPattern);
+    if (match && match[1]) {
+        category = match[1];
+        let number = String(1).padStart(5, "0"); // Example number
+        url = `https://xxxtok.gfranz.ch/media/${category}/${category}_${number}_`;
+        console.log("This is a category page");
+    }
 } else {
     console.log("This is another page");
 }
 
 // Load the first image
-loadInitialContent(page);
+loadInitialContent(1); // Start with page 1
 
 function loadInitialContent(page) {
-  let number = String(page).padStart(5, "0");
-  fetch(url)
-    .then(response => {
-      if (!response.ok) throw new Error("Failed to load image");
-      return response.blob();
-    })
-    .then(blob => {
-      const objectURL = URL.createObjectURL(blob);
-      const imgElement = document.createElement("img");
+    let number = String(page).padStart(5, "0");
+    fetch(url)
+        .then(response => {
+            if (!response.ok) throw new Error("Failed to load image");
+            return response.blob();
+        })
+        .then(blob => {
+            const objectURL = URL.createObjectURL(blob);
+            const imgElement = document.createElement("img");
 
-      imgElement.src = objectURL;
-      imgElement.classList.add("webp");
+            imgElement.src = objectURL;
+            imgElement.classList.add("webp");
 
-      // Add the first image as visible
-      imgElement.classList.add("active"); // First image should be visible
+            // Add the first image as visible
+            imgElement.classList.add("active"); // First image should be visible
 
-      webpContainer.appendChild(imgElement);
-      page++;
-      loadMoreContent(page);
-    })
-    .catch(error => console.error("Error loading images:", error));
+            webpContainer.appendChild(imgElement);
+            page++;
+            loadMoreContent(page);
+        })
+        .catch(error => console.error("Error loading images:", error));
+}
+
+function loadMoreContent(page) {
+    // You can implement additional logic here to load more images
 }
 
 function loadMoreContent(page) {
