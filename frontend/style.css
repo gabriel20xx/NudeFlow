@@ -13,7 +13,8 @@ body, html {
   overflow: hidden; 
   margin: 0;
   padding: 0;
-  display: block; /* Remove the flexbox centering */
+  display: flex;
+  flex-direction: column;
 }
 
 #dropdown-container {
