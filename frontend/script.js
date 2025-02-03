@@ -4,34 +4,33 @@ let isTransitioning = false;
 const webpContainer = document.getElementById("webp-container");
 
 const currentUrl = window.location.href;
-const currentUrl = window.location.href;
 const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
 const categoryPattern = /^https:\/\/[a-zA-Z0-9.-]+\/([a-zA-Z0-9.-]+)\/$/;
 
-let url = "";
-let category = "";
-
-if (domainPattern.test(currentUrl)) {
-    let number = String(1).padStart(5, "0"); // Example number
-    url = `https://xxxtok.gfranz.ch/media/ComfyUI_${number}`;
+function getUrl(page) {
+  if (domainPattern.test(currentUrl)) {
+    let number = String(page).padStart(5, "0"); // Example number
+    let url = `https://xxxtok.gfranz.ch/media/ComfyUI_${number}`;
     console.log("This is the homepage");
-} else if (categoryPattern.test(currentUrl)) {
+    return url;
+  } else if (categoryPattern.test(currentUrl)) {
     const match = currentUrl.match(categoryPattern);
     if (match && match[1]) {
-        category = match[1];
-        let number = String(1).padStart(5, "0"); // Example number
-        url = `https://xxxtok.gfranz.ch/media/${category}/${category}_${number}_`;
+        let category = match[1];
+        let number = String(page).padStart(5, "0"); // Example number
+        let url = `https://xxxtok.gfranz.ch/media/${category}/${category}_${number}_`;
         console.log("This is a category page");
+        return url;
     }
-} else {
+  } else {
     console.log("This is another page");
-}
+  }
 
 // Load the first image
 loadInitialContent(1); // Start with page 1
 
 function loadInitialContent(page) {
-    let number = String(page).padStart(5, "0");
+    url = getUrl(page);
     fetch(url)
         .then(response => {
             if (!response.ok) throw new Error("Failed to load image");
@@ -53,13 +52,9 @@ function loadInitialContent(page) {
         })
         .catch(error => console.error("Error loading images:", error));
 }
-
+    
 function loadMoreContent(page) {
-    // You can implement additional logic here to load more images
-}
-
-function loadMoreContent(page) {
-  let number = String(page).padStart(5, "0");
+  url = getUrl(page);
   fetch(url)
     .then(response => {
       if (!response.ok) throw new Error("Failed to load image");
