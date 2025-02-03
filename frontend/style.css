@@ -19,16 +19,12 @@ body, html {
 #dropdown-container {
   width: 100vw;
   height: 10vh;
-  position: absolute; /* This will position it at the top */
-  top: 0;
 }
 
 #webp-container {
   width: 100vw;
   height: 90vh;
   overflow: hidden;
-  position: absolute;
-  top: 10vh; /* Position it below the dropdown */
 }
 
 select {
