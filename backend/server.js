@@ -24,7 +24,7 @@ mongoose
   .catch((err) => console.log("Failed to connect to MongoDB", err));
 
 const staticPath = path.join(__dirname, "..", "frontend");
-const routes = ["/", "/bouncing_breasts_hunyuan", "/Br34st_3xpan5ion_v1", "/breast_drop_v2_170", "/three_breasts", "/", "/Top_Off", "/tittydrop_v1"];
+const routes = ["/", "/bouncing_breasts_hunyuan", "/Br34st_3xpan5ion_v1", "/breast_drop_v2_170", "/BreastMassage", "/Full Nelson Position 0.8", "/three_breasts", "/", "/Top_Off", "/tittydrop_v1"];
 
 routes.forEach(route => {
   app.use(route, express.static(staticPath, { extensions: ["html"] }));
