@@ -9,7 +9,7 @@ loadInitialContent(page);
 function getUrl(page) {
   const currentUrl = window.location.href;
   const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
-  const categoryPattern = /^https:\/\/[a-zA-Z0-9.-]+\/([a-zA-Z0-9.-]+)\/$/;
+  const categoryPattern = /https?:\/\/[^/]+\/([^/]+)\//;
   let number = String(page).padStart(5, "0");
   if (categoryPattern.test(currentUrl)) {
     const match = currentUrl.match(categoryPattern);
