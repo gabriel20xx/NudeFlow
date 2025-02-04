@@ -1,6 +1,7 @@
 let page = 1; // Track the page number for fetching images
 let currentIndex = 0; // Track the current visible image
 let isTransitioning = false;
+let initial = true;
 const webpContainer = document.getElementById("webp-container");
 
 // Load the first image
@@ -101,7 +102,11 @@ function showNextImage() {
 
   if (currentIndex < images.length - 1) {  
     images[currentIndex].classList.remove("active");  
-    currentIndex++;  
+    if (initial) {
+      intial = false;
+    } else {
+      currentIndex++;
+    }
     images[currentIndex].classList.add("active");  
   }  
 
