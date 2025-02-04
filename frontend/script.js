@@ -104,6 +104,7 @@ function showNextImage() {
     images[currentIndex].classList.remove("active");  
     if (initial) {
       intial = false;
+      currentIndex += 2;
     } else {
       currentIndex++;
     }
