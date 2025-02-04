@@ -31,26 +31,6 @@ mongoose
 
 const staticPath = path.join(__dirname, "..", "frontend");
 
-const outputDir = await clientModels.execute("ls -1A");
-console.log(outputDir);
-
-async function getRouteNames() {
-  try {
-    const output = await clientModels.execute("ls -1A SDXL/Loras"); // Get only filenames
-    let files = output
-      .split("\n")
-      .map((f) => f.trim())
-      .filter((f) => f); // Remove empty lines
-
-    // Remove file extensions
-    let routes = files.map((f) => "/" + path.parse(f).name);
-    return routes;
-  } catch (err) {
-    console.error("Error retrieving files from SMB:", err);
-    return [];
-  }
-}
-
 // Set up routes dynamically
 getRouteNames().then(routes => {
   routes.forEach(route => {
