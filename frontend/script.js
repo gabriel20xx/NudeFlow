@@ -1,16 +1,16 @@
-let page = 1; // Track the page number for fetching images
-let currentIndex = 0; // Track the current visible image
+let toLoadImage = 1; // Track the page number for fetching images
+let currentImage = 0; // Track the current visible image
 let isTransitioning = false;
 const webpContainer = document.getElementById("webp-container");
 
 // Load the first image
-loadInitialContent(page);
+loadInitialContent(toLoadImage);
 
-function getUrl(page) {
+function getUrl(toLoadImage) {
   const currentUrl = window.location.href;
   const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
   const categoryPattern = /https?:\/\/[^/]+\/([^/]+)\//;
-  let number = String(page).padStart(5, "0");
+  let number = String(toLoadImage).padStart(5, "0");
   if (categoryPattern.test(currentUrl)) {
     const match = currentUrl.match(categoryPattern);
     if (match && match[1]) {
@@ -30,8 +30,8 @@ function getUrl(page) {
   }
 }
 
-function loadInitialContent(page) {
-    url = getUrl(page);
+function loadInitialContent(toLoadImage) {
+    url = getUrl(toLoadImage);
     fetch(url)
         .then(response => {
             if (!response.ok) throw new Error("Failed to load image");
@@ -48,13 +48,13 @@ function loadInitialContent(page) {
             imgElement.classList.add("active"); // First image should be visible
 
             webpContainer.appendChild(imgElement);
-            page++;
-            loadMoreContent(page);
+            toLoadImage++;
+            loadMoreContent(toLoadImage);
         })
         .catch(error => console.error("Error loading images:", error));
 }
     
-function loadMoreContent(page) {
+function loadMoreContent(toLoadImage) {
   url = getUrl(page);
   fetch(url)
     .then(response => {
