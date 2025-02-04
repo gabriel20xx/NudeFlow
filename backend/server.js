@@ -5,48 +5,10 @@ const sharp = require("sharp");
 const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
-const SambaClient = require('samba-client');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// Configure SMB connection
-let clientGenerated = new SambaClient({
-  address: '//192.168.2.5/Generated', // SMB share path
-  username: 'gabriel',
-  password: 'KingPong31:)',
-});
-
-// Configure SMB connection
-let clientModels = new SambaClient({
-  address: '//192.168.2.5/Models', // SMB share path
-  username: 'gabriel',
-  password: 'KingPong31:)',
-});
-
-async function listFiles() {
-  try {
-    // Run the 'dir' command on the 'Loras' directory
-    clientModels.dir('SDXL/Loras', (err, files) => {
-      if (err) {
-        console.error('Error reading directory:', err);
-        return;
-      }
-
-      // Extract filenames without extensions
-      const fileNamesWithoutExt = files
-        .filter(file => path.extname(file) !== '') // Only files, no directories
-        .map(file => path.basename(file, path.extname(file))); // Remove extensions
-
-      console.log(fileNamesWithoutExt); // List of filenames without extension
-    });
-  } catch (err) {
-    console.error('Error executing dir command:', err);
-  }
-}
-
-listFiles();
 
 mongoose
   .connect("mongodb://192.168.2.94:27017/xxxtok")
@@ -64,22 +26,15 @@ routes.forEach(route => {
 app.get('/media/:category/:name', async (req, res) => {
   const category = req.params.category;
   const imageName = req.params.name + '.webp';
-  const smbPath = path.join('ComfyUI', category, imageName);  // Path to the file on the SMB share
+  const localPath = path.join(__dirname, '..', '..', 'mnt', 'images', category, imageName);  // Path to the file on the SMB share
 
   try {
-    // Fetch the file from the SMB share
-    const localPath = path.join(__dirname, 'media', imageName); // Temporary local path to save the file
-    await clientGenerated.getFile(smbPath, localPath); // Download the file to local disk
-
     // Read the file and send it as a response
     const fileData = fs.readFileSync(localPath);
     res.set('Content-Type', 'image/webp');
-    res.send(fileData); // Send the image data from the local disk
-
-    // Clean up the temporary file after sending it
-    fs.unlinkSync(localPath);
+    res.send(fileData); // Send the image data from the local dis
   } catch (err) {
-    console.error('Error retrieving file from SMB share:', err);
+    console.error('Error accessing the file:', err);
     res.status(404).send('Image not found');
   }
 });
@@ -87,22 +42,15 @@ app.get('/media/:category/:name', async (req, res) => {
 // Route to serve a specific WebP image
 app.get('/media/:name', async (req, res) => {
   const imageName = req.params.name + '.webp';
-  const smbPath = 'ComfyUI/' + imageName;  // Path to the file on the SMB share
-
+  const localPath = path.join(__dirname, '..', '..', 'mnt', 'images', imageName);
+  
   try {
-    // Fetch the file from the SMB share
-    const localPath = path.join(__dirname, 'media', imageName); // Temporary local path to save the file
-    await clientGenerated.getFile(smbPath, localPath); // Download the file to local disk
-
     // Read the file and send it as a response
     const fileData = fs.readFileSync(localPath);
     res.set('Content-Type', 'image/webp');
     res.send(fileData); // Send the image data from the local disk
-
-    // Clean up the temporary file after sending it
-    fs.unlinkSync(localPath);
   } catch (err) {
-    console.error('Error retrieving file from SMB share:', err);
+    console.error('Error accessing the file:', err);
     res.status(404).send('Image not found');
   }
 });
