@@ -1,16 +1,13 @@
 let toLoadImage = 1; // Track the page number for fetching images
 let currentImage = 1; // Track the current visible image
 let isTransitioning = false;
-let isInitial = true;
+let startY = 0;
 const webpContainer = document.getElementById("webp-container");
-
-// Load the first image
-loadInitialContent();
+const currentUrl = window.location.href;
+const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
+const categoryPattern = /https?:\/\/[^/]+\/([^/]+)\//;
 
 function getUrl() {
-  const currentUrl = window.location.href;
-  const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
-  const categoryPattern = /https?:\/\/[^/]+\/([^/]+)\//;
   let number = String(toLoadImage).padStart(5, "0");
   if (categoryPattern.test(currentUrl)) {
     const match = currentUrl.match(categoryPattern);
@@ -30,32 +27,8 @@ function getUrl() {
     return url;
   }
 }
-
-function loadInitialContent() {
-    url = getUrl();
-    fetch(url)
-        .then(response => {
-            if (!response.ok) throw new Error("Failed to load image");
-            return response.blob();
-        })
-        .then(blob => {
-            const objectURL = URL.createObjectURL(blob);
-            const imgElement = document.createElement("img");
-
-            imgElement.src = objectURL;
-            imgElement.classList.add("webp");
-
-            // Add the first image as visible
-            imgElement.classList.add("active"); // First image should be visible
-
-            webpContainer.appendChild(imgElement);
-            toLoadImage++;
-            loadMoreContent(toLoadImage);
-        })
-        .catch(error => console.error("Error loading images:", error));
-}
     
-function loadMoreContent() {
+function loadContent() {
   url = getUrl();
   fetch(url)
     .then(response => {
@@ -69,14 +42,20 @@ function loadMoreContent() {
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
 
+      if (toLoadImage == 1) {
+        imgElement.classList.add("active");
+      }
+
       webpContainer.appendChild(imgElement);
       toLoadImage++;
     })
     .catch(error => console.error("Error loading images:", error));
 }
 
-// Handle swipe & scroll
-let startY = 0;
+// Preload images
+loadContent();
+loadContent();
+loadContent();
 
 window.addEventListener("touchstart", e => {
   startY = e.touches[0].clientY;
@@ -108,7 +87,7 @@ function showNextImage() {
   
     // Load the next image and increment the page number
      // Increment the page number after loading the next imag
-  loadMoreContent();
+  loadContent();
 
   setTimeout(() => {
     isTransitioning = false;
