@@ -12,8 +12,14 @@ app.use(cors());
 app.use(express.json());
 
 // Configure SMB connection
-let client = new SambaClient({
+let clientGenerated = new SambaClient({
   address: '//192.168.2.5/Generated', // SMB share path
+  username: 'gabriel',
+  password: 'KingPong31:)',
+});
+
+let clientModels = new SambaClient({
+  address: '//192.168.2.5/Models', // SMB share path
   username: 'gabriel',
   password: 'KingPong31:)',
 });
@@ -24,10 +30,29 @@ mongoose
   .catch((err) => console.log("Failed to connect to MongoDB", err));
 
 const staticPath = path.join(__dirname, "..", "frontend");
-const routes = ["/", "/bouncing_breasts_hunyuan", "/Br34st_3xpan5ion_v1", "/breast_drop_v2_170", "/BreastMassage", "/Full Nelson Position 0.8", "/hunyuan_futa_reversed_cowgirl", "/missionary_pov_v1.1", "/nipple_play_v0-1", "/pov_cowgirlposition_hunyuan_V3", "/ReverseCowgirl", "/riding_dildo_v1_hunyuan", "/str1p_v2", "/Tentacle_v4", "/three_breasts", "/tittydrop_v1", "/Top_Off"];
 
-routes.forEach(route => {
-  app.use(route, express.static(staticPath, { extensions: ["html"] }));
+// Function to get filenames dynamically
+async function getRouteNames() {
+  try {
+    const output = await clientModels.execute("ls SDXL/Loras"); // List files
+    let files = output.split("\n").map(f => f.trim()).filter((f) => f && !f.endsWith(":")); // Remove empty lines & directory headers;
+
+    // Remove file extensions
+    let routes = files.map(f => "/" + path.parse(f).name);
+    return routes;
+  } catch (err) {
+    console.error("Error retrieving files from SMB:", err);
+    return [];
+  }
+}
+
+// Set up routes dynamically
+getRouteNames().then(routes => {
+  routes.forEach(route => {
+    app.use(route, express.static(staticPath, { extensions: ["html"] }));
+  });
+
+  console.log("Routes set up:", routes);
 });
 
 // Route to serve a specific WebP image
@@ -39,7 +64,7 @@ app.get('/media/:category/:name', async (req, res) => {
   try {
     // Fetch the file from the SMB share
     const localPath = path.join(__dirname, 'media', imageName); // Temporary local path to save the file
-    await client.getFile(smbPath, localPath); // Download the file to local disk
+    await clientGenerated.getFile(smbPath, localPath); // Download the file to local disk
 
     // Read the file and send it as a response
     const fileData = fs.readFileSync(localPath);
@@ -62,7 +87,7 @@ app.get('/media/:name', async (req, res) => {
   try {
     // Fetch the file from the SMB share
     const localPath = path.join(__dirname, 'media', imageName); // Temporary local path to save the file
-    await client.getFile(smbPath, localPath); // Download the file to local disk
+    await clientGenerated.getFile(smbPath, localPath); // Download the file to local disk
 
     // Read the file and send it as a response
     const fileData = fs.readFileSync(localPath);
