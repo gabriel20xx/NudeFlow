@@ -25,6 +25,22 @@ let clientModels = new SambaClient({
   password: 'KingPong31:)',
 });
 
+async function listFiles() {
+  try {
+    // Get list of files in the 'Loras' folder
+    const files = await clientModels.readdir('SDXL/Loras');
+    const fileNamesWithoutExt = files
+      .filter(file => path.extname(file) !== '') // Only files, no directories
+      .map(file => path.basename(file, path.extname(file))); // Remove extensions
+    
+    console.log(fileNamesWithoutExt); // List of filenames without extension
+  } catch (err) {
+    console.error('Error reading directory:', err);
+  }
+}
+
+listFiles();
+
 mongoose
   .connect("mongodb://192.168.2.94:27017/xxxtok")
   .then(() => console.log("Connected to MongoDB"))
