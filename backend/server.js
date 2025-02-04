@@ -27,13 +27,23 @@ let clientModels = new SambaClient({
 
 async function listFiles() {
   try {
-    // Get list of files in the 'Loras' folder
-    const files = await clientModels.readdir('SDXL/Loras');
+    // Use the 'clientModels' connection to access the folder.
+    await clientModels.connect();
+
+    // List files in the 'SDXL/Loras' folder (you can use any file operation here)
+    const folderPath = 'SDXL/Loras'; // Relative path from the SMB share
+
+    // The SambaClient doesn't have readdir, so we use fs to list the files from the share
+    const files = await clientModels.getDirectoryListing(folderPath);
+
     const fileNamesWithoutExt = files
       .filter(file => path.extname(file) !== '') // Only files, no directories
       .map(file => path.basename(file, path.extname(file))); // Remove extensions
-    
+
     console.log(fileNamesWithoutExt); // List of filenames without extension
+
+    // Disconnect after listing the files
+    clientModels.disconnect();
   } catch (err) {
     console.error('Error reading directory:', err);
   }
