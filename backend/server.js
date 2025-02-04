@@ -33,7 +33,7 @@ const staticPath = path.join(__dirname, "..", "frontend");
 
 async function getRouteNames() {
   try {
-    const output = await clientModels.execute("ls -1A SDXL/Loras/"); // Get only filenames
+    const output = await clientModels.execute("ls -1A SDXL/Loras"); // Get only filenames
     let files = output
       .split("\n")
       .map((f) => f.trim())
