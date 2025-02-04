@@ -1,7 +1,6 @@
 let page = 1; // Track the page number for fetching images
 let currentIndex = 0; // Track the current visible image
 let isTransitioning = false;
-let initial = true;
 const webpContainer = document.getElementById("webp-container");
 
 // Load the first image
@@ -94,30 +93,23 @@ window.addEventListener("wheel", e => {
   if (e.deltaY > 0) showNextImage();
 });
 
-function showNextImage() {  
-  if (isTransitioning) return;  
-  isTransitioning = true;  
+function showNextImage() {
+  if (isTransitioning) return;
+  isTransitioning = true;
 
-  const images = document.querySelectorAll(".webp");  
+  const images = document.querySelectorAll(".webp");
 
-  if (currentIndex < images.length - 1) {  
-    images[currentIndex].classList.remove("active");  
-    if (initial) {
-      intial = false;
-      currentIndex += 2;
-    } else {
-      currentIndex++;
-    }
-    images[currentIndex].classList.add("active");  
-  }  
+  // If there are more images loaded, show the next one
+  if (currentIndex < images.length - 1) {
+    images[currentIndex].classList.remove("active");
+    currentIndex++;
+    images[currentIndex].classList.add("active");
+    // Load the next image and increment the page number
+    page++; // Increment the page number after loading the next image
+    loadMoreContent(page);
+  }
 
-  // Ensure the next image is always preloaded before reaching it  
-  if (currentIndex >= images.length - 2) {  
-    page++;  
-    loadMoreContent(page);  
-  }  
-
-  setTimeout(() => {  
-    isTransitioning = false;  
-  }, 500);  
+  setTimeout(() => {
+    isTransitioning = false;
+  }, 500);
 }
