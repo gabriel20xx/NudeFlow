@@ -5,9 +5,9 @@ let isInitial = true;
 const webpContainer = document.getElementById("webp-container");
 
 // Load the first image
-loadInitialContent(toLoadImage);
+loadInitialContent();
 
-function getUrl(toLoadImage) {
+function getUrl() {
   const currentUrl = window.location.href;
   const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
   const categoryPattern = /https?:\/\/[^/]+\/([^/]+)\//;
@@ -31,8 +31,8 @@ function getUrl(toLoadImage) {
   }
 }
 
-function loadInitialContent(toLoadImage) {
-    url = getUrl(toLoadImage);
+function loadInitialContent() {
+    url = getUrl();
     fetch(url)
         .then(response => {
             if (!response.ok) throw new Error("Failed to load image");
@@ -55,8 +55,8 @@ function loadInitialContent(toLoadImage) {
         .catch(error => console.error("Error loading images:", error));
 }
     
-function loadMoreContent(toLoadImage) {
-  url = getUrl(toLoadImage);
+function loadMoreContent() {
+  url = getUrl();
   fetch(url)
     .then(response => {
       if (!response.ok) throw new Error("Failed to load image");
@@ -84,18 +84,18 @@ window.addEventListener("touchstart", e => {
 
 window.addEventListener("touchend", e => {
   let endY = e.changedTouches[0].clientY;
-  if (startY - endY > 50) showNextImage(toLoadImage); // Swipe up detected
+  if (startY - endY > 50) showNextImage(); // Swipe up detected
 });
 
 window.addEventListener("keydown", e => {
-  if (e.key === "ArrowDown") showNextImage(toLoadImage);
+  if (e.key === "ArrowDown") showNextImage();
 });
 
 window.addEventListener("wheel", e => {
-  if (e.deltaY > 0) showNextImage(toLoadImage);
+  if (e.deltaY > 0) showNextImage();
 });
 
-function showNextImage(toLoadImage) {
+function showNextImage() {
   if (isTransitioning) return;
   isTransitioning = true;
 
@@ -111,7 +111,7 @@ function showNextImage(toLoadImage) {
   }
     // Load the next image and increment the page number
      // Increment the page number after loading the next imag
-  loadMoreContent(toLoadImage);
+  loadMoreContent();
 
   setTimeout(() => {
     isTransitioning = false;
