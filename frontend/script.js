@@ -2,6 +2,7 @@ let toLoadImage = 1; // Track the page number for fetching images
 let currentImage = 1; // Track the current visible image
 let isTransitioning = false;
 let startY = 0;
+const preLoadImageCount = 3;
 const webpContainer = document.getElementById("webp-container");
 const currentUrl = window.location.href;
 const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
@@ -51,7 +52,7 @@ function loadContent() {
 
       webpContainer.appendChild(imgElement);
       toLoadImage++;
-      if (toLoadImage < 3) {
+      if (toLoadImage < preLoadImageCount) {
         loadContent()
       }
     })
