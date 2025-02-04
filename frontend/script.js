@@ -56,7 +56,7 @@ function loadInitialContent(toLoadImage) {
 }
     
 function loadMoreContent(toLoadImage) {
-  url = getUrl(page);
+  url = getUrl(toLoadImage);
   fetch(url)
     .then(response => {
       if (!response.ok) throw new Error("Failed to load image");
