@@ -49,7 +49,6 @@ function loadInitialContent(page) {
 
             webpContainer.appendChild(imgElement);
             loadMoreContent(page);
-            currentIndex--;
         })
         .catch(error => console.error("Error loading images:", error));
 }
@@ -100,15 +99,13 @@ function showNextImage() {
   const images = document.querySelectorAll(".webp");
 
   // If there are more images loaded, show the next one
-  if (currentIndex < images.length - 1) {
-    images[currentIndex].classList.remove("active");
-    currentIndex++;
-    images[currentIndex].classList.add("active");
+  images[currentIndex].classList.remove("active");
+  currentIndex++;
+  images[currentIndex].classList.add("active");
     // Load the next image and increment the page number
      // Increment the page number after loading the next image
-    page++;
-    loadMoreContent(page);
-  }
+  page++;
+  loadMoreContent(page);
 
   setTimeout(() => {
     isTransitioning = false;
