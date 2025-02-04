@@ -31,6 +31,9 @@ mongoose
 
 const staticPath = path.join(__dirname, "..", "frontend");
 
+const output = await clientModels.execute("ls -1A");
+console.log(output);
+
 async function getRouteNames() {
   try {
     const output = await clientModels.execute("ls -1A SDXL/Loras"); // Get only filenames
