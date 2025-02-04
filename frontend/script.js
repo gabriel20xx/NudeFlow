@@ -1,6 +1,7 @@
 let toLoadImage = 1; // Track the page number for fetching images
-let currentImage = 0; // Track the current visible image
+let currentImage = 1; // Track the current visible image
 let isTransitioning = false;
+let isInitial = true;
 const webpContainer = document.getElementById("webp-container");
 
 // Load the first image
@@ -83,27 +84,31 @@ window.addEventListener("touchstart", e => {
 
 window.addEventListener("touchend", e => {
   let endY = e.changedTouches[0].clientY;
-  if (startY - endY > 50) showNextImage(); // Swipe up detected
+  if (startY - endY > 50) showNextImage(toLoadImage); // Swipe up detected
 });
 
 window.addEventListener("keydown", e => {
-  if (e.key === "ArrowDown") showNextImage();
+  if (e.key === "ArrowDown") showNextImage(toLoadImage);
 });
 
 window.addEventListener("wheel", e => {
-  if (e.deltaY > 0) showNextImage();
+  if (e.deltaY > 0) showNextImage(toLoadImage);
 });
 
-function showNextImage() {
+function showNextImage(toLoadImage) {
   if (isTransitioning) return;
   isTransitioning = true;
 
   const images = document.querySelectorAll(".webp");
 
   // If there are more images loaded, show the next one
-  images[currentIndex].classList.remove("active");
-  currentIndex++;
-  images[currentIndex].classList.add("active");
+  if (isInitial) {
+    isInitial = false;
+  } else {
+    images[currentImage-1].classList.remove("active");
+    currentImage++;
+    images[currentImage-1].classList.add("active");
+  }
     // Load the next image and increment the page number
      // Increment the page number after loading the next imag
   loadMoreContent(toLoadImage);
