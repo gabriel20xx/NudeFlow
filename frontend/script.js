@@ -11,7 +11,7 @@ const categoryPattern = /https?:\/\/[^/]+\/([^/]+)\//;
 loadContent();
 toLoadImage++;
 loadContent();
-toLoadImahe++;
+toLoadImage++;
 loadContent();
 
 function getUrl() {
