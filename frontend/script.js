@@ -1,4 +1,4 @@
-let page = 1; // Track the page number for fetching images
+i8let page = 1; // Track the page number for fetching images
 let currentIndex = 0; // Track the current visible image
 let isTransitioning = false;
 const webpContainer = document.getElementById("webp-container");
@@ -105,8 +105,9 @@ function showNextImage() {
     currentIndex++;
     images[currentIndex].classList.add("active");
     // Load the next image and increment the page number
-    page++; // Increment the page number after loading the next image
+     // Increment the page number after loading the next image
     loadMoreContent(page);
+    page++;
   }
 
   setTimeout(() => {
