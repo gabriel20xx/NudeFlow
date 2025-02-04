@@ -19,6 +19,8 @@ if [ -d "xxxtok" ]; then
 fi
 
 # Create directory and enter it
+mkdir -p mnt/models
+mkdir -p mnt/images
 mkdir xxxtok
 cd xxxtok
 
