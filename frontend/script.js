@@ -22,11 +22,11 @@ function getUrl() {
         return url;
     }
   } else if (domainPattern.test(currentUrl)) {
-        let url = `https://xxxtok.gfranz.ch/media/ComfyUI_${number}`;
+        let url = `https://xxxtok.gfranz.ch/media/random`;
         console.log("This is the homepage");
         return url;
   } else {
-    let url = `https://xxxtok.gfranz.ch/media/ComfyUI_${number}`;
+    let url = `https://xxxtok.gfranz.ch/media/random`;
     console.log("This is another page");
     return url;
   }
