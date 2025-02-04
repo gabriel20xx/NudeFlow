@@ -9,10 +9,6 @@ const categoryPattern = /https?:\/\/[^/]+\/([^/]+)\//;
 
 // Preload images
 loadContent();
-toLoadImage++;
-loadContent();
-toLoadImage++;
-loadContent();
 
 function getUrl() {
   let number = String(toLoadImage).padStart(5, "0");
@@ -54,9 +50,7 @@ function loadContent() {
       }
 
       webpContainer.appendChild(imgElement);
-      if (toLoadImage > 3) {
-        toLoadImage++;
-      }
+      toLoadImage++;
     })
     .catch(error => console.error("Error loading images:", error));
 }
