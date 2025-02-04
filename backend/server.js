@@ -18,6 +18,7 @@ let clientGenerated = new SambaClient({
   password: 'KingPong31:)',
 });
 
+// Configure SMB connection
 let clientModels = new SambaClient({
   address: '//192.168.2.5/Models', // SMB share path
   username: 'gabriel',
@@ -30,14 +31,10 @@ mongoose
   .catch((err) => console.log("Failed to connect to MongoDB", err));
 
 const staticPath = path.join(__dirname, "..", "frontend");
+const routes = ["/", "/bouncing_breasts_hunyuan", "/Br34st_3xpan5ion_v1", "/breast_drop_v2_170", "/BreastMassage", "/Full Nelson Position 0.8", "/hunyuan_futa_reversed_cowgirl", "/missionary_pov_v1.1", "/nipple_play_v0-1", "/pov_cowgirlposition_hunyuan_V3", "/ReverseCowgirl", "/riding_dildo_v1_hunyuan", "/str1p_v2", "/Tentacle_v4", "/three_breasts", "/tittydrop_v1", "/Top_Off"];
 
-// Set up routes dynamically
-getRouteNames().then(routes => {
-  routes.forEach(route => {
-    app.use(route, express.static(staticPath, { extensions: ["html"] }));
-  });
-
-  console.log("Routes set up:", routes);
+routes.forEach(route => {
+  app.use(route, express.static(staticPath, { extensions: ["html"] }));
 });
 
 // Route to serve a specific WebP image
