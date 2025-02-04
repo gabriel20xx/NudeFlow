@@ -1,19 +1,34 @@
-<!-- frontend/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>XXXTok</title>
-   <script>
+  <script>
+        // Function to dynamically fetch route names and populate the dropdown
+        window.onload = function() {
+            fetch('https://xxxtok.gfranz.ch/api/routes')  // Update with your actual backend URL if necessary
+                .then(response => response.json())
+                .then(routes => {
+                    var dropdown = document.getElementById("dropdown");
+                    routes.forEach(route => {
+                        var option = document.createElement("option");
+                        option.value = route;  // Use route as value
+                        option.textContent = route.replace(/_/g, ' ').toUpperCase();  // Replace underscores and format
+                        dropdown.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching routes:', error));
+        };
+
         function redirectToOption() {
             var dropdown = document.getElementById("dropdown");
             var selectedOption = dropdown.value;
             if (selectedOption) {
-                window.location.href = "/" + selectedOption + "/";
+                window.location.href = "/" + selectedOption;
             }
         }
-   </script>
+  </script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,23 +36,6 @@
   <div id="dropdown-container">
     <select id="dropdown" name="options" onchange="redirectToOption()">
         <option value="">Select an option</option>
-        <option value="">Homepage</option>
-        <option value="bouncing_breasts_hunyuan">Bouncing Breasts</option>
-        <option value="Br34st_3xpan5ion_v1">Breast Expansion</option>
-        <option value="breast_drop_v2_170">Breast Drop</option>
-        <option value="BreastMassage">Breast Massage</option>
-        <option value="Full Nelson Position 0.8">Full Nelson Position</option>
-        <option value="hunyuan-futa-reverse-cowgirl">Futa Reversed Cowgirl</option>
-        <option value="missionary_pov_v1.1">Missionary POV</option>
-        <option value="nipple_play_v0-1">Nipple Play</option>
-        <option value="pov_cowgirlposition_hunyuan_V3">POV Cowgirlposition</option>
-        <option value="ReverseCowgirl">Reverse Cowgirl</option>
-        <option value="riding_dildo_v1_hunyuan">Riding Dildo</option>
-        <option value="str1p_v2">Undress</option>
-        <option value="Tentacle_v4">Tentacle</option>
-        <option value="three_breasts">Three Breasts</option>
-        <option value="tittydrop_v1">Titty Drop</option>
-        <option value="Top_Off">Top Off</option>
     </select>
   </div>
   <script src="script.js"></script>
