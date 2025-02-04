@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Function to retry a command indefinitely until it succeeds
+retry_until_success() {
+  local cmd="$1"
+  until $cmd; do
+    echo "Retrying..."
+    sleep 5
+  done
+}
+
 # Check if the directory exists and remove it if needed
 if [ -d "xxxtok" ]; then
   rm -rf xxxtok
@@ -11,9 +20,9 @@ cd xxxtok
 
 # Clone the repository if it's not already a Git repo
 if [ ! -d ".git" ]; then
-  git clone https://github.com/gabriel20xx/XXXTok.git .
+  retry_until_success "git clone https://github.com/gabriel20xx/XXXTok.git ."
 else
-  git pull origin master
+  retry_until_success "git pull origin master"
 fi
 
 # Check if package.json exists before running npm install
