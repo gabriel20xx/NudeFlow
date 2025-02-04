@@ -45,6 +45,7 @@ app.get('/api/routes', (req, res) => {
     const route = path.basename(file, path.extname(file));  // Strip extension to get the route
     routes.push(route);
   });
+  console.log(routes);
 
   res.json(routes);  // Send the list of routes as JSON
 });
