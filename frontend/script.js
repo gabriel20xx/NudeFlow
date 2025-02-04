@@ -48,6 +48,7 @@ function loadInitialContent(page) {
             imgElement.classList.add("active"); // First image should be visible
 
             webpContainer.appendChild(imgElement);
+            page++;
             loadMoreContent(page);
         })
         .catch(error => console.error("Error loading images:", error));
