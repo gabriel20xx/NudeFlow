@@ -3,8 +3,12 @@
 # Function to retry a command indefinitely until it succeeds
 retry_until_success() {
   local cmd="$1"
-  until $cmd; do
-    echo "Retrying..."
+  while true; do
+    eval "$cmd"
+    if [ $? -eq 0 ]; then
+      break
+    fi
+    echo "Command failed. Retrying in 5 seconds..."
     sleep 5
   done
 }
@@ -19,9 +23,10 @@ mkdir xxxtok
 cd xxxtok
 
 # Clone the repository if it's not already a Git repo
-if [ ! -d ".git" ]; then
-  retry_until_success "git clone https://github.com/gabriel20xx/XXXTok.git ."
-else
+retry_until_success "git clone https://github.com/gabriel20xx/XXXTok.git ."
+
+# Ensure it's a Git repo before pulling
+if [ -d ".git" ]; then
   retry_until_success "git pull origin master"
 fi
 
