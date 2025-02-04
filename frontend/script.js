@@ -93,23 +93,25 @@ window.addEventListener("wheel", e => {
   if (e.deltaY > 0) showNextImage();
 });
 
-function showNextImage() {
-  if (isTransitioning) return;
-  isTransitioning = true;
+function showNextImage() {  
+  if (isTransitioning) return;  
+  isTransitioning = true;  
 
-  const images = document.querySelectorAll(".webp");
+  const images = document.querySelectorAll(".webp");  
 
-  // If there are more images loaded, show the next one
-  if (currentIndex < images.length - 1) {
-    images[currentIndex].classList.remove("active");
-    currentIndex++;
-    images[currentIndex].classList.add("active");
-    // Load the next image and increment the page number
-    page++; // Increment the page number after loading the next image
-    loadMoreContent(page);
-  }
+  if (currentIndex < images.length - 1) {  
+    images[currentIndex].classList.remove("active");  
+    currentIndex++;  
+    images[currentIndex].classList.add("active");  
+  }  
 
-  setTimeout(() => {
-    isTransitioning = false;
-  }, 500);
+  // Ensure the next image is always preloaded before reaching it  
+  if (currentIndex >= images.length - 2) {  
+    page++;  
+    loadMoreContent(page);  
+  }  
+
+  setTimeout(() => {  
+    isTransitioning = false;  
+  }, 500);  
 }
