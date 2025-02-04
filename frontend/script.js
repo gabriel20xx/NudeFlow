@@ -49,6 +49,7 @@ function loadInitialContent(page) {
 
             webpContainer.appendChild(imgElement);
             loadMoreContent(page);
+            currentIndex--;
         })
         .catch(error => console.error("Error loading images:", error));
 }
