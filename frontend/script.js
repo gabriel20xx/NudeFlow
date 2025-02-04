@@ -102,13 +102,10 @@ function showNextImage() {
   const images = document.querySelectorAll(".webp");
 
   // If there are more images loaded, show the next one
-  if (isInitial) {
-    isInitial = false;
-  } else {
-    images[currentImage-1].classList.remove("active");
-    currentImage++;
-    images[currentImage-1].classList.add("active");
-  }
+  images[currentImage-1].classList.remove("active");   
+  currentImage++;
+  images[currentImage-1].classList.add("active");
+  
     // Load the next image and increment the page number
      // Increment the page number after loading the next imag
   loadMoreContent();
