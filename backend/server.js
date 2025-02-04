@@ -31,14 +31,16 @@ mongoose
 
 const staticPath = path.join(__dirname, "..", "frontend");
 
-// Function to get filenames dynamically
 async function getRouteNames() {
   try {
-    const output = await clientModels.execute("ls SDXL/Loras"); // List files
-    let files = output.split("\n").map(f => f.trim()).filter((f) => f && !f.endsWith(":")); // Remove empty lines & directory headers;
+    const output = await clientModels.execute("ls -1A SDXL/Loras/"); // Get only filenames
+    let files = output
+      .split("\n")
+      .map((f) => f.trim())
+      .filter((f) => f); // Remove empty lines
 
     // Remove file extensions
-    let routes = files.map(f => "/" + path.parse(f).name);
+    let routes = files.map((f) => "/" + path.parse(f).name);
     return routes;
   } catch (err) {
     console.error("Error retrieving files from SMB:", err);
