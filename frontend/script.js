@@ -7,6 +7,11 @@ const currentUrl = window.location.href;
 const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
 const categoryPattern = /https?:\/\/[^/]+\/([^/]+)\//;
 
+// Preload images
+loadContent();
+loadContent();
+loadContent();
+
 function getUrl() {
   let number = String(toLoadImage).padStart(5, "0");
   if (categoryPattern.test(currentUrl)) {
@@ -29,7 +34,7 @@ function getUrl() {
 }
     
 function loadContent() {
-  url = getUrl();
+  const url = getUrl(); // Declare 'url' properly
   fetch(url)
     .then(response => {
       if (!response.ok) throw new Error("Failed to load image");
@@ -51,11 +56,6 @@ function loadContent() {
     })
     .catch(error => console.error("Error loading images:", error));
 }
-
-// Preload images
-loadContent();
-loadContent();
-loadContent();
 
 window.addEventListener("touchstart", e => {
   startY = e.touches[0].clientY;
@@ -80,14 +80,15 @@ function showNextImage() {
 
   const images = document.querySelectorAll(".webp");
 
-  // If there are more images loaded, show the next one
-  images[currentImage-1].classList.remove("active");   
-  currentImage++;
-  images[currentImage-1].classList.add("active");
-  
+  // Check if the next image is available
+  if (currentImage < images.length) {
+    images[currentImage - 1].classList.remove("active");
+    currentImage++;
+    images[currentImage - 1].classList.add("active");
+
     // Load the next image and increment the page number
-     // Increment the page number after loading the next imag
-  loadContent();
+    loadContent();
+  }
 
   setTimeout(() => {
     isTransitioning = false;
