@@ -105,8 +105,8 @@ function showNextImage() {
     images[currentIndex].classList.add("active");
     // Load the next image and increment the page number
      // Increment the page number after loading the next image
-    loadMoreContent(page);
     page++;
+    loadMoreContent(page);
   }
 
   setTimeout(() => {
