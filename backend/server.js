@@ -28,6 +28,14 @@ fs.readdirSync(modelsPath).forEach(file => {
   app.use(route, express.static(staticPath, { extensions: ['html'] }));
 });
 
+// Serve static files like CSS and JS from the frontend folder
+app.use(express.static(staticPath));
+
+// Serve the index.html file for the root route
+app.get("/", (req, res) => {
+  res.sendFile(path.join(staticPath, "index.html"));
+});
+
 // Endpoint to fetch available route names dynamically
 app.get('/api/routes', (req, res) => {
   const routes = [];
