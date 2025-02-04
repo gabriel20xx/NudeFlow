@@ -51,6 +51,9 @@ function loadContent() {
 
       webpContainer.appendChild(imgElement);
       toLoadImage++;
+      if (toLoadImage < 3) {
+        loadContent()
+      }
     })
     .catch(error => console.error("Error loading images:", error));
 }
