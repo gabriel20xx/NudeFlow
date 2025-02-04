@@ -69,6 +69,7 @@ function loadMoreContent(toLoadImage) {
       imgElement.classList.add("webp");
 
       webpContainer.appendChild(imgElement);
+      toLoadImage++;
     })
     .catch(error => console.error("Error loading images:", error));
 }
@@ -104,9 +105,8 @@ function showNextImage() {
   currentIndex++;
   images[currentIndex].classList.add("active");
     // Load the next image and increment the page number
-     // Increment the page number after loading the next image
-  page++;
-  loadMoreContent(page);
+     // Increment the page number after loading the next imag
+  loadMoreContent(toLoadImage);
 
   setTimeout(() => {
     isTransitioning = false;
