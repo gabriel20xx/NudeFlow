@@ -9,7 +9,9 @@ const categoryPattern = /https?:\/\/[^/]+\/([^/]+)\//;
 
 // Preload images
 loadContent();
+toLoadImage++;
 loadContent();
+toLoadImahe++;
 loadContent();
 
 function getUrl() {
@@ -52,7 +54,9 @@ function loadContent() {
       }
 
       webpContainer.appendChild(imgElement);
-      toLoadImage++;
+      if (toLoadImage > 3) {
+        toLoadImage++;
+      }
     })
     .catch(error => console.error("Error loading images:", error));
 }
