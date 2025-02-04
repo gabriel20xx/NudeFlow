@@ -67,19 +67,42 @@ app.get('/media/:category/:name', async (req, res) => {
   }
 });
 
-// Route to serve a specific WebP image
-app.get('/media/:name', async (req, res) => {
-  const imageName = req.params.name + '.webp';
-  const localPath = path.join(imagesPath, imageName);
-  
+// Function to get all WebP image file paths from a directory and subdirectories
+const getAllWebPImages = (dir) => {
+  let results = [];
+  const files = fs.readdirSync(dir);
+
+  for (const file of files) {
+    const fullPath = path.join(dir, file);
+    const stat = fs.statSync(fullPath);
+
+    if (stat && stat.isDirectory()) {
+      results = results.concat(getAllWebPImages(fullPath));
+    } else if (file.endsWith('.webp')) {
+      results.push(fullPath);
+    }
+  }
+
+  return results;
+};
+
+// Route to serve a random WebP image
+app.get('/media/random', (req, res) => {
   try {
-    // Read the file and send it as a response
-    const fileData = fs.readFileSync(localPath);
+    const images = getAllWebPImages(imagesPath);
+
+    if (images.length === 0) {
+      return res.status(404).send('No images found');
+    }
+
+    const randomImage = images[Math.floor(Math.random() * images.length)];
+    const fileData = fs.readFileSync(randomImage);
+
     res.set('Content-Type', 'image/webp');
-    res.send(fileData); // Send the image data from the local disk
+    res.send(fileData);
   } catch (err) {
-    console.error('Error accessing the file:', err);
-    res.status(404).send('Image not found');
+    console.error('Error accessing images:', err);
+    res.status(500).send('Internal server error');
   }
 });
 
