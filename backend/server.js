@@ -31,8 +31,8 @@ mongoose
 
 const staticPath = path.join(__dirname, "..", "frontend");
 
-const output = await clientModels.execute("ls -1A");
-console.log(output);
+const outputDir = await clientModels.execute("ls -1A");
+console.log(outputDir);
 
 async function getRouteNames() {
   try {
