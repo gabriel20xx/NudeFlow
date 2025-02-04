@@ -15,7 +15,9 @@
                         var option = document.createElement("option");
                         option.value = route;  // Use route as value
                         // Format the display name: remove underscores and convert to uppercase
-                        option.textContent = route.replace(/_/g, ' ').toUpperCase();  
+                        option.textContent = route.replace(/_/g, ' ')
+                            .toLowerCase()
+                            .replace(/\b\w/g, c => c.toUpperCase());  
                         dropdown.appendChild(option);
                     });
                 })
