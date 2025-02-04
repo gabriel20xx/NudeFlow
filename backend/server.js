@@ -28,6 +28,19 @@ fs.readdirSync(modelsPath).forEach(file => {
   app.use(route, express.static(staticPath, { extensions: ['html'] }));
 });
 
+// Endpoint to fetch available route names dynamically
+app.get('/api/routes', (req, res) => {
+  const routes = [];
+
+  // Read the filenames in the models directory and create route names
+  fs.readdirSync(modelsPath).forEach(file => {
+    const route = path.basename(file, path.extname(file));  // Strip extension to get the route
+    routes.push(route);
+  });
+
+  res.json(routes);  // Send the list of routes as JSON
+});
+
 // Route to serve a specific WebP image
 app.get('/media/:category/:name', async (req, res) => {
   const category = req.params.category;
