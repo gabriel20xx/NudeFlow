@@ -15,9 +15,9 @@ mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.log("Failed to connect to MongoDB", err));
 
-const staticPath = path.join(__dirname, "../frontend");
-const modelsPath = path.join(__dirname, '../../mnt/models/');
-const imagesPath = path.join(__dirname, '../../mnt/images/');
+const staticPath = path.join(__dirname, '../frontend');
+const modelsPath = path.join(__dirname, '../../mnt/models');
+const imagesPath = path.join(__dirname, '../../mnt/images');
 
 // Read the filenames in the directory
 fs.readdirSync(modelsPath).forEach(file => {
@@ -53,7 +53,7 @@ app.get('/api/routes', (req, res) => {
 app.get('/media/:category/:name', async (req, res) => {
   const category = req.params.category;
   const imageName = req.params.name + '.webp';
-  const localPath = path.join(__dirname, imagesPath, category, imageName);  // Path to the file on the SMB share
+  const localPath = path.join(imagesPath, category, imageName);  // Path to the file on the SMB share
 
   try {
     // Read the file and send it as a response
@@ -69,7 +69,7 @@ app.get('/media/:category/:name', async (req, res) => {
 // Route to serve a specific WebP image
 app.get('/media/:name', async (req, res) => {
   const imageName = req.params.name + '.webp';
-  const localPath = path.join(__dirname, imagesPath, imageName);
+  const localPath = path.join(imagesPath, imageName);
   
   try {
     // Read the file and send it as a response
