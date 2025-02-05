@@ -52,7 +52,7 @@ function loadContent() {
 
       webpContainer.appendChild(imgElement);
       toLoadImage++;
-      if (toLoadImage < preLoadImageCount) {
+      if ((toLoadImage - currentImage) < preLoadImageCount) {
         loadContent()
       }
     })
