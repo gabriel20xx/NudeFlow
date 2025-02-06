@@ -97,7 +97,9 @@ function changeImage(side) {
   if (canChange) {
     images[currentImage - 1].classList.remove("active");
     if (side) {
+      flyOut(images[currentImage - 1]);
       currentImage++;
+      flyIn(images[currentImage - 1]);
     } else {
       currentImage--;
     }
@@ -112,4 +114,14 @@ function changeImage(side) {
   setTimeout(() => {
     isTransitioning = false;
   }, 500);
+}
+
+function flyOut(element) {
+  element.classList.add('fly-out');
+  element.classList.remove('fly-in');
+}
+
+function flyIn(element) {
+  element.classList.add('fly-in');
+  element.classList.remove('fly-out');
 }
