@@ -4,7 +4,6 @@
   box-sizing: border-box;
   background-color: black;
   color: white;
-  text-align: center;
 }
 
 html, body {
@@ -73,6 +72,7 @@ select {
   height: 100%;
   border: none;
   font-size: 1.2rem;
+  text-align: center;
 }
 
 .webp {
