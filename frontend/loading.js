@@ -117,7 +117,7 @@ function showPreviousImage() {
   const images = document.querySelectorAll(".webp");
 
   // Check if the next image is available
-  if (currentImage > 0) {
+  if (currentImage > 1) {
     images[currentImage - 1].classList.remove("active");
     currentImage--;
     images[currentImage - 1].classList.add("active");
