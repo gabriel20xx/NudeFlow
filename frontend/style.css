@@ -16,6 +16,10 @@ body, html {
   display: block; /* Remove the flexbox centering */
 }
 
+body {
+  padding-bottom: 60px;
+}
+
 #dropdown-container {
   width: 100vw;
   height: 5vh;
