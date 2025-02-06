@@ -68,35 +68,39 @@ window.addEventListener("touchend", e => {
   let diff = startY - endY;
 
   if (diff > 50) {
-    showNextImage(); // Swipe up
+    changeImage(true); // Swipe up
   } else if (diff < -50) {
-    showPreviousImage(); // Swipe down
+    changeImage(false); // Swipe down
   }
 });
 
 window.addEventListener("keydown", e => {
-  if (e.key === "ArrowDown") showNextImage();
-  if (e.key === "ArrowUp") showPreviousImage();
+  if (e.key === "ArrowDown") changeImage(true);
+  if (e.key === "ArrowUp") changeImage(false);
 });
 
 window.addEventListener("wheel", e => {
   if (e.deltaY > 0) {
-    showNextImage(); // Scroll down
+    changeImage(true); // Scroll down
   } else if (e.deltaY < 0) {
-    showPreviousImage(); // Scroll up
+    changeImage(false); // Scroll up
   }
 });
 
-function showNextImage() {
+function changeImage(side) {
   if (isTransitioning) return;
   isTransitioning = true;
 
   const images = document.querySelectorAll(".webp");
-
-  // Check if the next image is available
-  if (currentImage < images.length) {
+  const argument = side ? currentImage < images.length : currentImage > 1;
+  
+  if (argument) {
     images[currentImage - 1].classList.remove("active");
-    currentImage++;
+    if (side) {
+      currentImage++;
+    } else {
+      currentImage--;
+    }
     images[currentImage - 1].classList.add("active");
 
     // Load the next image and increment the page number
@@ -109,22 +113,3 @@ function showNextImage() {
     isTransitioning = false;
   }, 500);
 }
-
-function showPreviousImage() {
-  if (isTransitioning) return;
-  isTransitioning = true;
-
-  const images = document.querySelectorAll(".webp");
-
-  // Check if the next image is available
-  if (currentImage > 1) {
-    images[currentImage - 1].classList.remove("active");
-    currentImage--;
-    images[currentImage - 1].classList.add("active");
-  }
-
-  setTimeout(() => {
-    isTransitioning = false;
-  }, 500);
-}
-
