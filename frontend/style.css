@@ -12,6 +12,7 @@ body {
   height: 100%;
   overflow: hidden;
   display: block; /* Remove the flexbox centering */
+  font-family: Arial, sans-serif;
 }
 
 #dropdown-container {
