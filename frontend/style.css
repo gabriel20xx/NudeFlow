@@ -60,14 +60,70 @@ select {
   display: none; /* Hide preloaded images until activated */
 }
 
-/* Fly out */
-.webp.fly-out {
-  transform: translate(-50%, -150%) scale(0.8);
-  opacity: 0;
+/* Fly In from Bottom */
+.webp.fly-in-up {
+  animation: flyInUp 0.5s ease-out forwards;
 }
 
-/* Fly in */
-.webp.fly-in {
-  transform: translate(-50%, -50%) scale(1);
-  opacity: 1;
+/* Fly Out to Bottom */
+.webp.fly-out-down {
+  animation: flyOutDown 0.5s ease-in forwards;
+}
+
+/* Fly In from Top */
+.webp.fly-in-down {
+  animation: flyInDown 0.5s ease-out forwards;
+}
+
+/* Fly Out to Top */
+.webp.fly-out-up {
+  animation: flyOutUp 0.5s ease-in forwards;
+}
+
+/* Keyframes for Fly In from Bottom */
+@keyframes flyInUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Keyframes for Fly Out to Bottom */
+@keyframes flyOutDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+/* Keyframes for Fly In from Top */
+@keyframes flyInDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Keyframes for Fly Out to Top */
+@keyframes flyOutUp {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
 }
