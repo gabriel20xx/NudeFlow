@@ -118,11 +118,9 @@ select {
 @keyframes flyInUp {
   from {
     transform: translateY(50%);
-    opacity: 0;
   }
   to {
     transform: translateY(0);
-    opacity: 1;
   }
 }
 
@@ -130,11 +128,9 @@ select {
 @keyframes flyOutDown {
   from {
     transform: translateY(0);
-    opacity: 1;
   }
   to {
     transform: translateY(50%);
-    opacity: 0;
   }
 }
 
@@ -142,11 +138,9 @@ select {
 @keyframes flyInDown {
   from {
     transform: translateY(-50%);
-    opacity: 0;
   }
   to {
     transform: translateY(0);
-    opacity: 1;
   }
 }
 
@@ -154,10 +148,8 @@ select {
 @keyframes flyOutUp {
   from {
     transform: translateY(0);
-    opacity: 1;
   }
   to {
     transform: translateY(-50%);
-    opacity: 0;
   }
 }
