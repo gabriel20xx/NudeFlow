@@ -117,7 +117,7 @@ select {
 /* Keyframes for Fly In from Bottom */
 @keyframes flyInUp {
   from {
-    transform: translateY(50%);
+    transform: translateY(100%);
   }
   to {
     transform: translateY(0);
@@ -130,14 +130,14 @@ select {
     transform: translateY(0);
   }
   to {
-    transform: translateY(50%);
+    transform: translateY(100%);
   }
 }
 
 /* Keyframes for Fly In from Top */
 @keyframes flyInDown {
   from {
-    transform: translateY(-50%);
+    transform: translateY(-100%);
   }
   to {
     transform: translateY(0);
@@ -150,6 +150,6 @@ select {
     transform: translateY(0);
   }
   to {
-    transform: translateY(-50%);
+    transform: translateY(-100%);
   }
 }
