@@ -97,13 +97,13 @@ function changeImage(side) {
   if (canChange) {
     images[currentImage - 1].classList.remove("active");
     if (side) {
-      flyOut(images[currentImage - 1]);
+      toggleFlyAnimation(images[currentImage - 1], 'out', 'up'); // For flyOutUp
       currentImage++;
-      flyIn(images[currentImage - 1]);
+      toggleFlyAnimation(images[currentImage - 1], 'in', 'up');  // For flyInUp
     } else {
-      flyIn(images[currentImage - 1]);
+      toggleFlyAnimation(images[currentImage - 1], 'out', 'down'); // For flyOutDown
       currentImage--;
-      flyOut(images[currentImage - 1]);
+      toggleFlyAnimation(images[currentImage - 1], 'in', 'down'); // For flyInDown
     }
     images[currentImage - 1].classList.add("active");
 
@@ -118,12 +118,13 @@ function changeImage(side) {
   }, 500);
 }
 
-function flyOut(element) {
-  element.classList.add('fly-out');
-  element.classList.remove('fly-in');
-}
+function toggleFlyAnimation(element, action, direction) {
+  const directions = ['up', 'down'];
+  const actions = ['in', 'out'];
 
-function flyIn(element) {
-  element.classList.add('fly-in');
-  element.classList.remove('fly-out');
+  // Remove all classes related to the fly animation
+  directions.forEach(d => actions.forEach(a => element.classList.remove(`fly-${a}-${d}`)));
+
+  // Add the new class based on the action and direction
+  element.classList.add(`fly-${action}-${direction}`);
 }
