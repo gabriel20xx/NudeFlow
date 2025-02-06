@@ -95,13 +95,13 @@ function changeImage(side) {
   const canChange = side ? currentImage < images.length : currentImage > 1;
   
   if (canChange) {
-    images[currentImage - 1].classList.remove("active");
+    const previousImage = images[currentImage - 1]
     if (side) {
-      toggleFlyAnimation(images[currentImage - 1], 'out', 'up'); // For flyOutUp
+      toggleFlyAnimation(previousImage, 'out', 'up'); // For flyOutUp
       currentImage++;
       toggleFlyAnimation(images[currentImage - 1], 'in', 'up');  // For flyInUp
     } else {
-      toggleFlyAnimation(images[currentImage - 1], 'out', 'down'); // For flyOutDown
+      toggleFlyAnimation(previousImage, 'out', 'down'); // For flyOutDown
       currentImage--;
       toggleFlyAnimation(images[currentImage - 1], 'in', 'down'); // For flyInDown
     }
@@ -116,6 +116,7 @@ function changeImage(side) {
   setTimeout(() => {
     isTransitioning = false;
   }, 500);
+  previousImage.classList.remove("active");
 }
 
 function toggleFlyAnimation(element, action, direction) {
