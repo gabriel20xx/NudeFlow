@@ -53,7 +53,7 @@ function loadContent() {
       webpContainer.appendChild(imgElement);
       toLoadImage++;
       if ((toLoadImage - currentImage) < preLoadImageCount) {
-        loadContent()
+        loadContent();
       }
     })
     .catch(error => console.error("Error loading images:", error));
@@ -65,15 +65,26 @@ window.addEventListener("touchstart", e => {
 
 window.addEventListener("touchend", e => {
   let endY = e.changedTouches[0].clientY;
-  if (startY - endY > 50) showNextImage(); // Swipe up detected
+  let diff = startY - endY;
+
+  if (diff > 50) {
+    showNextImage(); // Swipe up
+  } else if (diff < -50) {
+    showPreviousImage(); // Swipe down
+  }
 });
 
 window.addEventListener("keydown", e => {
   if (e.key === "ArrowDown") showNextImage();
+  if (e.key === "ArrowUp") showPreviousImage();
 });
 
 window.addEventListener("wheel", e => {
-  if (e.deltaY > 0) showNextImage();
+  if (e.deltaY > 0) {
+    showNextImage(); // Scroll down
+  } else if (e.deltaY < 0) {
+    showPreviousImage(); // Scroll up
+  }
 });
 
 function showNextImage() {
@@ -89,10 +100,31 @@ function showNextImage() {
     images[currentImage - 1].classList.add("active");
 
     // Load the next image and increment the page number
-    loadContent();
+    if ((toLoadImage - currentImage) < preLoadImageCount) {
+        loadContent();
+    }
   }
 
   setTimeout(() => {
     isTransitioning = false;
   }, 500);
 }
+
+function showPreviousImage() {
+  if (isTransitioning) return;
+  isTransitioning = true;
+
+  const images = document.querySelectorAll(".webp");
+
+  // Check if the next image is available
+  if (currentImage > 0) {
+    images[currentImage - 1].classList.remove("active");
+    currentImage--;
+    images[currentImage - 1].classList.add("active");
+  }
+
+  setTimeout(() => {
+    isTransitioning = false;
+  }, 500);
+}
+
