@@ -1,43 +1,25 @@
 * {
   margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  background-color: black;
-  color: white;
-  text-align: center;
-}
-
-body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  display: block; /* Remove the flexbox centering */
-  padding-bottom: 60px;
-}
-
-#dropdown-container {
-  width: 100vw;
-  height: 5vh;
-  position: absolute;
-  bottom: 5vh;
-}
-
-/* Bottom Navigation Bar */
+  padding: /* Bottom Navigation Bar */
 .bottom-nav {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 5vh;
+    height: 10vh; /* Fixed height */
     background-color: #333;
     box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center; /* Center items vertically */
 }
 
 .bottom-nav ul {
     list-style: none;
     display: flex;
     justify-content: space-around;
-    padding: 10px 0;
+    width: 100%;
+    height: 100%;
+    align-items: center; /* Align items vertically */
 }
 
 .bottom-nav li {
@@ -50,7 +32,6 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 10px;
     color: white;
     text-decoration: none;
     font-size: 14px;
@@ -64,7 +45,30 @@ body {
 
 .bottom-nav a:hover {
     background-color: #555;
+}0;
+  box-sizing: border-box;
+  background-color: black;
+  color: white;
+  text-align: center;
 }
+
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: block; /* Remove the flexbox centering */
+  padding-bottom: 5vh;
+}
+
+#dropdown-container {
+  width: 100vw;
+  height: 5vh;
+  position: absolute;
+  bottom: 5vh;
+}
+
+/* Bottom Navigation Bar */
+
 
 #webp-container {
   width: 100vw;
