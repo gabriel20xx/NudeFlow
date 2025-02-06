@@ -92,31 +92,35 @@ function changeImage(side) {
   isTransitioning = true;
 
   const images = document.querySelectorAll(".webp");
-  const canChange = side ? currentImage < images.length : currentImage > 1;
-  
+  const maxIndex = images.length - 1; // Adjust for zero-based indexing
+  const canChange = side ? currentImage < maxIndex + 1 : currentImage > 1;
+
   if (canChange) {
-    const previousImage = images[currentImage - 1]
+    const previousImage = images[currentImage - 1];
+
     if (side) {
-      toggleFlyAnimation(previousImage, 'out', 'up'); // For flyOutUp
+      toggleFlyAnimation(previousImage, 'out', 'up');
       currentImage++;
-      toggleFlyAnimation(images[currentImage - 1], 'in', 'up');  // For flyInUp
+      toggleFlyAnimation(images[currentImage - 1], 'in', 'up');
     } else {
-      toggleFlyAnimation(previousImage, 'out', 'down'); // For flyOutDown
+      toggleFlyAnimation(previousImage, 'out', 'down');
       currentImage--;
-      toggleFlyAnimation(images[currentImage - 1], 'in', 'down'); // For flyInDown
+      toggleFlyAnimation(images[currentImage - 1], 'in', 'down');
     }
+
     images[currentImage - 1].classList.add("active");
 
-    // Load the next image and increment the page number
     if ((toLoadImage - currentImage) < preLoadImageCount) {
-        loadContent();
+      loadContent();
     }
-  }
 
-  setTimeout(() => {
+    setTimeout(() => {
+      isTransitioning = false;
+      previousImage.classList.remove("active");
+    }, 500);
+  } else {
     isTransitioning = false;
-  }, 500);
-  previousImage.classList.remove("active");
+  }
 }
 
 function toggleFlyAnimation(element, action, direction) {
