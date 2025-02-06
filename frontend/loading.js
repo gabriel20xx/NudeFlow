@@ -92,31 +92,35 @@ function changeImage(side) {
   isTransitioning = true;
 
   const images = document.querySelectorAll(".webp");
-  const maxIndex = images.length - 1; // Adjust for zero-based indexing
-  const canChange = side ? currentImage < maxIndex + 1 : currentImage > 1;
+  const maxIndex = images.length; // Since currentImage is 1-based
+  const canChange = side ? currentImage < maxIndex : currentImage > 1;
 
   if (canChange) {
     const previousImage = images[currentImage - 1];
+    let newImageIndex = side ? currentImage : currentImage - 2;
+    const newImage = images[newImageIndex];
 
-    if (side) {
-      toggleFlyAnimation(previousImage, 'out', 'up');
-      currentImage++;
-      toggleFlyAnimation(images[currentImage - 1], 'in', 'up');
-    } else {
-      toggleFlyAnimation(previousImage, 'out', 'down');
-      currentImage--;
-      toggleFlyAnimation(images[currentImage - 1], 'in', 'down');
-    }
+    // Animate previous image out
+    toggleFlyAnimation(previousImage, 'out', side ? 'up' : 'down');
 
-    images[currentImage - 1].classList.add("active");
+    // Ensure the new image is visible before animating it in
+    newImage.classList.add("active");
 
+    // Animate new image in
+    toggleFlyAnimation(newImage, 'in', side ? 'up' : 'down');
+
+    // Update index
+    currentImage = newImageIndex + 1;
+
+    // Load content if needed
     if ((toLoadImage - currentImage) < preLoadImageCount) {
       loadContent();
     }
 
+    // Remove active class from previous image after animation
     setTimeout(() => {
-      isTransitioning = false;
       previousImage.classList.remove("active");
+      isTransitioning = false;
     }, 500);
   } else {
     isTransitioning = false;
