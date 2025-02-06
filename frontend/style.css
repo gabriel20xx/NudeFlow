@@ -60,22 +60,22 @@ select {
 
 /* Fly In from Bottom */
 .webp.fly-in-up {
-  animation: flyInUp 0.5s ease-out forwards;
+  animation: flyInUp 0.5s linear forwards;
 }
 
 /* Fly Out to Bottom */
 .webp.fly-out-down {
-  animation: flyOutDown 0.5s ease-in forwards;
+  animation: flyOutDown 0.5s linear forwards;
 }
 
 /* Fly In from Top */
 .webp.fly-in-down {
-  animation: flyInDown 0.5s ease-out forwards;
+  animation: flyInDown 0.5s linear forwards;
 }
 
 /* Fly Out to Top */
 .webp.fly-out-up {
-  animation: flyOutUp 0.5s ease-in forwards;
+  animation: flyOutUp 0.5s linear forwards;
 }
 
 /* Keyframes for Fly In from Bottom */
