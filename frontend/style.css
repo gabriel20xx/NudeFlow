@@ -18,8 +18,9 @@ body {
 #dropdown-container {
   width: 100vw;
   height: 5vh;
-  position: absolute;
+  position: fixed;
   bottom: 5vh;
+  left: 0;
 }
 
 /* Bottom Navigation Bar */
