@@ -1,6 +1,27 @@
 * {
   margin: 0;
-  padding: /* Bottom Navigation Bar */
+  padding: 0;
+  box-sizing: border-box;
+  background-color: black;
+  color: white;
+  text-align: center;
+}
+
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: block; /* Remove the flexbox centering */
+}
+
+#dropdown-container {
+  width: 100vw;
+  height: 5vh;
+  position: absolute;
+  bottom: 5vh;
+}
+
+/* Bottom Navigation Bar */
 .bottom-nav {
     position: fixed;
     bottom: 0;
@@ -45,30 +66,7 @@
 
 .bottom-nav a:hover {
     background-color: #555;
-}0;
-  box-sizing: border-box;
-  background-color: black;
-  color: white;
-  text-align: center;
 }
-
-body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  display: block; /* Remove the flexbox centering */
-  padding-bottom: 5vh;
-}
-
-#dropdown-container {
-  width: 100vw;
-  height: 5vh;
-  position: absolute;
-  bottom: 5vh;
-}
-
-/* Bottom Navigation Bar */
-
 
 #webp-container {
   width: 100vw;
