@@ -59,3 +59,15 @@ select {
 .webp.preload {
   display: none; /* Hide preloaded images until activated */
 }
+
+/* Fly out */
+.webp.fly-out {
+  transform: translate(-50%, -150%) scale(0.8);
+  opacity: 0;
+}
+
+/* Fly in */
+.webp.fly-in {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
