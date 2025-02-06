@@ -92,9 +92,9 @@ function changeImage(side) {
   isTransitioning = true;
 
   const images = document.querySelectorAll(".webp");
-  const argument = side ? currentImage < images.length : currentImage > 1;
+  const canChange = side ? currentImage < images.length : currentImage > 1;
   
-  if (argument) {
+  if (canChange) {
     images[currentImage - 1].classList.remove("active");
     if (side) {
       currentImage++;
