@@ -89,13 +89,13 @@ window.addEventListener("wheel", e => {
 
 function changeImage(side) {
   if (isTransitioning) return;
-  isTransitioning = true;
 
   const images = document.querySelectorAll(".webp");
   const maxIndex = images.length; // Since currentImage is 1-based
   const canChange = side ? currentImage < maxIndex : currentImage > 1;
 
   if (canChange) {
+    isTransitioning = true;
     const previousImage = images[currentImage - 1];
     let newImageIndex = side ? currentImage : currentImage - 2;
     const newImage = images[newImageIndex];
@@ -122,8 +122,6 @@ function changeImage(side) {
       previousImage.classList.remove("active");
       isTransitioning = false;
     }, 500);
-  } else {
-    isTransitioning = false;
   }
 }
 
