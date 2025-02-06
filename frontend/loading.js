@@ -101,7 +101,9 @@ function changeImage(side) {
       currentImage++;
       flyIn(images[currentImage - 1]);
     } else {
+      flyIn(images[currentImage - 1]);
       currentImage--;
+      flyOut(images[currentImage - 1]);
     }
     images[currentImage - 1].classList.add("active");
 
