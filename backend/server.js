@@ -51,19 +51,24 @@ app.get('/api/routes', (req, res) => {
 });
 
 // Route to serve a specific WebP image
-app.get('/media/:category/:name', async (req, res) => {
-  const category = req.params.category;
-  const imageName = req.params.name + '.webp';
-  const localPath = path.join(imagesPath, category, imageName);  // Path to the file on the SMB share
-
+app.get('/media/:category/', async (req, res) => {
   try {
-    // Read the file and send it as a response
-    const fileData = fs.readFileSync(localPath);
+    const category = req.params.category;
+    const categoryPath = path.join(imagesPath, category);  // Path to the file on the SMB share
+    const images = getAllWebPImages(imagesPath);
+  
+    if (images.length === 0) {
+      return res.status(404).send('No images found');
+    }
+
+    const randomImage = images[Math.floor(Math.random() * images.length)];
+    const fileData = fs.readFileSync(randomImage);
+
     res.set('Content-Type', 'image/webp');
-    res.send(fileData); // Send the image data from the local dis
+    res.send(fileData);
   } catch (err) {
-    console.error('Error accessing the file:', err);
-    res.status(404).send('Image not found');
+    console.error('Error accessing images:', err);
+    res.status(500).send('Internal server error');
   }
 });
 
@@ -87,7 +92,7 @@ const getAllWebPImages = (dir) => {
 };
 
 // Route to serve a random WebP image
-app.get('/media/random', (req, res) => {
+app.get('/media/homepage', (req, res) => {
   try {
     const images = getAllWebPImages(imagesPath);
 
