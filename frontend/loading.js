@@ -1,5 +1,5 @@
-let toLoadImage = 1; // Track the page number for fetching images
-let currentImage = 1; // Track the current visible image
+let toLoadImageIndex = 0; // Track the page number for fetching images
+let currentImageIndex = 0; // Track the current visible image
 let isTransitioning = false;
 let startY = 0;
 const preLoadImageCount = 5;
@@ -12,28 +12,27 @@ const categoryPattern = /https?:\/\/[^/]+\/([^/]+)\//;
 loadContent();
 
 function getUrl() {
-  let number = String(toLoadImage).padStart(5, "0");
   if (categoryPattern.test(currentUrl)) {
     const match = currentUrl.match(categoryPattern);
     if (match && match[1]) {
         let category = match[1];
-        let url = `https://xxxtok.gfranz.ch/media/${category}/${category}_${number}_`;
+        let url = `https://xxxtok.gfranz.ch/media/${category}`;
         console.log("This is a category page");
         return url;
     }
   } else if (domainPattern.test(currentUrl)) {
-        let url = `https://xxxtok.gfranz.ch/media/random`;
+        let url = `https://xxxtok.gfranz.ch/media/homepage`;
         console.log("This is the homepage");
         return url;
   } else {
-    let url = `https://xxxtok.gfranz.ch/media/random`;
+    let url = `https://xxxtok.gfranz.ch/media/homepage`;
     console.log("This is another page");
     return url;
   }
 }
     
 function loadContent() {
-  const url = getUrl(); // Declare 'url' properly
+  const url = getUrl();
   fetch(url)
     .then(response => {
       if (!response.ok) throw new Error("Failed to load image");
@@ -46,13 +45,13 @@ function loadContent() {
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
 
-      if (toLoadImage == 1) {
+      if (toLoadImageIndex == 1) {
         imgElement.classList.add("active");
       }
 
       webpContainer.appendChild(imgElement);
-      toLoadImage++;
-      if ((toLoadImage - currentImage) < preLoadImageCount) {
+      toLoadImageIndex++;
+      if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
         loadContent();
       }
     })
@@ -91,13 +90,13 @@ function changeImage(side) {
   if (isTransitioning) return;
 
   const images = document.querySelectorAll(".webp");
-  const maxIndex = images.length; // Since currentImage is 1-based
-  const canChange = side ? currentImage < maxIndex : currentImage > 1;
+  const maxIndex = images.length - 1; 
+  const canChange = side ? currentImageIndex < maxIndex : currentImageIndex > 0;
 
   if (canChange) {
     isTransitioning = true;
-    const previousImage = images[currentImage - 1];
-    let newImageIndex = side ? currentImage : currentImage - 2;
+    const previousImage = images[currentImageIndex];
+    let newImageIndex = side ? currentImageIndex + 1 : currentImageIndex - 1;
     const newImage = images[newImageIndex];
 
     // Animate previous image out
@@ -110,10 +109,10 @@ function changeImage(side) {
     toggleFlyAnimation(newImage, 'in', side ? 'up' : 'down');
 
     // Update index
-    currentImage = newImageIndex + 1;
+    currentImageIndex = newImageIndex;
 
     // Load content if needed
-    if ((toLoadImage - currentImage) < preLoadImageCount) {
+    if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
       loadContent();
     }
 
