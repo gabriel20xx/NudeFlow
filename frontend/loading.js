@@ -39,24 +39,25 @@ function loadContent() {
       return response.blob();
     })
     .then(blob => {
-  const objectURL = URL.createObjectURL(blob);
-  const imgElement = document.createElement("img");
+      const objectURL = URL.createObjectURL(blob);
+      const imgElement = document.createElement("img");
 
-  imgElement.src = objectURL;
-  imgElement.classList.add("webp");
+      imgElement.src = objectURL;
+      imgElement.classList.add("webp");
 
-  if (toLoadImageIndex == 0) {
-    imgElement.classList.add("active");
-  }
+      if (toLoadImageIndex == 0) {
+        imgElement.classList.add("active");
+      }
 
-  webpContainer.appendChild(imgElement);
-  console.log("Added image:", toLoadImageIndex); // Debugging output
-  toLoadImageIndex++;
+      webpContainer.appendChild(imgElement);
+      console.log("Added image:", toLoadImageIndex); // Debugging output
+      toLoadImageIndex++;
 
-  if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
-    loadContent();
-  }
-})
+      if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
+        loadContent();
+      }
+   })
+}
 
 window.addEventListener("touchstart", e => {
   startY = e.touches[0].clientY;
