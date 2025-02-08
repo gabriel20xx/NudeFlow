@@ -129,9 +129,18 @@ function toggleFlyAnimation(element, action, direction) {
   const directions = ['up', 'down'];
   const actions = ['in', 'out'];
 
-  // Remove all classes related to the fly animation
+  // Remove all existing fly classes
   directions.forEach(d => actions.forEach(a => element.classList.remove(`fly-${a}-${d}`)));
 
-  // Add the new class based on the action and direction
-  element.classList.add(`fly-${action}-${direction}`);
+  // Apply the new class
+  const animationClass = `fly-${action}-${direction}`;
+  element.classList.add(animationClass);
+
+  // Ensure the animation class is removed after completion
+  element.addEventListener('animationend', () => {
+    element.classList.remove(animationClass);
+    if (action === 'in') {
+      element.style.transform = 'none'; // Prevent resetting
+    }
+  }, { once: true });
 }
