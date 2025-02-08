@@ -101,10 +101,9 @@ function changeImage(side) {
     const newImage = images[newImageIndex];
 
     console.log("New image index:", newImageIndex);
+    newImage.classList.add("active");
 
     toggleFlyAnimation(previousImage, 'out', side ? 'up' : 'down');
-
-    newImage.classList.add("active");
     toggleFlyAnimation(newImage, 'in', side ? 'up' : 'down');
 
     currentImageIndex = newImageIndex;
