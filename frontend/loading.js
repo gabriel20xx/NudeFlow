@@ -132,12 +132,4 @@ function toggleFlyAnimation(element, action, direction) {
   // Apply the new class
   const animationClass = `fly-${action}-${direction}`;
   element.classList.add(animationClass);
-
-  // Ensure the animation class is removed after completion
-  element.addEventListener('animationend', () => {
-    element.classList.remove(animationClass);
-    if (action === 'in') {
-      element.style.transform = 'none'; // Prevent resetting
-    }
-  }, { once: true });
 }
