@@ -39,24 +39,24 @@ function loadContent() {
       return response.blob();
     })
     .then(blob => {
-      const objectURL = URL.createObjectURL(blob);
-      const imgElement = document.createElement("img");
+  const objectURL = URL.createObjectURL(blob);
+  const imgElement = document.createElement("img");
 
-      imgElement.src = objectURL;
-      imgElement.classList.add("webp");
+  imgElement.src = objectURL;
+  imgElement.classList.add("webp");
 
-      if (toLoadImageIndex == 0) {
-        imgElement.classList.add("active");
-      }
+  if (toLoadImageIndex == 0) {
+    imgElement.classList.add("active");
+  }
 
-      webpContainer.appendChild(imgElement);
-      toLoadImageIndex++;
-      if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
-        loadContent();
-      }
-    })
-    .catch(error => console.error("Error loading images:", error));
-}
+  webpContainer.appendChild(imgElement);
+  console.log("Added image:", toLoadImageIndex); // Debugging output
+  toLoadImageIndex++;
+
+  if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
+    loadContent();
+  }
+})
 
 window.addEventListener("touchstart", e => {
   startY = e.touches[0].clientY;
@@ -87,9 +87,12 @@ window.addEventListener("wheel", e => {
 });
 
 function changeImage(side) {
+  console.log("Change image triggered", side ? "next" : "previous");
   if (isTransitioning) return;
 
   const images = document.querySelectorAll(".webp");
+  console.log("Total images:", images.length, "Current Index:", currentImageIndex);
+
   const maxIndex = images.length - 1; 
   const canChange = side ? currentImageIndex < maxIndex : currentImageIndex > 0;
 
@@ -99,29 +102,26 @@ function changeImage(side) {
     let newImageIndex = side ? currentImageIndex + 1 : currentImageIndex - 1;
     const newImage = images[newImageIndex];
 
-    // Animate previous image out
+    console.log("New image index:", newImageIndex);
+
     toggleFlyAnimation(previousImage, 'out', side ? 'up' : 'down');
 
-    // Ensure the new image is visible before animating it in
     newImage.classList.add("active");
-
-    // Animate new image in
     toggleFlyAnimation(newImage, 'in', side ? 'up' : 'down');
 
-    // Update index
     currentImageIndex = newImageIndex;
 
-    // Load content if needed
     if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
       loadContent();
     }
 
-    // Remove active class from previous image after animation
     setTimeout(() => {
       previousImage.classList.remove("active");
-      previousImage.classList.remove(`fly-out-up`, `fly-out-down`); // Remove fly-out classes
+      previousImage.classList.remove(`fly-out-up`, `fly-out-down`);
       isTransitioning = false;
     }, 500);
+  } else {
+    console.log("No image change possible");
   }
 }
 
