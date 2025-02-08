@@ -17,16 +17,13 @@ function getUrl() {
     if (match && match[1]) {
         let category = match[1];
         let url = `https://xxxtok.gfranz.ch/media/${category}`;
-        console.log("This is a category page");
         return url;
     }
   } else if (domainPattern.test(currentUrl)) {
         let url = `https://xxxtok.gfranz.ch/media/homepage`;
-        console.log("This is the homepage");
         return url;
   } else {
     let url = `https://xxxtok.gfranz.ch/media/homepage`;
-    console.log("This is another page");
     return url;
   }
 }
