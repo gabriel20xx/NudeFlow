@@ -88,6 +88,7 @@ select {
 .webp.active {
   display: block;
   opacity: 1;
+  transform: none;
 }
 
 .webp.preload {
