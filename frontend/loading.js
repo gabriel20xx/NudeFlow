@@ -119,6 +119,7 @@ function changeImage(side) {
     // Remove active class from previous image after animation
     setTimeout(() => {
       previousImage.classList.remove("active");
+      previousImage.classList.remove(`fly-out-up`, `fly-out-down`); // Remove fly-out classes
       isTransitioning = false;
     }, 500);
   }
