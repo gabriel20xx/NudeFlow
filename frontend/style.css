@@ -82,12 +82,11 @@ select {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  display: block !important;
+  display: none;
 }
 
 .webp.active {
   display: block;
-  opacity: 1;
   transform: none;
 }
 
