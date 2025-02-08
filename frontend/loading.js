@@ -45,7 +45,7 @@ function loadContent() {
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
 
-      if (toLoadImageIndex == 1) {
+      if (toLoadImageIndex == 0) {
         imgElement.classList.add("active");
       }
 
