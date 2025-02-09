@@ -68,7 +68,10 @@ html, body {
 #webp-container {
   width: 100vw;
   flex: 1;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevents scrolling outside the container */
+  position: relative;
 }
 
 select {
@@ -80,10 +83,11 @@ select {
 }
 
 .webp {
+  flex: 1;  /* Makes each image take up full space */
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  display: none;
+  object-fit: contain;  /* Ensures the full image is visible */
+  transition: transform 0.3s ease-out;
 }
 
 .webp.active {
