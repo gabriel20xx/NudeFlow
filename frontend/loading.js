@@ -1,9 +1,11 @@
 let toLoadImageIndex = 0; // Track the page number for fetching images
 let currentImageIndex = 0; // Track the current visible image
 let isTransitioning = false;
+let scrollTimeout = null;
 let startY = 0;
 const preLoadImageCount = 5;
 const webpContainer = document.getElementById("webp-container");
+const images = document.querySelectorAll(".webp");
 const currentUrl = window.location.href;
 const domainPattern = /^https:\/\/[a-zA-Z0-9.-]+\/$/;
 const categoryPattern = /https?:\/\/[^/]+\/([^/]+)\//;
@@ -56,80 +58,78 @@ function loadContent() {
    })
 }
 
-window.addEventListener("touchstart", e => {
-  startY = e.touches[0].clientY;
-});
-
-window.addEventListener("touchend", e => {
-  let endY = e.changedTouches[0].clientY;
-  let diff = startY - endY;
-
-  if (diff > 50) {
-    changeImage(true); // Swipe up
-  } else if (diff < -50) {
-    changeImage(false); // Swipe down
-  }
-});
-
-window.addEventListener("keydown", e => {
-  if (e.key === "ArrowDown") changeImage(true);
-  if (e.key === "ArrowUp") changeImage(false);
-});
-
-window.addEventListener("wheel", e => {
-  if (e.deltaY > 0) {
-    changeImage(true); // Scroll down
-  } else if (e.deltaY < 0) {
-    changeImage(false); // Scroll up
-  }
-});
-
-function changeImage(side) {
-  console.log("Change image triggered", side ? "next" : "previous");
-  if (isTransitioning) return;
-
-  const images = document.querySelectorAll(".webp");
-  console.log("Total images:", images.length, "Current Index:", currentImageIndex);
-
-  const maxIndex = images.length - 1; 
-  const canChange = side ? currentImageIndex < maxIndex : currentImageIndex > 0;
-
-  if (canChange) {
+// Handle touch swipes
+document.addEventListener("touchstart", (e) => {
+    startY = e.touches[0].clientY;
     isTransitioning = true;
-    const previousImage = images[currentImageIndex];
-    let newImageIndex = side ? currentImageIndex + 1 : currentImageIndex - 1;
-    const newImage = images[newImageIndex];
+});
 
-    console.log("New image index:", newImageIndex);
-    newImage.classList.add("active");
+document.addEventListener("touchmove", (e) => {
+    if (!isSwiping) return;
+    let deltaY = e.touches[0].clientY - startY;
+    handleSwipe(deltaY);
+});
 
-    toggleFlyAnimation(previousImage, 'out', side ? 'up' : 'down');
-    toggleFlyAnimation(newImage, 'in', side ? 'up' : 'down');
+document.addEventListener("touchend", () => {
+    isTransitioning = false;
+});
 
-    currentImageIndex = newImageIndex;
+// Handle mouse wheel scroll
+document.addEventListener("wheel", (e) => {
+    if (isTransitioning) return;
+    isTransitioning = true;
 
-    if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
-      loadContent();
+    handleSwipe(e.deltaY);
+
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+        isTransitioning = false;
+    }, 200); // Prevent rapid scrolling
+});
+
+// Handle arrow keys
+document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") {
+        goToNextPage();
+    } else if (e.key === "ArrowUp") {
+        goToPreviousPage();
     }
+});
 
-    setTimeout(() => {
-      previousImage.classList.remove("active");
-      previousImage.classList.remove(`fly-out-up`, `fly-out-down`);
-      isTransitioning = false;
-    }, 500);
-  } else {
-    console.log("No image change possible");
-  }
+// Swipe handler for both touch and scroll
+function handleSwipe(deltaY) {
+    if (Math.abs(deltaY) > 50) { // Minimum movement to trigger
+        if (deltaY < 0) {
+            goToNextPage();
+        } else {
+            goToPreviousPage();
+        }
+    }
 }
 
-function toggleFlyAnimation(element, action, direction) {
-  const directions = ['up', 'down'];
-  const actions = ['in', 'out'];
+// Navigate to next page
+function goToNextPage() {
+    if (currentImageIndex < images.length - 1) {
+        currentImageIndex++;
+        updatePagePosition();
+    }
+}
 
-  // Remove all existing fly classes
-  directions.forEach(d => actions.forEach(a => element.classList.remove(`fly-${a}-${d}`)));
+// Navigate to previous page
+function goToPreviousPage() {
+    if (currentImageIndex > 0) {
+        currentImageIndex--;
+        updatePagePosition();
+    }
+}
 
-  // Apply the new class
-  const animationClass = `fly-${action}-${direction}`;
-  element.classList.add(animationClass);
+// Update the page positions
+function updatePagePosition() {
+    const offset = currentImageIndex * -100;
+    images.forEach((images) => {
+        images.style.transform = `translateY(${offset}%)`;
+    });
+    if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
+        loadContent();
+    }
 }
