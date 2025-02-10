@@ -10,7 +10,6 @@ const port = 5000;
 
 const staticPath = path.join(__dirname, "public");
 const modelsPath = path.join(__dirname, "../../mnt/models");
-const imagesPath = path.join(__dirname, "../../mnt/models");
 
 const app = express();
 app.use(cors());

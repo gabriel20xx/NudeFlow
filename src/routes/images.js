@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
+const imagesPath = path.join(__dirname, "../../../mnt/models");
+
 // Route to serve a random WebP image
 router.get("/media/homepage", (req, res) => {
     try {
