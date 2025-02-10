@@ -6,6 +6,8 @@ const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
 
+const port = 5000;
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -115,6 +117,6 @@ const getAllWebPImages = (dir) => {
 };
 
 // Start the server
-app.listen(5000, () => {
+app.listen(port, () => {
   console.log("Server is running on port 5000");
 });
