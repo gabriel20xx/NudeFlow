@@ -17,6 +17,8 @@ app.use(express.json());
 
 const imagesRoutes = require('./routes/images');
 app.use('/images', imagesRoutes);
+const tabsRoutes = require('./routes/tabs');
+app.use('/tabs', tabsRoutes);
 
 mongoose
   .connect("mongodb://192.168.2.94:27017/xxxtok")
