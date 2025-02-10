@@ -2,7 +2,7 @@ const express = require('express');
 const path = require("path");
 const router = express.Router();
 
-router.use(express.static(path.join(__dirname, '../public')); // For serving static files like CSS, JS
+router.use(express.static(path.join(__dirname, '../public'))); // For serving static files like CSS, JS
 router.get("/", (req, res) => res.render("home")); // Default route
 
 router.get("/:page", (req, res) => {
