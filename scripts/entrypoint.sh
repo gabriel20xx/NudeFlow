@@ -40,8 +40,8 @@ else
 fi
 
 # Check if the server.js file exists before starting
-if [ -f "backend/server.js" ]; then
-  node backend/server.js
+if [ -f "server.js" ]; then
+  node server.js
 else
-  echo "server.js not found in backend/"
+  echo "server.js not found"
 fi

@@ -15,9 +15,9 @@ mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.log("Failed to connect to MongoDB", err));
 
-const staticPath = path.join(__dirname, '../frontend');
-const modelsPath = path.join(__dirname, '../../mnt/models');
-const imagesPath = path.join(__dirname, '../../mnt/images');
+const staticPath = path.join(__dirname, 'src/public');
+const modelsPath = path.join(__dirname, '../mnt/models');
+const imagesPath = path.join(__dirname, '../mnt/images');
 
 // Read the filenames in the directory
 fs.readdirSync(modelsPath).forEach(file => {
