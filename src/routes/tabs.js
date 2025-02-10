@@ -10,3 +10,5 @@ router.get("/:page", (req, res) => {
     res.send(html);
   });
 });
+
+module.exports = router;
