@@ -14,14 +14,14 @@
         <option value="">Homepage</option>
     </select>
   </div>
-  <div id="webp-container"></div>
+  <%- include(page) %>
   <nav class="bottom-nav">
         <ul>
-            <li><a href="#"><i class="fas fa-home"></i><span>Home</span></a></li>
-            <li><a href="#"><i class="fas fa-search"></i><span>Search</span></a></li>
-            <li><a href="#"><i class="fas fa-plus-circle"></i><span>Add</span></a></li>
-            <li><a href="#"><i class="fas fa-bell"></i><span>Notifications</span></a></li>
-            <li><a href="#"><i class="fas fa-user"></i><span>Profile</span></a></li>
+            <li class="nav-btn" data-page="home"><a href="#"><i class="fas fa-home"></i><span>Home</span></a></li>
+            <li class="nav-btn"><a href="#"><i class="fas fa-search"></i><span>Search</span></a></li>
+            <li class="nav-btn"><a href="#"><i class="fas fa-plus-circle"></i><span>Add</span></a></li>
+            <li class="nav-btn"><a href="#"><i class="fas fa-bell"></i><span>Notifications</span></a></li>
+            <li class="nav-btn"><a href="#"><i class="fas fa-user"></i><span>Profile</span></a></li>
         </ul>
   </nav>
   <script src="js/loading.js"></script>
