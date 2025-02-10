@@ -64,3 +64,5 @@ router.get("/media/homepage", (req, res) => {
   
     return results;
   };
+
+module.exports = router;
