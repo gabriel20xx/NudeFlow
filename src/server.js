@@ -27,7 +27,7 @@ const routesAPI = require("./api/routesApi");  // Update the path to the correct
 const { setupDynamicRoutes } = require("./controllers/dynamicRoutesController");
 
 app.use("/images", imagesRoutes);
-app.use("/tabs", tabsRoutes);
+app.use("/", tabsRoutes);
 routesAPI(app);  // Pass the app instance to the routes
 
 // Setup dynamic routes
