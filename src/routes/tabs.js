@@ -4,6 +4,7 @@ const router = express.Router();
 
 router.use(express.static(path.join(__dirname, '../public'))); // For serving static files like CSS, JS
 router.get("/", (req, res) => res.render("home")); // Default route
+router.get("/categories", (req, res) => res.render("categories"));
 
 router.get("/:page", (req, res) => {
   res.render("partials", { page: req.params.page }, (err, html) => {
