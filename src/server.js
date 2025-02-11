@@ -1,6 +1,5 @@
 // backend/server.js
 const express = require("express");
-const expressLayouts = require("express-ejs-layouts");
 const mongoose = require("mongoose");
 const sharp = require("sharp");
 const path = require("path");
@@ -17,8 +16,6 @@ app.use(cors());
 app.use(express.json());
 
 app.set("view engine", "ejs");
-app.use(expressLayouts);
-app.set("layout", "layouts/main"); // Default layout (optional)
 
 app.get("/", (req, res) => {
   res.render("home", { title: "Home Page" });
