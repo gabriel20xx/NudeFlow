@@ -5,6 +5,7 @@ let startY = 0;
 const preLoadImageCount = 5;
 const webpContainer = document.getElementById("home-container");
 const currentUrl = window.location.href;
+console.log("Full URL:", currentUrl);
 const domainPattern = /^https?:\/\/[^\/]+\/?$/;
 const categoryPattern = /^https?:\/\/[^\/]+\/.+$/;
 
