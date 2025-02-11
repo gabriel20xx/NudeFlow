@@ -4,7 +4,10 @@ const cors = require("cors");
 const path = require("path");
 
 const app = express();
-const port = 5000;
+const appPort = 5000;
+const mongoDBIP = 192.168.2.94;
+const mongoDBPort = 27017;
+const mongoDBName = "xxxtok";
 
 app.use(cors());
 app.use(express.json());
@@ -24,10 +27,10 @@ app.use("/tabs", tabsRoutes);
 setupDynamicRoutes(app);
 
 mongoose
-  .connect("mongodb://192.168.2.94:27017/xxxtok")
+  .connect("mongodb://${mongoDBIP}:${mongoDBPort}/${mongoDBName}")
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.log("Failed to connect to MongoDB", err));
 
-app.listen(port, () => {
+app.listen(appPort, () => {
   console.log("Server is running on port", port);
 });
