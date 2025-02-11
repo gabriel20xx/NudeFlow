@@ -7,7 +7,7 @@ const router = express.Router();
 const imagesPath = path.join(__dirname, "../../../mnt/images");
 
 // Route to serve a random WebP image
-router.get("/media/homepage", (req, res) => {
+router.get("/homepage", (req, res) => {
     try {
       const images = getAllWebPImages(imagesPath);
   
@@ -27,7 +27,7 @@ router.get("/media/homepage", (req, res) => {
   });
   
   // Route to serve a specific WebP image
-  router.get("/media/:category", async (req, res) => {
+  router.get("/:category", async (req, res) => {
     try {
       const category = req.params.category;
       const categoryPath = path.join(imagesPath, category); // Path to the file on the SMB share
