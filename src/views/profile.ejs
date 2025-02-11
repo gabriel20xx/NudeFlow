@@ -1,5 +1,80 @@
 <%- include("partials/header") %>
 <%- include("partials/title") %>
-<div id="profile-container"></div>
+<div id="profile-container">
+        <h2>Profile</h2>
+
+        <div class="profile-info">
+            <img id="profilePicture" src="/images/default-avatar.png" alt="Profile Picture">
+            <div>
+                <p><strong>Username:</strong> <span id="username">Loading...</span></p>
+                <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+                <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
+            </div>
+        </div>
+
+        <button id="editProfileButton">Edit Profile</button>
+
+        <div id="editProfileForm" style="display:none;">
+            <h3>Edit Profile</h3>
+            <label for="usernameInput">Username:</label>
+            <input type="text" id="usernameInput">
+            <label for="emailInput">Email:</label>
+            <input type="email" id="emailInput">
+            <label for="bioInput">Bio:</label>
+            <textarea id="bioInput"></textarea>
+            <button onclick="saveProfileChanges()">Save Changes</button>
+            <button onclick="cancelEdit()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        async function fetchUserProfile() {
+            const response = await fetch('/api/profile');
+            const user = await response.json();
+
+            document.getElementById('username').textContent = user.username;
+            document.getElementById('email').textContent = user.email;
+            document.getElementById('bio').textContent = user.bio;
+            document.getElementById('profilePicture').src = user.profilePicture || '/images/default-avatar.png';
+        }
+
+        function editProfile() {
+            document.getElementById('editProfileForm').style.display = 'block';
+            document.getElementById('usernameInput').value = document.getElementById('username').textContent;
+            document.getElementById('emailInput').value = document.getElementById('email').textContent;
+            document.getElementById('bioInput').value = document.getElementById('bio').textContent;
+        }
+
+        function cancelEdit() {
+            document.getElementById('editProfileForm').style.display = 'none';
+        }
+
+        async function saveProfileChanges() {
+            const updatedProfile = {
+                username: document.getElementById('usernameInput').value,
+                email: document.getElementById('emailInput').value,
+                bio: document.getElementById('bioInput').value,
+            };
+
+            const response = await fetch('/api/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedProfile),
+            });
+
+            if (response.ok) {
+                fetchUserProfile();
+                cancelEdit();
+            } else {
+                alert('Error saving profile.');
+            }
+        }
+
+        document.getElementById('editProfileButton').addEventListener('click', editProfile);
+
+        fetchUserProfile();
+    </script>
 <%- include("partials/navbar") %>
 <%- include("partials/footer") %>
