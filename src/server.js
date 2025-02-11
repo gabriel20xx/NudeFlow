@@ -22,7 +22,7 @@ const tabsRoutes = require("./routes/tabs");
 const routesAPI = require("./api/routesApi");  // Update the path to the correct location
 const { setupDynamicRoutes } = require("./controllers/dynamicRoutesController");
 
-app.use("/images", imagesRoutes);
+app.use("/", imagesRoutes);
 app.use("/", tabsRoutes);
 routesAPI(app);  // Pass the app instance to the routes
 
