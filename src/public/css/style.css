@@ -15,7 +15,7 @@ html, body {
   font-family: Arial, sans-serif;
 }
 
-#dropdown-container {
+#dropdown-container, #title-container {
   width: 100vw;
   height: 5vh;
 }
