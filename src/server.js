@@ -19,7 +19,7 @@ app.set("view engine", "ejs");
 app.use(express.static("public"));
 
 app.get("/", (req, res) => {
-  res.render("home", { title: "Home Page" });
+  res.render("index", { title: "Home Page" });
 });
 
 const imagesRoutes = require("./routes/images");
