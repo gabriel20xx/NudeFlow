@@ -27,7 +27,7 @@ app.use("/tabs", tabsRoutes);
 setupDynamicRoutes(app);
 
 mongoose
-  .connect("mongodb://${mongoDBIP}:${mongoDBPort}/${mongoDBName}")
+  .connect(`mongodb://${mongoDBIP}:${mongoDBPort}/${mongoDBName}`)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.log("Failed to connect to MongoDB", err));
 
