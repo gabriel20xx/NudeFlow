@@ -1,5 +1,38 @@
 <%- include("partials/header") %>
 <%- include("partials/title") %>
-<div id="search-container"></div>
+ <div id="search-container">
+        <input type="text" id="searchInput" placeholder="Search videos...">
+        <button onclick="searchVideos()">Search</button>
+    </div>
+
+    <div id="searchResults"></div>
+
+    <script>
+        async function searchVideos() {
+            const query = document.getElementById('searchInput').value;
+            const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+            const results = await response.json();
+
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = '';
+
+            if (results.length === 0) {
+                resultsContainer.innerHTML = '<p>No results found.</p>';
+                return;
+            }
+
+            results.forEach(video => {
+                const videoElement = document.createElement('div');
+                videoElement.classList.add('video-item');
+                videoElement.innerHTML = `
+                    <a href="/videos/${video.id}">
+                        <img src="${video.thumbnail}" alt="${video.title}">
+                        <p>${video.title}</p>
+                    </a>
+                `;
+                resultsContainer.appendChild(videoElement);
+            });
+        }
+    </script>
 <%- include("partials/navbar") %>
 <%- include("partials/footer") %>
