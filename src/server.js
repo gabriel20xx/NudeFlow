@@ -50,12 +50,6 @@ routeNames.forEach((route) => {
   });
 });
 
-// Endpoint to fetch available route names dynamically
-app.get("/api/routes", (req, res) => {
-  console.log(routeNames);
-  res.json(routeNames); // Send the list of routes as JSON
-});
-
 // Start the server
 app.listen(port, () => {
   console.log("Server is running on port 5000");
