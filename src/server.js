@@ -7,8 +7,6 @@ const cors = require("cors");
 const fs = require("fs");
 
 const port = 5000;
-
-const staticPath = path.join(__dirname, "public");
 const modelsPath = path.join(__dirname, "../../mnt/models");
 
 const app = express();
@@ -41,7 +39,7 @@ fs.readdirSync(modelsPath).forEach((file) => {
   const route = "/" + path.basename(file, path.extname(file));
 
   // Use the route for serving static files
-  app.use(route, express.static(staticPath, { extensions: ["html"] }));
+  app.use(route, express.static(path.join(__dirname, "public"), { extensions: ["html"] }));
 });
 
 // Endpoint to fetch available route names dynamically
