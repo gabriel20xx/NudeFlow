@@ -46,7 +46,7 @@ const routeNames = fs.readdirSync(modelsPath).map((file) => path.basename(file, 
 routeNames.forEach((route) => {
   app.get(`/${route}`, (req, res) => {
     // Handle the request for each dynamically created route
-    res.send(`This is the page for route: ${route}`);
+    res.render("index", { title: "Home Page" });
   });
 });
 
