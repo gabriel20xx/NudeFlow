@@ -65,15 +65,18 @@ html, body {
     background-color: #555;
 }
 
-#webp-container {
-  width: 100vw;
-  flex: 1;
+#homepage-container {
   display: flex;
   flex-direction: column;
   overflow: hidden; /* Prevents scrolling outside the container */
   position: relative;
 }
 
+#homepage-container, #categories-container, #search-container, #profile-container, #saved-container {
+  width: 100vw;
+  flex: 1;
+}
+  
 select {
   width: 100%;
   height: 100%;
