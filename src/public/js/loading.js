@@ -16,14 +16,14 @@ function getUrl() {
     const match = currentUrl.match(categoryPattern);
     if (match && match[1]) {
         let category = match[1];
-        let url = `https://xxxtok.gfranz.ch/images/media/${category}`;
+        let url = `https://xxxtok.gfranz.ch/images/${category}`;
         return url;
     }
   } else if (domainPattern.test(currentUrl)) {
-        let url = `https://xxxtok.gfranz.ch/images/media/homepage`;
+        let url = `https://xxxtok.gfranz.ch/images/homepage`;
         return url;
   } else {
-    let url = `https://xxxtok.gfranz.ch/images/media/homepage`;
+    let url = `https://xxxtok.gfranz.ch/images/homepage`;
     return url;
   }
 }
