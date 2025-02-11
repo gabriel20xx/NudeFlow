@@ -1,56 +1,33 @@
-// backend/server.js
 const express = require("express");
 const mongoose = require("mongoose");
-const sharp = require("sharp");
-const path = require("path");
 const cors = require("cors");
-const fs = require("fs");
-
-const port = 5000;
-const modelsPath = path.join(__dirname, "../../mnt/models");
+const path = require("path");
 
 const app = express();
+const port = 5000;
+
 app.use(cors());
 app.use(express.json());
 
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views")); // Views are in /my-app/src/views
-
-// Serve static files from /my-app/src/public
-app.use(express.static(path.join(__dirname, "public")));
-
-app.get("/", (req, res) => {
-  res.render("index", { title: "Home Page" });
-});
+app.set("views", path.join(__dirname, "views")); 
+app.use(express.static(path.join(__dirname, "public")));  
 
 const imagesRoutes = require("./routes/images");
-app.use("/images", imagesRoutes);
 const tabsRoutes = require("./routes/tabs");
+const { setupDynamicRoutes } = require("./controllers/dynamicRoutesController");
+
+app.use("/images", imagesRoutes);
 app.use("/tabs", tabsRoutes);
+
+// Setup dynamic routes
+setupDynamicRoutes(app);
 
 mongoose
   .connect("mongodb://192.168.2.94:27017/xxxtok")
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.log("Failed to connect to MongoDB", err));
 
-// Read the filenames in the directory
-fs.readdirSync(modelsPath).forEach((file) => {
-  // Get the route by stripping the extension from the filename
-  const route = "/" + path.basename(file, path.extname(file));
-});
-
-// Read the filenames in the models directory and create route names once
-const routeNames = fs.readdirSync(modelsPath).map((file) => path.basename(file, path.extname(file)));
-
-// Dynamically create endpoints based on route names
-routeNames.forEach((route) => {
-  app.get(`/${route}`, (req, res) => {
-    // Handle the request for each dynamically created route
-    res.render("index", { title: "Home Page" });
-  });
-});
-
-// Start the server
 app.listen(port, () => {
-  console.log("Server is running on port 5000");
+  console.log("Server is running on port", port);
 });
