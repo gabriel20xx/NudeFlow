@@ -18,6 +18,7 @@ html, body {
 #dropdown-container, #title-container {
   width: 100vw;
   height: 5vh;
+  text-align: center;
 }
 
 /* Bottom Navigation Bar */
