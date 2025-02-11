@@ -5,8 +5,8 @@ let startY = 0;
 const preLoadImageCount = 5;
 const webpContainer = document.getElementById("home-container");
 const currentUrl = window.location.href;
-const domainPattern = /^\/images\/homepage$/;
-const categoryPattern = /^\/images\/(?!homepage$)([^\/]+)$/;
+const domainPattern = /^https?:\/\/[^\/]+\/?$/;
+const categoryPattern = /^https?:\/\/[^\/]+\/.+$/;
 
 // Preload images
 loadContent();
