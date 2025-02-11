@@ -2,7 +2,7 @@ window.onload = function() {
     fetch('https://xxxtok.gfranz.ch/api/routes')  // Update with your actual backend URL if necessary
         .then(response => response.json())
         .then(routes => {
-            var gridContainer = document.getElementById("grid-container");
+            var gridContainer = document.getElementById("categories-container");
 
             // Loop through the fetched routes and create grid boxes
             routes.forEach(route => {
