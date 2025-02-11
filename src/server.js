@@ -35,6 +35,20 @@ mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.log("Failed to connect to MongoDB", err));
 
+// Endpoint to fetch available route names dynamically
+app.get("/api/routes", (req, res) => {
+  const routes = [];
+
+  // Read the filenames in the models directory and create route names
+  fs.readdirSync(modelsPath).forEach((file) => {
+    const route = path.basename(file, path.extname(file)); // Strip extension to get the route
+    routes.push(route);
+  });
+  console.log(routes);
+
+  res.json(routes); // Send the list of routes as JSON
+});
+
 app.listen(appPort, () => {
   console.log("Server is running on port", appPort);
 });
