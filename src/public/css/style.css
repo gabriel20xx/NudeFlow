@@ -65,14 +65,14 @@ html, body {
     background-color: #555;
 }
 
-#homepage-container {
+#home-container {
   display: flex;
   flex-direction: column;
   overflow: hidden; /* Prevents scrolling outside the container */
   position: relative;
 }
 
-#homepage-container, #categories-container, #search-container, #profile-container, #saved-container {
+#home-container, #categories-container, #search-container, #profile-container, #saved-container {
   width: 100vw;
   flex: 1;
 }
