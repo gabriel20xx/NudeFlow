@@ -5,8 +5,8 @@ const path = require("path");
 
 const app = express();
 const appPort = 5000;
-const mongoDBIP = 192.168.2.94;
-const mongoDBPort = 27017;
+const mongoDBIP = "192.168.2.94";
+const mongoDBPort = "27017";
 const mongoDBName = "xxxtok";
 
 app.use(cors());
