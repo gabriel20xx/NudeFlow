@@ -12,4 +12,16 @@ router.get("/categories", (req, res) => {
   res.render("categories", { title: "Categories" });
 });
 
+router.get("/search", (req, res) => {
+  res.render("search", { title: "Search" });
+});
+
+router.get("/categories", (req, res) => {
+  res.render("categories", { title: "Categories" });
+});
+
+router.get("/categories", (req, res) => {
+  res.render("categories", { title: "Categories" });
+});
+
 module.exports = router;
