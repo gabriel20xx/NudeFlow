@@ -2,7 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const modelsPath = path.join(__dirname, "../models"); // Adjust path if necessary
+const modelsPath = path.join(__dirname, "../../../mnt/models"); // Adjust path if necessary
 
 // Endpoint to fetch available route names dynamically
 module.exports = function(app) {
