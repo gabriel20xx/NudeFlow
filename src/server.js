@@ -37,23 +37,23 @@ mongoose
 fs.readdirSync(modelsPath).forEach((file) => {
   // Get the route by stripping the extension from the filename
   const route = "/" + path.basename(file, path.extname(file));
+});
 
-  // Use the route for serving static files
-  app.use(route, express.static(path.join(__dirname, "public"), { extensions: ["html"] }));
+// Read the filenames in the models directory and create route names once
+const routeNames = fs.readdirSync(modelsPath).map((file) => path.basename(file, path.extname(file)));
+
+// Dynamically create endpoints based on route names
+routeNames.forEach((route) => {
+  app.get(`/${route}`, (req, res) => {
+    // Handle the request for each dynamically created route
+    res.send(`This is the page for route: ${route}`);
+  });
 });
 
 // Endpoint to fetch available route names dynamically
 app.get("/api/routes", (req, res) => {
-  const routes = [];
-
-  // Read the filenames in the models directory and create route names
-  fs.readdirSync(modelsPath).forEach((file) => {
-    const route = path.basename(file, path.extname(file)); // Strip extension to get the route
-    routes.push(route);
-  });
-  console.log(routes);
-
-  res.json(routes); // Send the list of routes as JSON
+  console.log(routeNames);
+  res.json(routeNames); // Send the list of routes as JSON
 });
 
 // Start the server
