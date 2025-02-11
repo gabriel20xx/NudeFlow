@@ -12,11 +12,4 @@ router.get("/categories", (req, res) => {
   res.render("categories", { title: "Categories" });
 });
 
-router.get("/:page", (req, res) => {
-  res.render("partials", { page: req.params.page }, (err, html) => {
-    if (err) return res.status(404).send("<h2>Page Not Found</h2>");
-    res.send(html);
-  });
-});
-
 module.exports = router;
