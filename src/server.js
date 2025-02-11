@@ -16,7 +16,10 @@ app.use(cors());
 app.use(express.json());
 
 app.set("view engine", "ejs");
-app.use(express.static("public"));
+app.set("views", path.join(__dirname, "views")); // Views are in /my-app/src/views
+
+// Serve static files from /my-app/src/public
+app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
   res.render("index", { title: "Home Page" });
