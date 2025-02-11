@@ -4,11 +4,11 @@ const router = express.Router();
 
 router.use(express.static(path.join(__dirname, '../public'))); // For serving static files like CSS, JS
 
-app.get("/", (req, res) => {
+router.get("/", (req, res) => {
   res.render("index", { title: "Home" });
 });
 
-app.get("/categories", (req, res) => {
+router.get("/categories", (req, res) => {
   res.render("categories", { title: "Categories" });
 });
 
