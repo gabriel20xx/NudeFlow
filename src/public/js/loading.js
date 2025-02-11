@@ -17,16 +17,16 @@ function getUrl() {
     if (match && match[1]) {
         let category = match[1];
         let url = `https://xxxtok.gfranz.ch/images/${category}`;
-        console.log("Category page");
+        console.log("Category page", currentUrl);
         return url;
     }
   } else if (domainPattern.test(currentUrl)) {
         let url = `https://xxxtok.gfranz.ch/images/homepage`;
-        console.log("Homepage");
+        console.log("Homepage", currentUrl);
         return url;
   } else {
     let url = `https://xxxtok.gfranz.ch/images/homepage`;
-    console.log("No page matched, using homepage");
+    console.log("No page matched, using homepage", currentUrl);
     return url;
   }
 }
