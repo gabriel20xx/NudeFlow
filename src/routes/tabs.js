@@ -16,12 +16,12 @@ router.get("/search", (req, res) => {
   res.render("search", { title: "Search" });
 });
 
-router.get("/categories", (req, res) => {
-  res.render("categories", { title: "Categories" });
+router.get("/saved", (req, res) => {
+  res.render("saved", { title: "Saved" });
 });
 
-router.get("/categories", (req, res) => {
-  res.render("categories", { title: "Categories" });
+router.get("/profile", (req, res) => {
+  res.render("profile", { title: "Profile" });
 });
 
 module.exports = router;
