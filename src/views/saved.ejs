@@ -1,5 +1,37 @@
 <%- include("partials/header") %>
 <%- include("partials/title") %>
-<div id="saved-container"></div>
+<div id="saved-container">
+        <h2>Saved Videos</h2>
+        <div id="savedVideos"></div>
+    </div>
+
+    <script>
+        async function fetchSavedVideos() {
+            const response = await fetch('/api/saved');
+            const videos = await response.json();
+
+            const container = document.getElementById('savedVideos');
+            container.innerHTML = '';
+
+            if (videos.length === 0) {
+                container.innerHTML = '<p>No saved videos yet.</p>';
+                return;
+            }
+
+            videos.forEach(video => {
+                const videoElement = document.createElement('div');
+                videoElement.classList.add('video-item');
+                videoElement.innerHTML = `
+                    <a href="/videos/${video.id}">
+                        <img src="${video.thumbnail}" alt="${video.title}">
+                        <p>${video.title}</p>
+                    </a>
+                `;
+                container.appendChild(videoElement);
+            });
+        }
+
+        fetchSavedVideos();
+    </script>
 <%- include("partials/navbar") %>
 <%- include("partials/footer") %>
