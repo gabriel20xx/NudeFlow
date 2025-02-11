@@ -6,7 +6,7 @@ router.use(express.static(path.join(__dirname, '../public'))); // For serving st
 router.get("/", (req, res) => res.render("home")); // Default route
 
 router.get("/:page", (req, res) => {
-  res.render("layout", { page: req.params.page }, (err, html) => {
+  res.render("partials", { page: req.params.page }, (err, html) => {
     if (err) return res.status(404).send("<h2>Page Not Found</h2>");
     res.send(html);
   });
