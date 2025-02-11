@@ -1,5 +1,6 @@
 // backend/server.js
 const express = require("express");
+const expressLayouts = require("express-ejs-layouts");
 const mongoose = require("mongoose");
 const sharp = require("sharp");
 const path = require("path");
@@ -15,10 +16,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const imagesRoutes = require('./routes/images');
-app.use('/images', imagesRoutes);
-const tabsRoutes = require('./routes/tabs');
-app.use('/tabs', tabsRoutes);
+app.set("view engine", "ejs");
+app.use(expressLayouts);
+app.set("layout", "layouts/main"); // Default layout (optional)
+
+app.get("/", (req, res) => {
+  res.render("home", { title: "Home Page" });
+});
+
+const imagesRoutes = require("./routes/images");
+app.use("/images", imagesRoutes);
+const tabsRoutes = require("./routes/tabs");
+app.use("/tabs", tabsRoutes);
 
 mongoose
   .connect("mongodb://192.168.2.94:27017/xxxtok")
@@ -33,8 +42,6 @@ fs.readdirSync(modelsPath).forEach((file) => {
   // Use the route for serving static files
   app.use(route, express.static(staticPath, { extensions: ["html"] }));
 });
-
-app.set("view engine", "ejs");
 
 // Endpoint to fetch available route names dynamically
 app.get("/api/routes", (req, res) => {
