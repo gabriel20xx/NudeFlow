@@ -7,7 +7,7 @@ const webpContainer = document.getElementById("home-container");
 const currentUrl = window.location.href;
 console.log("Full URL:", currentUrl);
 const domainPattern = /^https?:\/\/[^\/]+\/?$/;
-const categoryPattern = /^https?:\/\/[^\/]+\/.+$/;
+const categoryPattern = /^https?:\/\/[^\/]+(\/.*)?$/;
 
 // Preload images
 loadContent();
