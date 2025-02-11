@@ -1,6 +1,9 @@
+const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const modelsPath = path.join(__dirname, "../../../mnt/models"); // Adjust path if needed
+
+const app = express();
 
 // Function to get route names from filenames
 const getRouteNames = () => {
