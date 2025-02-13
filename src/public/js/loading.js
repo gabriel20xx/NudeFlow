@@ -95,8 +95,9 @@ function changeImage(side) {
   const images = document.querySelectorAll(".webp");
   console.log("Total images:", images.length, "Current Index:", currentImageIndex);
 
-  const maxIndex = images.length - 1; 
-  const canChange = side ? currentImageIndex < maxIndex : currentImageIndex > 0;
+  // const maxIndex = images.length - 1; 
+  // const canChange = side ? currentImageIndex < maxIndex : currentImageIndex > 0;
+  const canChange = !side || currentImageIndex > 0;
 
   if (canChange) {
     isTransitioning = true;
