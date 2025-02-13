@@ -97,7 +97,7 @@ function changeImage(side) {
 
   // const maxIndex = images.length - 1; 
   // const canChange = side ? currentImageIndex < maxIndex : currentImageIndex > 0;
-  const canChange = !side && currentImageIndex <= 0;
+  const canChange = !( !side && currentImageIndex <= 0 );
 
   if (canChange) {
     isTransitioning = true;
