@@ -36,7 +36,7 @@ function loadContent() {
   const url = getUrl();
   fetch(url)
     .then(response => {
-      if (!response.ok) throw new Error("Failed to load image");
+      if (!response.ok) throw new Error("Failed to load content");
       return response.blob();
     })
     .then(blob => {
