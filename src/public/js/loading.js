@@ -44,7 +44,7 @@ function loadContent() {
       const imgElement = document.createElement("video");
 
       imgElement.src = objectURL;
-      imgElement.classList.add("webp");
+      imgElement.classList.add("mp4");
 
       imgElement.autoplay = true;
       imgElement.loop = true;
