@@ -3,7 +3,7 @@ let currentImageIndex = 0; // Track the current visible image
 let isTransitioning = false;
 let startY = 0;
 const preLoadImageCount = 5;
-const webpContainer = document.getElementById("home-container");
+const mediaContainer = document.getElementById("home-container");
 const currentUrl = window.location.href;
 console.log("Full URL:", currentUrl);
 const domainPattern = /^https?:\/\/[^\/]+\/?$/;
@@ -41,30 +41,30 @@ function loadContent() {
     })
     .then(blob => {
       const objectURL = URL.createObjectURL(blob);
-      const imgElement = document.createElement("video");
+      const mediaElement = document.createElement("video");
 
-      imgElement.src = objectURL;
-      imgElement.classList.add("mp4");
+      mediaElement.src = objectURL;
+      mediaElement.classList.add("mp4");
 
-      imgElement.autoplay = true;
-      imgElement.loop = true;
-      imgElement.controls = false;
-      imgElement.muted = true;
-      imgElement.playsInline = true;
+      mediaElement.autoplay = true;
+      mediaElement.loop = true;
+      mediaElement.controls = false;
+      mediaElement.muted = true;
+      mediaElement.playsInline = true;
 
       if (toLoadImageIndex == 0) {
-        imgElement.classList.add("active");
+        mediaElement.classList.add("active");
       }
 
       if (toLoadImageIndex == 0) {
         // Attempt to play with sound after user interaction
         document.body.addEventListener("click", () => {
-          imgElement.muted = false;
-          imgElement.play().catch(error => console.error("Autoplay failed:", error));
+          mediaElement.muted = false;
+          mediaElement.play().catch(error => console.error("Autoplay failed:", error));
         }, { once: true });
       }    
 
-      webpContainer.appendChild(imgElement);
+      mediaContainer.appendChild(mediaElement);
       console.log("Added image:", toLoadImageIndex); // Debugging output
       toLoadImageIndex++;
 
@@ -106,8 +106,8 @@ function changeImage(side) {
   console.log("Change content triggered", side ? "next" : "previous");
   if (isTransitioning) return;
 
-  const images = document.querySelectorAll(".mp4");
-  console.log("Total images:", images.length, "Current Index:", currentImageIndex);
+  const media = document.querySelectorAll(".mp4");
+  console.log("Total images:", media.length, "Current Index:", currentImageIndex);
 
   // const maxIndex = images.length - 1; 
   // const canChange = side ? currentImageIndex < maxIndex : currentImageIndex > 0;
@@ -115,9 +115,9 @@ function changeImage(side) {
 
   if (canChange) {
     isTransitioning = true;
-    const previousImage = images[currentImageIndex];
+    const previousImage = media[currentImageIndex];
     let newImageIndex = side ? currentImageIndex + 1 : currentImageIndex - 1;
-    const newImage = images[newImageIndex];
+    const newImage = media[newImageIndex];
 
     console.log("New content index:", newImageIndex);
     newImage.classList.add("active");
