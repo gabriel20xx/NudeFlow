@@ -41,7 +41,7 @@ function loadContent() {
     })
     .then(blob => {
       const objectURL = URL.createObjectURL(blob);
-      const imgElement = document.createElement("img");
+      const imgElement = document.createElement("video");
 
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
