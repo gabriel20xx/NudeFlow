@@ -52,10 +52,6 @@ function loadContent() {
       imgElement.muted = true;
       imgElement.playsInline = true;
 
-      webpContainer.appendChild(imgElement);
-      console.log("Added image:", toLoadImageIndex); // Debugging output
-      toLoadImageIndex++;
-
       if (toLoadImageIndex == 0) {
         imgElement.classList.add("active");
       }
@@ -67,6 +63,10 @@ function loadContent() {
           imgElement.play().catch(error => console.error("Autoplay failed:", error));
         }, { once: true });
       }    
+
+      webpContainer.appendChild(imgElement);
+      console.log("Added image:", toLoadImageIndex); // Debugging output
+      toLoadImageIndex++;
 
       if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
         loadContent();
