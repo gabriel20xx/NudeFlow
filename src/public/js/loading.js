@@ -50,6 +50,7 @@ function loadContent() {
       imgElement.loop = true;
       imgElement.controls = false;
       imgElement.muted = true;
+      imgElement.playsInline = true;
 
       webpContainer.appendChild(imgElement);
       console.log("Added image:", toLoadImageIndex); // Debugging output
@@ -57,6 +58,9 @@ function loadContent() {
 
       if (toLoadImageIndex == 0) {
         imgElement.classList.add("active");
+      }
+
+      if (toLoadImageIndex == 0) {
         // Attempt to play with sound after user interaction
         document.body.addEventListener("click", () => {
         document.getElementById('overlay').style.display = 'none';
