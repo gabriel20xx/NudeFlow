@@ -50,20 +50,18 @@ function loadContent() {
       imgElement.loop = true;
       imgElement.controls = false;
 
+      // Attempt to play with sound after user interaction
+      document.body.addEventListener("click", () => {
+          imgElement.muted = false;
+          imgElement.play().catch(error => console.error("Autoplay failed:", error));
+      }, { once: true });
+
       webpContainer.appendChild(imgElement);
       console.log("Added image:", toLoadImageIndex); // Debugging output
       toLoadImageIndex++;
 
       if (toLoadImageIndex == 0) {
         imgElement.classList.add("active");
-        imgElement.play().then(() => {
-        // Attempt to unmute after a short delay
-          setTimeout(() => {
-            imgElement.muted = false; // This will likely be blocked unless user interacts
-          }, 2000); // Adjust timing as needed
-        }).catch(error => {
-          console.log('Autoplay blocked:', error);
-        });
       }    
 
       if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
