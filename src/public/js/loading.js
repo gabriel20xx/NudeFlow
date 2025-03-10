@@ -103,10 +103,10 @@ window.addEventListener("wheel", e => {
 });
 
 function changeImage(side) {
-  console.log("Change image triggered", side ? "next" : "previous");
+  console.log("Change content triggered", side ? "next" : "previous");
   if (isTransitioning) return;
 
-  const images = document.querySelectorAll(".webp");
+  const images = document.querySelectorAll(".mp4");
   console.log("Total images:", images.length, "Current Index:", currentImageIndex);
 
   // const maxIndex = images.length - 1; 
@@ -119,7 +119,7 @@ function changeImage(side) {
     let newImageIndex = side ? currentImageIndex + 1 : currentImageIndex - 1;
     const newImage = images[newImageIndex];
 
-    console.log("New image index:", newImageIndex);
+    console.log("New content index:", newImageIndex);
     newImage.classList.add("active");
     newImage.play();
     newImage.muted = false;
@@ -142,7 +142,7 @@ function changeImage(side) {
       isTransitioning = false;
     }, 500);
   } else {
-    console.log("No image change possible");
+    console.log("No content change possible");
   }
 }
 
