@@ -51,6 +51,12 @@ function loadContent() {
       mediaElement.controls = false;
       mediaElement.muted = true;
       mediaElement.playsInline = true;
+      mediaElement.preload = 'auto';
+
+      mediaElement.addEventListener('ended', () => {
+        mediaElement.currentTime = 0;
+        mediaElement.play();
+      });
 
       if (toLoadImageIndex == 0) {
         mediaElement.classList.add("active");
