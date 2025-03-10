@@ -4,24 +4,24 @@ const path = require("path");
 const fs = require("fs");
 const router = express.Router();
 
-const imagesPath = path.join(__dirname, "../../../mnt/images");
+const contentPath = path.join(__dirname, "../../../mnt/images");
 
 // Route to serve a random WebP image
 router.get("/homepage", (req, res) => {
   try {
-    const images = getAllWebPImages(imagesPath);
+    const content = getAllContent(contentPath);
 
     if (images.length === 0) {
       return res.status(404).send("No images found");
     }
 
-    const randomImage = images[Math.floor(Math.random() * images.length)];
-    const fileData = fs.readFileSync(randomImage);
+    const randomContent = content[Math.floor(Math.random() * content.length)];
+    const fileData = fs.readFileSync(randomContent);
 
     res.set("Content-Type", "video/mp4");
     res.send(fileData);
   } catch (err) {
-    console.error("Error accessing images:", err);
+    console.error("Error accessing content:", err);
     res.status(500).send("Internal server error");
   }
 });
@@ -49,7 +49,7 @@ router.get("/:category", async (req, res) => {
 });
 
 // Function to get all WebP image file paths from a directory and subdirectories
-const getAllWebPImages = (dir) => {
+const getAllContent = (dir) => {
   let results = [];
   const files = fs.readdirSync(dir);
 
@@ -58,8 +58,8 @@ const getAllWebPImages = (dir) => {
     const stat = fs.statSync(fullPath);
 
     if (stat && stat.isDirectory()) {
-      results = results.concat(getAllWebPImages(fullPath));
-    } else if (file.endsWith(".mp4")) {
+      results = results.concat(getAllContent(fullPath));
+    } else if (file.endsWith("-audio.mp4")) {
       results.push(fullPath);
     }
   }
