@@ -44,7 +44,7 @@ function loadContent() {
       const mediaElement = document.createElement("video");
 
       mediaElement.src = objectURL;
-      mediaElement.classList.add("mp4");
+      mediaElement.classList.add("media");
 
       mediaElement.autoplay = true;
       mediaElement.loop = true;
@@ -65,7 +65,7 @@ function loadContent() {
       }    
 
       mediaContainer.appendChild(mediaElement);
-      console.log("Added image:", toLoadImageIndex); // Debugging output
+      console.log("Added media:", toLoadImageIndex); // Debugging output
       toLoadImageIndex++;
 
       if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
@@ -106,8 +106,8 @@ function changeImage(side) {
   console.log("Change content triggered", side ? "next" : "previous");
   if (isTransitioning) return;
 
-  const media = document.querySelectorAll(".mp4");
-  console.log("Total images:", media.length, "Current Index:", currentImageIndex);
+  const media = document.querySelectorAll(".media");
+  console.log("Total media:", media.length, "Current Index:", currentImageIndex);
 
   // const maxIndex = images.length - 1; 
   // const canChange = side ? currentImageIndex < maxIndex : currentImageIndex > 0;
