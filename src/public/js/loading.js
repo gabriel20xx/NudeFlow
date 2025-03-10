@@ -43,8 +43,6 @@ function loadContent() {
       const objectURL = URL.createObjectURL(blob);
       const imgElement = document.createElement("video");
 
-      const videoElement = document.createElement("video");
-
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
 
