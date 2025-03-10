@@ -49,6 +49,7 @@ function loadContent() {
       imgElement.autoplay = true;
       imgElement.loop = true;
       imgElement.controls = false;
+      imgElement.muted = true;
 
       webpContainer.appendChild(imgElement);
       console.log("Added image:", toLoadImageIndex); // Debugging output
