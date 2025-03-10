@@ -314,8 +314,9 @@ button {
 
 /* Content box */
 .overlay-content {
-    background: white;
+    background: blue;
     padding: 20px;
+    border: solid 2px;
     border-radius: 10px;
     text-align: center;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
