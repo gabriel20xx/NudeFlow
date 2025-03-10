@@ -49,15 +49,11 @@ function loadContent() {
       imgElement.autoplay = true;
       imgElement.loop = true;
       imgElement.controls = false;
-
-      // Attempt to play with sound after user interaction
-      document.body.addEventListener("click", () => {
-          imgElement.muted = false;
-          imgElement.play().catch(error => console.error("Autoplay failed:", error));
-      }, { once: true });
+      imgElement.muted = false;
 
       if (toLoadImageIndex == 0) {
         imgElement.classList.add("active");
+        imgElement.play();
       }
 
       webpContainer.appendChild(imgElement);
