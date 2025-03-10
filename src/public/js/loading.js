@@ -49,12 +49,18 @@ function loadContent() {
       imgElement.autoplay = true;
       imgElement.loop = true;
       imgElement.controls = false;
-      imgElement.muted = false;
 
       if (toLoadImageIndex == 0) {
         imgElement.classList.add("active");
-        imgElement.play();
-      }
+        imgElement.play().then(() => {
+        // Attempt to unmute after a short delay
+          setTimeout(() => {
+            imgElement.muted = false; // This will likely be blocked unless user interacts
+          }, 2000); // Adjust timing as needed
+        }).catch(error => {
+          console.log('Autoplay blocked:', error);
+        });
+      });    
 
       webpContainer.appendChild(imgElement);
       console.log("Added image:", toLoadImageIndex); // Debugging output
