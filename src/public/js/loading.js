@@ -43,8 +43,20 @@ function loadContent() {
       const objectURL = URL.createObjectURL(blob);
       const imgElement = document.createElement("video");
 
+      const videoElement = document.createElement("video");
+
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
+
+      videoElement.autoplay = true;
+      videoElement.loop = true;
+      videoElement.controls = false;
+
+      // Attempt to play with sound after user interaction
+      document.body.addEventListener("click", () => {
+          videoElement.muted = false;
+          videoElement.play().catch(error => console.error("Autoplay failed:", error));
+      }, { once: true });
 
       if (toLoadImageIndex == 0) {
         imgElement.classList.add("active");
