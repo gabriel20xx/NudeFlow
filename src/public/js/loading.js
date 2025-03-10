@@ -117,6 +117,7 @@ function changeImage(side) {
 
     console.log("New image index:", newImageIndex);
     newImage.classList.add("active");
+    newImage.play();
 
     toggleFlyAnimation(previousImage, 'out', side ? 'up' : 'down');
     toggleFlyAnimation(newImage, 'in', side ? 'up' : 'down');
@@ -130,6 +131,7 @@ function changeImage(side) {
     setTimeout(() => {
       previousImage.classList.remove("active");
       previousImage.classList.remove(`fly-out-up`, `fly-out-down`);
+      previousImage.pause();
       isTransitioning = false;
     }, 500);
   } else {
