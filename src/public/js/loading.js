@@ -48,14 +48,14 @@ function loadContent() {
       imgElement.src = objectURL;
       imgElement.classList.add("webp");
 
-      videoElement.autoplay = true;
-      videoElement.loop = true;
-      videoElement.controls = false;
+      imgElement.autoplay = true;
+      imgElement.loop = true;
+      imgElement.controls = false;
 
       // Attempt to play with sound after user interaction
       document.body.addEventListener("click", () => {
-          videoElement.muted = false;
-          videoElement.play().catch(error => console.error("Autoplay failed:", error));
+          imgElement.muted = false;
+          imgElement.play().catch(error => console.error("Autoplay failed:", error));
       }, { once: true });
 
       if (toLoadImageIndex == 0) {
