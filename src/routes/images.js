@@ -18,7 +18,7 @@ router.get("/homepage", (req, res) => {
     const randomImage = images[Math.floor(Math.random() * images.length)];
     const fileData = fs.readFileSync(randomImage);
 
-    res.set("Content-Type", "image/webp");
+    res.set("Content-Type", "video/mp4");
     res.send(fileData);
   } catch (err) {
     console.error("Error accessing images:", err);
@@ -59,7 +59,7 @@ const getAllWebPImages = (dir) => {
 
     if (stat && stat.isDirectory()) {
       results = results.concat(getAllWebPImages(fullPath));
-    } else if (file.endsWith(".webp")) {
+    } else if (file.endsWith(".mp4")) {
       results.push(fullPath);
     }
   }
