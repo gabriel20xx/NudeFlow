@@ -21,11 +21,21 @@ html, body {
   color: white;
 }
 
+select {
+  background-color: black;
+  color: white;
+}
+
+select option {
+  background-color: black;
+  color: white;
+}
+
 /* Bottom Navigation Bar */
 .bottom-nav {
     width: 100vw;
     height: auto;
-    background-color: #333;
+    background-color: black;
     box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center; /* Center items vertically */
