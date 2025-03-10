@@ -50,19 +50,18 @@ function loadContent() {
       imgElement.loop = true;
       imgElement.controls = false;
 
-      // Attempt to play with sound after user interaction
-      document.body.addEventListener("click", () => {
-          document.getElementById('overlay').style.display = 'none';
-          imgElement.muted = false;
-          imgElement.play().catch(error => console.error("Autoplay failed:", error));
-      }, { once: true });
-
       webpContainer.appendChild(imgElement);
       console.log("Added image:", toLoadImageIndex); // Debugging output
       toLoadImageIndex++;
 
       if (toLoadImageIndex == 0) {
         imgElement.classList.add("active");
+        // Attempt to play with sound after user interaction
+        document.body.addEventListener("click", () => {
+        document.getElementById('overlay').style.display = 'none';
+          imgElement.muted = false;
+          imgElement.play().catch(error => console.error("Autoplay failed:", error));
+        }, { once: true });
       }    
 
       if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
@@ -119,6 +118,7 @@ function changeImage(side) {
     console.log("New image index:", newImageIndex);
     newImage.classList.add("active");
     newImage.play();
+    newImage.muted = false;
 
     toggleFlyAnimation(previousImage, 'out', side ? 'up' : 'down');
     toggleFlyAnimation(newImage, 'in', side ? 'up' : 'down');
@@ -129,10 +129,12 @@ function changeImage(side) {
       loadContent();
     }
 
+    previousImage.pause();
+    previousImage.muted = true;
+
     setTimeout(() => {
       previousImage.classList.remove("active");
       previousImage.classList.remove(`fly-out-up`, `fly-out-down`);
-      previousImage.pause();
       isTransitioning = false;
     }, 500);
   } else {
