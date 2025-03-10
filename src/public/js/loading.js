@@ -52,6 +52,7 @@ function loadContent() {
 
       // Attempt to play with sound after user interaction
       document.body.addEventListener("click", () => {
+          document.getElementById('overlay').style.display = 'none';
           imgElement.muted = false;
           imgElement.play().catch(error => console.error("Autoplay failed:", error));
       }, { once: true });
