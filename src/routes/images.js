@@ -30,20 +30,20 @@ router.get("/homepage", (req, res) => {
 router.get("/:category", async (req, res) => {
   try {
     const category = req.params.category;
-    const categoryPath = path.join(imagesPath, category); // Path to the file on the SMB share
-    const images = getAllWebPImages(categoryPath);
+    const categoryPath = path.join(contentPath, category); // Path to the file on the SMB share
+    const content = getAllContent(categoryPath);
 
-    if (images.length === 0) {
+    if (content.length === 0) {
       return res.status(404).send("No images found");
     }
 
-    const randomImage = images[Math.floor(Math.random() * images.length)];
-    const fileData = fs.readFileSync(randomImage);
+    const randomContent = content[Math.floor(Math.random() * content.length)];
+    const fileData = fs.readFileSync(randomContent);
 
-    res.set("Content-Type", "image/webp");
+    res.set("Content-Type", "video/mp4");
     res.send(fileData);
   } catch (err) {
-    console.error("Error accessing images:", err);
+    console.error("Error accessing content:", err);
     res.status(500).send("Internal server error");
   }
 });
