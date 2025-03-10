@@ -64,7 +64,7 @@ function loadContent() {
         }).catch(error => {
           console.log('Autoplay blocked:', error);
         });
-      });    
+      }    
 
       if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
         loadContent();
