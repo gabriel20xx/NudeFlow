@@ -50,6 +50,10 @@ function loadContent() {
       imgElement.loop = true;
       imgElement.controls = false;
 
+      webpContainer.appendChild(imgElement);
+      console.log("Added image:", toLoadImageIndex); // Debugging output
+      toLoadImageIndex++;
+
       if (toLoadImageIndex == 0) {
         imgElement.classList.add("active");
         imgElement.play().then(() => {
@@ -61,10 +65,6 @@ function loadContent() {
           console.log('Autoplay blocked:', error);
         });
       });    
-
-      webpContainer.appendChild(imgElement);
-      console.log("Added image:", toLoadImageIndex); // Debugging output
-      toLoadImageIndex++;
 
       if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
         loadContent();
