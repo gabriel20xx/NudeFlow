@@ -100,7 +100,7 @@ select {
   text-align: center;
 }
 
-.webp {
+.media {
   flex: 1;  /* Makes each image take up full space */
   width: 100%;
   height: 100%;
@@ -109,32 +109,32 @@ select {
   display: none;
 }
 
-.webp.active {
+.media.active {
   display: block;
   transform: none;
 }
 
-.webp.preload {
+.media.preload {
   display: none; /* Hide preloaded images until activated */
 }
 
 /* Fly In from Bottom */
-.webp.fly-in-up {
+.media.fly-in-up {
   animation: flyInUp 0.5s linear forwards;
 }
 
 /* Fly Out to Bottom */
-.webp.fly-out-down {
+.media.fly-out-down {
   animation: flyOutDown 0.5s linear forwards;
 }
 
 /* Fly In from Top */
-.webp.fly-in-down {
+.media.fly-in-down {
   animation: flyInDown 0.5s linear forwards;
 }
 
 /* Fly Out to Top */
-.webp.fly-out-up {
+.media.fly-out-up {
   animation: flyOutUp 0.5s linear forwards;
 }
 
