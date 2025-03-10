@@ -322,6 +322,10 @@ button {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
+.overlay-content > p {
+  color: white;
+}
+
 /* OK button */
 #okButton {
     background: #007bff;
