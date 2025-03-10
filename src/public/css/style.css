@@ -17,6 +17,8 @@ html, body {
   width: 100vw;
   height: 5vh;
   text-align: center;
+  background-color: black;
+  color: white;
 }
 
 /* Bottom Navigation Bar */
@@ -74,6 +76,7 @@ html, body {
 #home-container, #categories-container, #search-container, #profile-container, #saved-container {
   width: 100vw;
   flex: 1;
+  background-color: black;
 }
   
 select {
@@ -313,16 +316,11 @@ button {
 
 /* Content box */
 .overlay-content {
-    background: blue;
+    background: dark-gray;
     padding: 20px;
-    border: solid 2px;
     border-radius: 10px;
     text-align: center;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-}
-
-.overlay-content > p {
-  color: white;
 }
 
 /* OK button */
