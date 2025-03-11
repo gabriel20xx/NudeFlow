@@ -5,11 +5,19 @@ const modelsPath = path.join(__dirname, "../../../mnt/models"); // Adjust path i
 
 const app = express();
 
-// Function to get route names from filenames
+// Function to get all route names from subfolders
 const getRouteNames = () => {
   return fs
-    .readdirSync(modelsPath)
-    .map((file) => path.basename(file, path.extname(file)));
+    .readdirSync(modelsPath) // Read subdirectories (hunyuan, wan)
+    .flatMap((subfolder) => {
+      const subfolderPath = path.join(modelsPath, subfolder);
+      if (fs.statSync(subfolderPath).isDirectory()) {
+        return fs.readdirSync(subfolderPath).map((file) =>
+          path.basename(file, path.extname(file))
+        );
+      }
+      return [];
+    });
 };
 
 // Function to dynamically add routes
