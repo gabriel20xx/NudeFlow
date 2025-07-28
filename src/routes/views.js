@@ -1,0 +1,96 @@
+const express = require('express');
+const path = require("path");
+const AppUtils = require('../utils/AppUtils');
+
+const viewsRouter = express.Router();
+const MODULE_NAME = 'ViewsRouter';
+
+// Middleware for serving static files
+viewsRouter.use(express.static(path.join(__dirname, '../public')));
+
+/**
+ * Home page route handler
+ */
+viewsRouter.get("/", (request, response) => {
+  const FUNCTION_NAME = 'handleHomePageRoute';
+  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Processing home page request');
+  
+  try {
+    AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering home page');
+    response.render("index", { title: "Home" });
+    AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Home page rendered successfully');
+  } catch (error) {
+    AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error rendering home page', error);
+    response.status(500).render('error', { message: 'Failed to load home page' });
+  }
+});
+
+/**
+ * Categories page route handler
+ */
+viewsRouter.get("/categories", (request, response) => {
+  const FUNCTION_NAME = 'handleCategoriesPageRoute';
+  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Processing categories page request');
+  
+  try {
+    AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering categories page');
+    response.render("categories", { title: "Categories" });
+    AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Categories page rendered successfully');
+  } catch (error) {
+    AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error rendering categories page', error);
+    response.status(500).render('error', { message: 'Failed to load categories page' });
+  }
+});
+
+/**
+ * Profile page route handler
+ */
+viewsRouter.get("/profile", (request, response) => {
+  const FUNCTION_NAME = 'handleProfilePageRoute';
+  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Processing profile page request');
+  
+  try {
+    AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering profile page');
+    response.render("profile", { title: "Profile" });
+    AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Profile page rendered successfully');
+  } catch (error) {
+    AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error rendering profile page', error);
+    response.status(500).render('error', { message: 'Failed to load profile page' });
+  }
+});
+
+/**
+ * Search page route handler
+ */
+viewsRouter.get("/search", (request, response) => {
+  const FUNCTION_NAME = 'handleSearchPageRoute';
+  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Processing search page request');
+  
+  try {
+    AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering search page');
+    response.render("search", { title: "Search" });
+    AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Search page rendered successfully');
+  } catch (error) {
+    AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error rendering search page', error);
+    response.status(500).render('error', { message: 'Failed to load search page' });
+  }
+});
+
+/**
+ * Saved videos page route handler
+ */
+viewsRouter.get("/saved", (request, response) => {
+  const FUNCTION_NAME = 'handleSavedPageRoute';
+  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Processing saved page request');
+  
+  try {
+    AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering saved page');
+    response.render("saved", { title: "Saved" });
+    AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Saved page rendered successfully');
+  } catch (error) {
+    AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error rendering saved page', error);
+    response.status(500).render('error', { message: 'Failed to load saved page' });
+  }
+});
+
+module.exports = viewsRouter;

@@ -1,20 +1,46 @@
 {
   "name": "xxxtok",
   "version": "1.0.0",
-  "main": "backend/server.js",
+  "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "node tests/basic-test.js",
+    "test:watch": "nodemon tests/basic-test.js",
+    "debug": "node --inspect src/server.js",
+    "lint": "echo 'Linting not configured yet'",
+    "clean": "npm ci"
   },
-  "keywords": [],
+  "keywords": [
+    "video",
+    "streaming",
+    "tiktok",
+    "express",
+    "nodejs",
+    "media-server"
+  ],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Video streaming application similar to TikTok with dynamic content management",
   "dependencies": {
     "cors": "^2.8.5",
+    "ejs": "^3.1.10",
     "express": "^4.21.2",
-    "fs": "^0.0.1-security",
-    "mongoose": "^8.9.5",
-    "path": "^0.12.7",
     "sharp": "^0.33.5"
-  }
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gabriel20xx/XXXTok.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gabriel20xx/XXXTok/issues"
+  },
+  "homepage": "https://github.com/gabriel20xx/XXXTok#readme"
 }
