@@ -1,4 +1,4 @@
-# XXXTok
+# NudeTok
 
 A video streaming application similar to TikTok, built with Node.js and Express with file-based media management.
 
