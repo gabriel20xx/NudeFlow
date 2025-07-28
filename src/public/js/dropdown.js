@@ -41,7 +41,7 @@ async function populateDropdownWithRoutes() {
             throw new Error('Dropdown element not found');
         }
 
-        // Clear existing options except the first two (default options)
+        // Clear existing options except the first one (default "Select an option")
         clearExistingDropdownOptions(dropdownElement);
 
         // Extract routes data (handle both old and new API response formats)
@@ -76,8 +76,8 @@ function clearExistingDropdownOptions(dropdownElement) {
     
     const initialOptionCount = dropdownElement.children.length;
     
-    // Keep first two options (default options), remove the rest
-    while (dropdownElement.children.length > 2) {
+    // Keep first option (default "Select an option"), remove the rest
+    while (dropdownElement.children.length > 1) {
         dropdownElement.removeChild(dropdownElement.lastChild);
     }
     
@@ -100,11 +100,18 @@ function addRouteOptionToDropdown(dropdownElement, routeName) {
     optionElement.value = routeName;
     optionElement.textContent = ApplicationUtilities.formatDisplayText(routeName);
     
+    // Set homepage as selected by default
+    if (routeName.toLowerCase() === 'homepage') {
+        optionElement.selected = true;
+        ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Homepage set as default selection', { routeName });
+    }
+    
     dropdownElement.appendChild(optionElement);
     
     ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Route option added successfully', { 
         routeName,
-        displayText: optionElement.textContent
+        displayText: optionElement.textContent,
+        isSelected: optionElement.selected
     });
 }
 
@@ -127,8 +134,10 @@ function redirectToSelectedOption() {
     });
     
     if (selectedOptionValue && selectedOptionValue.trim() !== '') {
-        const redirectionUrl = "/" + selectedOptionValue;
+        // Special case for homepage - redirect to root path
+        const redirectionUrl = selectedOptionValue.toLowerCase() === 'homepage' ? "/" : "/" + selectedOptionValue;
         ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Redirecting to selected route', { 
+            selectedOptionValue,
             redirectionUrl 
         });
         

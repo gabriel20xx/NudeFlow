@@ -101,6 +101,45 @@ apiRouter.get("/saved", (request, response) => {
 });
 
 /**
+ * Random media info endpoint - returns media metadata instead of the file
+ */
+apiRouter.get("/media/random/:category?", (request, response) => {
+  const ENDPOINT_FUNCTION = 'handleRandomMediaInfoRequest';
+  const { category } = request.params;
+  
+  AppUtils.debugLog(MODULE_NAME, ENDPOINT_FUNCTION, 'Processing random media info request', { category });
+  
+  try {
+    const randomMedia = mediaService.getRandomMedia(category);
+    
+    if (!randomMedia) {
+      AppUtils.errorLog(MODULE_NAME, ENDPOINT_FUNCTION, 'No media found for the given criteria', { category });
+      return response.status(404).json(AppUtils.createErrorResponse("No media found"));
+    }
+    
+    const mediaInfo = {
+      ...randomMedia,
+      thumbnail: `/media/${randomMedia.relativePath}`,
+      url: `/media/${randomMedia.relativePath}`
+    };
+    
+    AppUtils.infoLog(MODULE_NAME, ENDPOINT_FUNCTION, 'Random media info retrieved successfully', { 
+      category,
+      fileName: randomMedia.name,
+      mediaType: randomMedia.mediaType 
+    });
+    
+    response.json(AppUtils.createSuccessResponse(mediaInfo, 'Random media info retrieved'));
+  } catch (error) {
+    AppUtils.errorLog(MODULE_NAME, ENDPOINT_FUNCTION, 'Error getting random media info', { 
+      category, 
+      error: error.message 
+    });
+    response.status(500).json(AppUtils.createErrorResponse("Internal server error"));
+  }
+});
+
+/**
  * User profile retrieval endpoint (placeholder)
  */
 apiRouter.get("/profile", (request, response) => {

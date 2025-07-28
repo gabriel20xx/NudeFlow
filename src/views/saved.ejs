@@ -7,28 +7,44 @@
 
     <script>
         async function fetchSavedVideos() {
-            const response = await fetch('/api/saved');
-            const videos = await response.json();
+            try {
+                const response = await fetch('/api/saved');
+                const apiResponse = await response.json();
 
-            const container = document.getElementById('savedVideos');
-            container.innerHTML = '';
+                const container = document.getElementById('savedVideos');
+                container.innerHTML = '';
 
-            if (videos.length === 0) {
-                container.innerHTML = '<p>No saved videos yet.</p>';
-                return;
+                if (!apiResponse.success || !apiResponse.data || apiResponse.data.length === 0) {
+                    container.innerHTML = '<p>No saved videos yet.</p>';
+                    return;
+                }
+
+                apiResponse.data.forEach(video => {
+                    const videoElement = document.createElement('div');
+                    videoElement.classList.add('video-item');
+                    videoElement.innerHTML = `
+                        <div class="video-thumbnail">
+                            <img src="${video.thumbnail || video.url}" alt="${video.name}" onclick="playVideo('${video.url}')">
+                            <p>${video.name}</p>
+                            <small>Category: ${video.category}</small>
+                            <button onclick="removeSaved('${video.id}')">Remove</button>
+                        </div>
+                    `;
+                    container.appendChild(videoElement);
+                });
+            } catch (error) {
+                console.error('Error fetching saved videos:', error);
+                document.getElementById('savedVideos').innerHTML = '<p>Error loading saved videos. Please try again.</p>';
             }
+        }
 
-            videos.forEach(video => {
-                const videoElement = document.createElement('div');
-                videoElement.classList.add('video-item');
-                videoElement.innerHTML = `
-                    <a href="/videos/${video.id}">
-                        <img src="${video.thumbnail}" alt="${video.title}">
-                        <p>${video.title}</p>
-                    </a>
-                `;
-                container.appendChild(videoElement);
-            });
+        function playVideo(videoUrl) {
+            window.location.href = `/?video=${encodeURIComponent(videoUrl)}`;
+        }
+
+        function removeSaved(videoId) {
+            // This would need an API endpoint to remove saved videos
+            alert('Remove saved video functionality not yet implemented');
         }
 
         fetchSavedVideos();

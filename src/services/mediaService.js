@@ -52,7 +52,7 @@ const scanMediaFiles = async () => {
               name: path.basename(file, path.extname(file)),
               filename: file,
               category: categoryName,
-              relativePath: path.join(categoryName, file),
+              relativePath: `${categoryName}/${file}`, // Use forward slashes for URLs
               mimeType: AppUtils.determineMimeType(file),
               mediaType: AppUtils.getMediaType(file)
             });
@@ -178,11 +178,20 @@ const getMediaPath = (relativePath) => {
   return absolutePath;
 };
 
+/**
+ * Get the base media directory path for security checks.
+ * @returns {string} - The absolute path to the media directory.
+ */
+const getMediaBasePath = () => {
+  return getMediaDirectory();
+};
+
 module.exports = {
   initializeMediaService,
   getAllMedia,
   getCategories,
   getRandomMedia,
   searchMedia,
-  getMediaPath
+  getMediaPath,
+  getMediaBasePath
 };

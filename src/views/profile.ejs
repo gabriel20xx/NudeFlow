@@ -29,13 +29,24 @@
 
     <script>
         async function fetchUserProfile() {
-            const response = await fetch('/api/profile');
-            const user = await response.json();
+            try {
+                const response = await fetch('/api/profile');
+                const apiResponse = await response.json();
 
-            document.getElementById('username').textContent = user.username;
-            document.getElementById('email').textContent = user.email;
-            document.getElementById('bio').textContent = user.bio;
-            document.getElementById('profilePicture').src = user.profilePicture || '/images/default-avatar.png';
+                if (apiResponse.success && apiResponse.data) {
+                    const user = apiResponse.data;
+                    document.getElementById('username').textContent = user.username || 'Not set';
+                    document.getElementById('email').textContent = user.email || 'Not set';
+                    document.getElementById('bio').textContent = user.bio || 'No bio available';
+                    document.getElementById('profilePicture').src = user.profilePicture || '/images/default-avatar.png';
+                } else {
+                    console.error('Failed to fetch profile:', apiResponse.message);
+                    document.getElementById('username').textContent = 'Error loading profile';
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+                document.getElementById('username').textContent = 'Error loading profile';
+            }
         }
 
         function editProfile() {

@@ -31,59 +31,100 @@ function getUrl() {
     const match = currentUrl.match(categoryPattern);
     if (match && match[1]) {
         let category = match[1];
-        let url = `${baseUrl}/media${category}`;
+        let url = `${baseUrl}/api/media/random${category}`;
         ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Category page detected', { category, url });
         return url;
     }
   } else if (domainPattern.test(currentUrl)) {
-        let url = `${baseUrl}/media/homepage`;
+        let url = `${baseUrl}/api/media/random/homepage`;
         ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Homepage detected', { url });
         return url;
   } else {
-    let url = `${baseUrl}/media/homepage`;
+    let url = `${baseUrl}/api/media/random/homepage`;
     ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'No specific page matched, using homepage', { currentUrl });
     return url;
   }
 }
     
 function loadContent() {
+  const FUNCTION_NAME = 'loadContent';
   const url = getUrl();
+  
+  ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Loading content from API', { url });
+  
   fetch(url)
     .then(response => {
       if (!response.ok) throw new Error(`Failed to load content: ${response.status}`);
-      return response.blob();
+      return response.json();
     })
-    .then(blob => {
-      const objectURL = URL.createObjectURL(blob);
-      const mediaElement = document.createElement("video");
-
-      mediaElement.src = objectURL;
-      mediaElement.classList.add("media");
-
-      // Apply media configuration
-      const mediaConfig = ApplicationConfiguration?.mediaPlaybackSettings || {};
-      mediaElement.autoplay = mediaConfig.autoplay !== false;
-      mediaElement.loop = mediaConfig.loop !== false;
-      mediaElement.controls = mediaConfig.controls === true;
-      mediaElement.muted = mediaConfig.muted !== false;
-      mediaElement.playsInline = mediaConfig.playsInline !== false;
+    .then(apiResponse => {
+      ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'API response received', { apiResponse });
+      
+      if (!apiResponse.success || !apiResponse.data) {
+        throw new Error('Invalid API response');
+      }
+      
+      const mediaInfo = apiResponse.data;
+      const mediaType = mediaInfo.mediaType || 'video'; // default to video
+      const mediaUrl = mediaInfo.url;
+      
+      ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Creating media element', { 
+        mediaType, 
+        fileName: mediaInfo.filename 
+      });
+      
+      let mediaElement;
+      
+      // Create appropriate element based on media type
+      if (mediaType === 'static') {
+        mediaElement = document.createElement("img");
+        mediaElement.src = mediaUrl;
+        mediaElement.alt = mediaInfo.name || 'Media content';
+        
+        // Apply common styling
+        mediaElement.classList.add("media");
+        mediaElement.style.maxWidth = "100%";
+        mediaElement.style.height = "auto";
+        mediaElement.style.objectFit = "contain";
+        
+      } else {
+        mediaElement = document.createElement("video");
+        mediaElement.src = mediaUrl;
+        
+        // Apply media configuration for videos
+        const mediaConfig = ApplicationConfiguration?.mediaPlaybackSettings || {};
+        mediaElement.autoplay = mediaConfig.autoplay !== false;
+        mediaElement.loop = mediaConfig.loop !== false;
+        mediaElement.controls = mediaConfig.controls === true;
+        mediaElement.muted = mediaConfig.muted !== false;
+        mediaElement.playsInline = mediaConfig.playsInline !== false;
+        
+        mediaElement.classList.add("media");
+      }
 
       if (toLoadImageIndex == 0) {
         mediaElement.classList.add("active");
       }
 
-      if (toLoadImageIndex == 0) {
-        // Attempt to play with sound after user interaction
+      // Handle audio unmuting for videos on user interaction
+      if (mediaType !== 'static' && toLoadImageIndex == 0) {
         document.body.addEventListener("click", () => {
-          mediaElement.muted = false;
-          mediaElement.play().catch(error => {
-            ApplicationUtilities.errorLog(MODULE_NAME, 'mediaPlayback', 'Autoplay failed', { error: error.message });
-          });
+          if (mediaElement.tagName === 'VIDEO') {
+            mediaElement.muted = false;
+            mediaElement.play().catch(error => {
+              ApplicationUtilities.errorLog(MODULE_NAME, 'mediaPlayback', 'Autoplay failed', { error: error.message });
+            });
+          }
         }, { once: true });
       }    
 
       mediaContainer.appendChild(mediaElement);
-      ApplicationUtilities.debugLog(MODULE_NAME, 'loadContent', 'Added media element to container', { toLoadImageIndex });
+      ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Added media element to container', { 
+        toLoadImageIndex, 
+        mediaType,
+        elementType: mediaElement.tagName 
+      });
+      
       toLoadImageIndex++;
 
       if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
@@ -91,7 +132,7 @@ function loadContent() {
       }
    })
    .catch(error => {
-     ApplicationUtilities.errorLog(MODULE_NAME, 'loadContent', 'Error loading content', { error: error.message });
+     ApplicationUtilities.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error loading content', { error: error.message });
      // Show user-friendly error message
      if (typeof ApplicationUtilities !== 'undefined') {
        ApplicationUtilities.displayUserError("Failed to load media content");
@@ -152,8 +193,12 @@ function changeImage(side) {
 
     ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Changing to new content', { newImageIndex });
     newImage.classList.add("active");
-    newImage.play();
-    newImage.muted = false;
+    
+    // Only call play() and set muted for video elements
+    if (newImage.tagName === 'VIDEO') {
+      newImage.play();
+      newImage.muted = false;
+    }
 
     toggleFlyAnimation(previousImage, 'out', side ? 'up' : 'down');
     toggleFlyAnimation(newImage, 'in', side ? 'up' : 'down');
@@ -164,8 +209,11 @@ function changeImage(side) {
       loadContent();
     }
 
-    previousImage.pause();
-    previousImage.muted = true;
+    // Only call pause() and set muted for video elements
+    if (previousImage.tagName === 'VIDEO') {
+      previousImage.pause();
+      previousImage.muted = true;
+    }
 
     setTimeout(() => {
       previousImage.classList.remove("active");

@@ -258,13 +258,93 @@ window.ApplicationUtilities = {
     
     this.errorLog(MODULE_NAME, FUNCTION_NAME, 'Displaying user error', { errorMessage });
     
-    // Enhanced error display - could be replaced with a toast notification system
-    if (allowReload && window.confirm(`Error: ${errorMessage}\n\nWould you like to reload the page?`)) {
-      this.debugLog(MODULE_NAME, FUNCTION_NAME, 'User chose to reload page');
-      window.location.reload();
-    } else {
-      // Simple alert fallback
-      alert(`Error: ${errorMessage}`);
+    // Create or get the error overlay
+    let errorOverlay = document.getElementById('error-overlay');
+    if (!errorOverlay) {
+      errorOverlay = this.createErrorOverlay();
+    }
+    
+    // Update the error message content
+    const errorText = errorOverlay.querySelector('.error-text');
+    const errorActions = errorOverlay.querySelector('.error-actions');
+    
+    errorText.textContent = errorMessage;
+    
+    // Clear existing buttons
+    errorActions.innerHTML = '';
+    
+    // Add dismiss button
+    const dismissButton = document.createElement('button');
+    dismissButton.textContent = 'Dismiss';
+    dismissButton.onclick = () => {
+      this.hideErrorOverlay();
+    };
+    errorActions.appendChild(dismissButton);
+    
+    // Add reload button if allowed
+    if (allowReload) {
+      const reloadButton = document.createElement('button');
+      reloadButton.className = 'reload-button';
+      reloadButton.textContent = 'Reload Page';
+      reloadButton.onclick = () => {
+        this.debugLog(MODULE_NAME, FUNCTION_NAME, 'User chose to reload page');
+        window.location.reload();
+      };
+      errorActions.appendChild(reloadButton);
+    }
+    
+    // Show the overlay
+    this.showErrorOverlay();
+  },
+
+  /**
+   * Create the error overlay element
+   * @returns {HTMLElement} - The created error overlay
+   */
+  createErrorOverlay: function() {
+    const overlay = document.createElement('div');
+    overlay.id = 'error-overlay';
+    overlay.className = 'error-overlay';
+    
+    const errorMessage = document.createElement('div');
+    errorMessage.className = 'error-message';
+    
+    errorMessage.innerHTML = `
+      <div class="error-title">⚠️ Error</div>
+      <div class="error-text"></div>
+      <div class="error-actions"></div>
+    `;
+    
+    overlay.appendChild(errorMessage);
+    document.body.appendChild(overlay);
+    
+    // Allow clicking outside to dismiss
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        this.hideErrorOverlay();
+      }
+    });
+    
+    return overlay;
+  },
+
+  /**
+   * Show the error overlay
+   */
+  showErrorOverlay: function() {
+    const overlay = document.getElementById('error-overlay');
+    if (overlay) {
+      overlay.style.display = 'flex';
+    }
+  },
+
+  /**
+   * Hide the error overlay
+   */
+  hideErrorOverlay: function() {
+    const overlay = document.getElementById('error-overlay');
+    if (overlay) {
+      overlay.style.display = 'none';
     }
   },
   

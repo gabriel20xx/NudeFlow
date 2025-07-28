@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const mediaService = require("../services/mediaService");
 const AppUtils = require('../utils/AppUtils');
 
@@ -39,22 +40,33 @@ mediaRouter.get("/random/:category?", (request, response) => {
 
 /**
  * Route to serve a specific media file by its relative path.
- * The path is expected to be URL-encoded.
+ * The path is expected to be URL-encoded and can include subdirectories.
  */
-mediaRouter.get("/:relativePath", (request, response) => {
+mediaRouter.get("/*", (request, response) => {
     const FUNCTION_NAME = 'handleSpecificMediaRequest';
-    const { relativePath } = request.params;
+    // Get the full path after /media/
+    const relativePath = request.params[0];
 
     AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Processing specific media request', { relativePath });
 
     try {
         const decodedPath = decodeURIComponent(relativePath);
-        const mediaPath = mediaService.getMediaPath(decodedPath);
+        // Convert URL path separators to system path separators
+        const systemPath = decodedPath.replace(/\//g, path.sep);
+        const mediaPath = mediaService.getMediaPath(systemPath);
 
         // Security check to prevent path traversal
         if (!mediaPath.startsWith(mediaService.getMediaBasePath())) {
              AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Attempted path traversal', { relativePath });
              return response.status(403).send("Forbidden");
+        }
+
+        // Check if the path is a directory (category)
+        const fs = require('fs');
+        if (fs.existsSync(mediaPath) && fs.lstatSync(mediaPath).isDirectory()) {
+            // If it's a directory, redirect to get a random media from that category
+            AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Directory requested, redirecting to random media', { category: decodedPath });
+            return response.redirect(`/media/random/${decodedPath}`);
         }
 
         // The sendFile method will handle Content-Type and other headers
@@ -69,7 +81,17 @@ mediaRouter.get("/:relativePath", (request, response) => {
             }
         });
     } catch (error) {
-        AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error serving specific media', { relativePath, error: error.message });
+        AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error serving specific media', { 
+            module: MODULE_NAME,
+            function: FUNCTION_NAME,
+            message: 'Error serving specific media',
+            error: {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+            },
+            relativePath 
+        });
         response.status(500).json(AppUtils.createErrorResponse("Internal server error"));
     }
 });
