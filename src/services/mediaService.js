@@ -8,6 +8,20 @@ const MODULE_NAME = 'MediaService';
 const MEDIA_PATH = process.env.MEDIA_PATH || '../media';
 const MEDIA_SCAN_INTERVAL = parseInt(process.env.MEDIA_SCAN_INTERVAL) || 300000; // 5 minutes
 
+// Get the project root directory (going from src/services to project root)
+const PROJECT_ROOT = path.resolve(__dirname, '../../');
+
+// Helper function to get the resolved media directory path
+const getMediaDirectory = () => {
+  // If MEDIA_PATH starts with ../, resolve it from project root
+  // Otherwise, treat it as an absolute path or relative to project root
+  if (MEDIA_PATH.startsWith('../')) {
+    return path.resolve(PROJECT_ROOT, MEDIA_PATH);
+  } else {
+    return path.resolve(PROJECT_ROOT, MEDIA_PATH);
+  }
+};
+
 let mediaCache = [];
 let categoriesCache = [];
 
@@ -21,7 +35,7 @@ const scanMediaFiles = async () => {
   try {
     const tempMediaCache = [];
     const tempCategoriesCache = new Set();
-    const mediaDirectory = path.resolve(__dirname, '../../', MEDIA_PATH);
+    const mediaDirectory = getMediaDirectory();
 
     const items = await fs.readdir(mediaDirectory, { withFileTypes: true });
 
@@ -66,7 +80,7 @@ const scanMediaFiles = async () => {
     mediaCache = tempMediaCache;
     categoriesCache = Array.from(tempCategoriesCache).map(name => ({
         name,
-        displayName: AppUtils.formatDisplayText(name)
+        displayName: AppUtils.formatRouteNameForDisplay(name)
     }));
 
     AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Media scan completed successfully', {
@@ -78,7 +92,7 @@ const scanMediaFiles = async () => {
     // If the directory doesn't exist, create it
     if (error.code === 'ENOENT') {
         try {
-            const mediaDirectory = path.resolve(__dirname, '../../', MEDIA_PATH);
+            const mediaDirectory = getMediaDirectory();
             await fs.mkdir(mediaDirectory, { recursive: true });
             AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, `Created media directory at: ${mediaDirectory}`);
         } catch (mkdirError) {
@@ -158,7 +172,7 @@ const getMediaPath = (relativePath) => {
     return null;
   }
   
-  const absolutePath = path.join(path.resolve(__dirname, '../../', MEDIA_PATH), relativePath);
+  const absolutePath = path.join(getMediaDirectory(), relativePath);
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Media path resolved', { absolutePath });
   
   return absolutePath;

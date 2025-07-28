@@ -1,4 +1,5 @@
 // Dropdown functionality for route navigation
+(function() {
 const MODULE_NAME = 'DropdownModule';
 
 /**
@@ -141,3 +142,5 @@ function redirectToSelectedOption() {
 window.redirectToOption = redirectToSelectedOption;
 
 ApplicationUtilities.debugLog(MODULE_NAME, 'MODULE_INIT', 'Dropdown module loaded and ready');
+
+})(); // End of IIFE

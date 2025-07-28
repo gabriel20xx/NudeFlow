@@ -1,4 +1,5 @@
 // Media loading and display functionality
+(function() {
 const MODULE_NAME = 'LoadingModule';
 
 let toLoadImageIndex = 0; // Track the page number for fetching images
@@ -190,3 +191,5 @@ function toggleFlyAnimation(element, action, direction) {
   const animationClass = `fly-${action}-${direction}`;
   element.classList.add(animationClass);
 }
+
+})(); // End of IIFE

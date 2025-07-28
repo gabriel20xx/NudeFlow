@@ -1,4 +1,5 @@
 // Categories page functionality
+(function() {
 const MODULE_NAME = 'CategoriesModule';
 
 window.onload = async function() {
@@ -56,3 +57,5 @@ window.onload = async function() {
         ApplicationUtilities.displayUserError('Failed to load categories');
     }
 };
+
+})(); // End of IIFE

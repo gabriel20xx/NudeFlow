@@ -1,4 +1,5 @@
 // Intro overlay functionality
+(function() {
 const MODULE_NAME = 'IntroModule';
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -29,3 +30,5 @@ document.addEventListener('DOMContentLoaded', function() {
     
     ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Intro overlay functionality initialized successfully');
 });
+
+})(); // End of IIFE
