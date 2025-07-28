@@ -35,11 +35,16 @@ npm install
 cp .env.example .env
 ```
 
-4. Edit `.env` file with your configuration:
+4. (Optional) Install dotenv for .env file support:
 ```bash
-# Update paths as needed
-MEDIA_PATH=./media
-MODELS_PATH=./models
+npm install dotenv
+```
+
+5. Edit `.env` file with your configuration:
+```bash
+# Paths are relative to project root using ../
+MEDIA_PATH=../media
+MODELS_PATH=../models
 ```
 
 ## Usage
@@ -82,7 +87,7 @@ Media files are scanned from the configured media path and categorized based on 
 
 ```
 XXXTok/
-├── config/                 # Configuration files
+├── .env.example            # Environment configuration template
 ├── src/
 │   ├── api/                # API route handlers
 │   ├── controllers/        # Business logic controllers
@@ -111,10 +116,15 @@ The application uses environment variables for configuration. Key settings inclu
 ### Environment Variables
 
 - `PORT`: Server port (default: 3000)
-- `MEDIA_PATH`: Path to media files directory (default: ./media)
-- `MODELS_PATH`: Path to models directory (default: ./models)
+- `MEDIA_PATH`: Path to media files directory (default: ../media, relative to project root)
+- `MODELS_PATH`: Path to models directory (default: ../models, relative to project root)
 - `BASE_URL`: Base URL for the application
-- `CORS_ORIGIN`: CORS origin configuration
+- `CORS_ORIGIN`: CORS origin configuration (default: *)
+- `MAX_FILE_SIZE`: Maximum file size for uploads (default: 10mb)
+- `MEDIA_SCAN_INTERVAL`: Media scan interval in milliseconds (default: 300000)
+- `ENABLE_DYNAMIC_ROUTES`: Enable dynamic routing (default: true)
+- `ENABLE_SEARCH`: Enable search functionality (default: true)
+- `ENABLE_PROFILES`: Enable profile functionality (default: true)
 - `NODE_ENV`: Environment mode (development/production)
 
 ## Security Features

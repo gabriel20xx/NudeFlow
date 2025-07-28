@@ -1,9 +1,12 @@
 const path = require("path");
 const fs = require("fs").promises;
 const AppUtils = require("../utils/AppUtils");
-const config = require("../../config/config");
 
 const MODULE_NAME = 'MediaService';
+
+// Environment configuration
+const MEDIA_PATH = process.env.MEDIA_PATH || '../media';
+const MEDIA_SCAN_INTERVAL = parseInt(process.env.MEDIA_SCAN_INTERVAL) || 300000; // 5 minutes
 
 let mediaCache = [];
 let categoriesCache = [];
@@ -18,7 +21,7 @@ const scanMediaFiles = async () => {
   try {
     const tempMediaCache = [];
     const tempCategoriesCache = new Set();
-    const mediaDirectory = config.paths.media;
+    const mediaDirectory = path.resolve(__dirname, '../../', MEDIA_PATH);
 
     const items = await fs.readdir(mediaDirectory, { withFileTypes: true });
 
@@ -75,8 +78,9 @@ const scanMediaFiles = async () => {
     // If the directory doesn't exist, create it
     if (error.code === 'ENOENT') {
         try {
-            await fs.mkdir(config.paths.media, { recursive: true });
-            AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, `Created media directory at: ${config.paths.media}`);
+            const mediaDirectory = path.resolve(__dirname, '../../', MEDIA_PATH);
+            await fs.mkdir(mediaDirectory, { recursive: true });
+            AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, `Created media directory at: ${mediaDirectory}`);
         } catch (mkdirError) {
             AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Failed to create media directory', mkdirError);
         }
@@ -89,7 +93,7 @@ const scanMediaFiles = async () => {
  */
 const initializeMediaService = async () => {
   await scanMediaFiles();
-  setInterval(scanMediaFiles, config.cache.mediaScanInterval);
+  setInterval(scanMediaFiles, MEDIA_SCAN_INTERVAL);
 };
 
 /**
@@ -154,7 +158,7 @@ const getMediaPath = (relativePath) => {
     return null;
   }
   
-  const absolutePath = path.join(config.paths.media, relativePath);
+  const absolutePath = path.join(path.resolve(__dirname, '../../', MEDIA_PATH), relativePath);
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Media path resolved', { absolutePath });
   
   return absolutePath;

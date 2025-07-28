@@ -19,9 +19,14 @@ const configureMiddleware = () => {
   const FUNCTION_NAME = 'configureMiddleware';
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Configuring Express middleware');
   
-  expressApplication.use(cors());
-  expressApplication.use(express.json({ limit: '10mb' }));
-  expressApplication.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  // CORS configuration from environment
+  const corsOptions = {
+    origin: process.env.CORS_ORIGIN || "*"
+  };
+  
+  expressApplication.use(cors(corsOptions));
+  expressApplication.use(express.json({ limit: process.env.MAX_FILE_SIZE || '10mb' }));
+  expressApplication.use(express.urlencoded({ extended: true, limit: process.env.MAX_FILE_SIZE || '10mb' }));
 
   // View engine setup
   expressApplication.set("view engine", "ejs");

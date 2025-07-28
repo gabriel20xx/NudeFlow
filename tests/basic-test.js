@@ -2,12 +2,11 @@
 // Run with: node tests/basic-test.js
 
 const http = require('http');
-const config = require('../config/config');
 
 // Test configuration
 const testConfig = {
   host: 'localhost',
-  port: config.server.port,
+  port: process.env.PORT || 3000,
   timeout: 5000
 };
 
