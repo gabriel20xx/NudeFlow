@@ -215,11 +215,12 @@ function changeImage(side) {
       previousImage.muted = true;
     }
 
-    setTimeout(() => {
+  // Match cleanup timing to CSS animation (~450-500ms). Using 520ms for safety.
+  setTimeout(() => {
       previousImage.classList.remove("active");
       previousImage.classList.remove(`fly-out-up`, `fly-out-down`);
       isTransitioning = false;
-    }, 500);
+  }, 520);
   } else {
     ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'No content change possible', { 
       canChange: false, 
