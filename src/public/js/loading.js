@@ -200,8 +200,19 @@ function changeImage(side) {
       newImage.muted = false;
     }
 
-    toggleFlyAnimation(previousImage, 'out', side ? 'up' : 'down');
-    toggleFlyAnimation(newImage, 'in', side ? 'up' : 'down');
+    // For forward (side === true): new media comes from bottom (in-up), old goes to top (out-up)
+    // For backward (side === false): new media comes from top (in-down), old goes to bottom (out-down)
+    if (side) { // next
+      previousImage.classList.remove('fly-in-up','fly-in-down','fly-out-down','fly-out-up');
+      newImage.classList.remove('fly-in-up','fly-in-down','fly-out-down','fly-out-up');
+      newImage.classList.add('fly-in-up');
+      previousImage.classList.add('fly-out-up');
+    } else { // previous
+      previousImage.classList.remove('fly-in-up','fly-in-down','fly-out-down','fly-out-up');
+      newImage.classList.remove('fly-in-up','fly-in-down','fly-out-down','fly-out-up');
+      newImage.classList.add('fly-in-down');
+      previousImage.classList.add('fly-out-down');
+    }
 
     currentImageIndex = newImageIndex;
 
@@ -229,16 +240,7 @@ function changeImage(side) {
   }
 }
 
-function toggleFlyAnimation(element, action, direction) {
-  const directions = ['up', 'down'];
-  const actions = ['in', 'out'];
-
-  // Remove all existing fly classes
-  directions.forEach(d => actions.forEach(a => element.classList.remove(`fly-${a}-${d}`)));
-
-  // Apply the new class
-  const animationClass = `fly-${action}-${direction}`;
-  element.classList.add(animationClass);
-}
+// Legacy helper no longer needed with explicit mapping above (kept for compatibility if referenced elsewhere)
+function toggleFlyAnimation() { /* deprecated */ }
 
 })(); // End of IIFE
