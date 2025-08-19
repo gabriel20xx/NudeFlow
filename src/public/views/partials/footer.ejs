@@ -1,16 +1,5 @@
 </div>
 <script defer src="/js/ui.js"></script>
-<script>
- // Ensure bottom nav always visible by adjusting padding if viewport changes / orientation
- (function(){
-	 function adjustPadding(){
-		 const nav=document.querySelector('.bottom-nav');
-		 if(!nav) return; document.body.style.paddingBottom = nav.getBoundingClientRect().height + 'px';
-	 }
-	 window.addEventListener('resize', adjustPadding);
-	 window.addEventListener('orientationchange', adjustPadding);
-	 document.addEventListener('DOMContentLoaded', adjustPadding);
- })();
-</script>
+<!-- Footer scripts: bottom nav padding script removed (layout uses fixed offsets) -->
 </body>
 </html>

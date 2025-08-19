@@ -15,15 +15,17 @@
 <body>
 <div class="body-container">
 	<header class="app-topbar" role="banner">
-	<a href="/" class="app-logo" aria-label="Go to home feed">NudeFlow</a>
+	  <a href="/" class="app-logo" aria-label="Go to home feed">NudeFlow</a>
+	  <div class="app-topbar-center">
 		<div class="app-category-select" aria-label="Select category">
-			<select id="dropdown" name="category" aria-label="Categories" onchange="redirectToOption()">
+			<select id="dropdown" class="ui-select" name="category" aria-label="Categories" onchange="redirectToOption()">
 				<option value="">All Categories</option>
 			</select>
 		</div>
-		<div class="theme-toggle" style="margin-left:auto;">
-			<button type="button" id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme" title="Toggle dark / light theme">🌙</button>
-		</div>
+	  </div>
+	  <div class="theme-toggle">
+		<button type="button" id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme" title="Toggle dark / light theme">🌙</button>
+	  </div>
 	</header>
 	<script>
 		(function(){

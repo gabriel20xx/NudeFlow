@@ -77,30 +77,26 @@ function loadContent() {
       
       // Create appropriate element based on media type
       if (mediaType === 'static') {
-        mediaElement = document.createElement("img");
+        mediaElement = document.createElement('img');
         mediaElement.src = mediaUrl;
         mediaElement.alt = mediaInfo.name || 'Media content';
-        
-        // Apply common styling
-        mediaElement.classList.add("media");
-        mediaElement.style.maxWidth = "100%";
-        mediaElement.style.height = "auto";
-        mediaElement.style.objectFit = "contain";
-        
       } else {
-        mediaElement = document.createElement("video");
+        mediaElement = document.createElement('video');
         mediaElement.src = mediaUrl;
-        
-        // Apply media configuration for videos
         const mediaConfig = ApplicationConfiguration?.mediaPlaybackSettings || {};
         mediaElement.autoplay = mediaConfig.autoplay !== false;
         mediaElement.loop = mediaConfig.loop !== false;
         mediaElement.controls = mediaConfig.controls === true;
         mediaElement.muted = mediaConfig.muted !== false;
         mediaElement.playsInline = mediaConfig.playsInline !== false;
-        
-        mediaElement.classList.add("media");
       }
+
+      // Unified sizing / fit
+      mediaElement.classList.add('media');
+      mediaElement.style.width = '100%';
+      mediaElement.style.height = '100%';
+      mediaElement.style.objectFit = 'contain';
+      mediaElement.style.background = 'var(--color-bg)';
 
       if (toLoadImageIndex == 0) {
         mediaElement.classList.add("active");
