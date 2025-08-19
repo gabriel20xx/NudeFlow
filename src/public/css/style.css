@@ -1,5 +1,7 @@
-/* Unified Theme Import */
+/* Canonical NudeFlow stylesheet (migrated to src/public). */
 @import url('./theme.css');
+
+/* (Add component styles here; legacy version existed at ../../public/css/style.css) */
 
 /* Tokens (transition etc.) specific to this module */
 :root { 

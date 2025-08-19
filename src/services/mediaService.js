@@ -5,6 +5,8 @@ const AppUtils = require("../utils/AppUtils");
 const MODULE_NAME = 'MediaService';
 
 // Environment configuration
+// Default media directory placed OUTSIDE project root (sibling to NudeFlow) => ../media
+// Allows sharing a single media library across redeploys without touching source tree.
 const MEDIA_PATH = process.env.MEDIA_PATH || '../media';
 const MEDIA_SCAN_INTERVAL = parseInt(process.env.MEDIA_SCAN_INTERVAL) || 300000; // 5 minutes
 
@@ -106,6 +108,18 @@ const scanMediaFiles = async () => {
  * Initializes the media service and starts the periodic scan.
  */
 const initializeMediaService = async () => {
+  const FUNCTION_NAME = 'initializeMediaService';
+  // Validate external media directory presence (warn only; do not fail startup)
+  try {
+    const mediaDir = getMediaDirectory();
+    const fsSync = require('fs');
+    if (!fsSync.existsSync(mediaDir)) {
+      AppUtils.warnLog(MODULE_NAME, FUNCTION_NAME, 'Media directory missing at startup (will create & remain empty)', { mediaDir });
+      await fs.mkdir(mediaDir, { recursive: true });
+    }
+  } catch (dirErr) {
+    AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Failed during media directory validation', dirErr);
+  }
   await scanMediaFiles();
   setInterval(scanMediaFiles, MEDIA_SCAN_INTERVAL);
 };

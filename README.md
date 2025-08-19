@@ -59,7 +59,7 @@ npm run dev
 npm start
 ```
 
-The application will be available at `http://localhost:3000` (or your configured port).
+The application will be available at `http://localhost:8080` (or your configured port).
 
 ## Media Management
 
@@ -83,7 +83,7 @@ Media files are scanned from the configured media path and categorized based on 
 - `GET /media/random/:category?` - Get random video (optionally from category)
 - `GET /media/:relativePath` - Get specific media file
 
-## Directory Structure
+## Directory Structure (Updated)
 
 ```
 NudeFlow/
@@ -92,10 +92,13 @@ NudeFlow/
 │   ├── api/                # API route handlers
 │   ├── controllers/        # Business logic controllers
 │   ├── models/             # Database models
-│   ├── public/             # Static assets (CSS, JS, images)
+│   ├── public/             # Static assets + views/ (EJS templates now here)
+│   │   ├── css/            # Styles (theme + style)
+│   │   ├── js/             # Frontend scripts
+│   │   ├── images/         # Static images
+│   │   └── views/          # EJS templates (partials + pages)
 │   ├── routes/             # Express routes
 │   ├── utils/              # Utility functions
-│   ├── views/              # EJS templates
 │   └── server.js           # Main server file
 ├── scripts/                # Utility scripts
 ├── logs/                   # Application logs
@@ -115,7 +118,7 @@ The application uses environment variables for configuration. Key settings inclu
 
 ### Environment Variables
 
-- `PORT`: Server port (default: 3000)
+- `PORT`: Server port (default: 8080)
 - `MEDIA_PATH`: Path to media files directory (default: ../media, relative to project root)
 - `MODELS_PATH`: Path to models directory (default: ../models, relative to project root)
 - `BASE_URL`: Base URL for the application

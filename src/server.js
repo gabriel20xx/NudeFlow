@@ -19,7 +19,7 @@ const MODULE_NAME = 'MainServer';
 let expressApplication; // lazily created
 
 // Configuration
-const serverPort = process.env.PORT || 3000;
+const serverPort = process.env.PORT || 8080;
 
 AppUtils.infoLog(MODULE_NAME, 'SERVER_INIT', 'Starting NudeFlow server initialization', {
   serverPort
@@ -44,8 +44,10 @@ const configureMiddleware = () => {
 
   // View engine setup
   expressApplication.set("view engine", "ejs");
-  expressApplication.set("views", path.join(__dirname, "views"));
-  expressApplication.use(express.static(path.join(__dirname, "public")));
+  // Updated views path to new unified structure (views inside public)
+  expressApplication.set("views", path.join(__dirname, "public", "views"));
+  // Serve static assets from src/public (unified monorepo convention)
+  expressApplication.use(express.static(path.join(__dirname, 'public')));
   
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Express middleware configuration completed');
 };
@@ -62,6 +64,10 @@ const configureRoutes = () => {
   expressApplication.use("/media", mediaRoutesModule);
   expressApplication.use("/", viewRoutesModule);
   expressApplication.use("/api", apiRoutesModule);
+  // Simple health probe (no heavy deps)
+  expressApplication.get('/health', (req, res) => {
+    res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+  });
   
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Application routes configuration completed');
 };
