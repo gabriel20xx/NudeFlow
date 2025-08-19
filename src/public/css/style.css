@@ -4,23 +4,17 @@
 /* (Add component styles here; legacy version existed at ../../public/css/style.css) */
 
 /* Tokens (transition etc.) specific to this module */
-:root { 
-    --transition-fast: 120ms cubic-bezier(.4,0,.2,1); 
-    --transition-normal: 260ms cubic-bezier(.4,0,.2,1);
-}
+/* Transition tokens */
+:root { --transition-fast: 120ms cubic-bezier(.4,0,.2,1); --transition-normal: 260ms cubic-bezier(.4,0,.2,1); }
+
+/* Unified sizing / layout tokens (kept in sync with NudeForge) */
+:root { --bar-height:56px; --topbar-height: var(--bar-height); --bottom-nav-height: var(--bar-height); --font-size-xs:.65rem; --font-size-sm:.75rem; --font-size-base:.9rem; --font-size-md:1rem; --font-size-lg:1.2rem; --gap-xs:.25rem; --gap-sm:.4rem; --gap-md:.65rem; --gap-lg:1rem; }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body { height: 100%; }
 
-body {
-  font-family: var(--font-stack);
-  background: var(--color-bg);
-  color: var(--color-text);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-:root { --bar-height:56px; --topbar-height: var(--bar-height); --bottom-nav-height: var(--bar-height); }
-}
+body { font-family: var(--font-stack); background: var(--color-bg); color: var(--color-text); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 
 .body-container {
 .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; background: rgba(13,15,17,0.82); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-top: 1px solid var(--color-border); height: var(--bottom-nav-height); display:flex; }
@@ -34,18 +28,15 @@ body {
   position: relative;
 }
 
-/* Bottom Navigation (unified style with NudeForge) */
+/* Bottom Navigation (unified with NudeForge) */
 .bottom-nav { position:fixed; bottom:0; left:0; right:0; height: var(--bottom-nav-height); background: rgba(13,15,17,0.82); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-top:1px solid var(--color-border); z-index:60; display:flex; }
 .bottom-nav ul { list-style:none; margin:0; padding:0; display:flex; width:100%; justify-content:space-around; align-items:center; }
 .bottom-nav a { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.25rem; font-size: var(--font-size-xs); color: var(--color-text-dim); text-decoration:none; position:relative; height:100%; padding:.2rem .4rem; letter-spacing:.3px; transition: color var(--transition-fast); }
 .bottom-nav a i { font-size:1.05rem; }
 .bottom-nav a.active, .bottom-nav a:hover { color: var(--color-accent); }
 .bottom-nav a.active::after { content:""; position:absolute; bottom:.15rem; left:50%; transform:translateX(-50%); width:18px; height:3px; background: var(--gradient-accent); border-radius:2px; }
-/* Define nav height token (used for layout calculations) */
-:root { --bottom-nav-height: var(--bar-height); }
 
-/* Shared sizing scale (align with NudeForge) */
-:root { --font-size-xs:.65rem; --font-size-sm:.75rem; --font-size-base:.9rem; --font-size-md:1rem; --font-size-lg:1.2rem; --gap-xs:.25rem; --gap-sm:.4rem; --gap-md:.65rem; --gap-lg:1rem; }
+/* (font / gap tokens moved to unified :root block above) */
 
 /* Remove legacy bottom padding; we'll anchor feed between fixed header & nav */
 body { padding-bottom: 0; }
@@ -88,18 +79,18 @@ body { padding-bottom: 0; }
 .media:not(.active) { pointer-events:none; }
 
 
-/* Top Brand / Category Bar */
+/* Top Bar (unified with NudeForge) */
 .app-topbar { position:fixed; top:0; left:0; right:0; height: var(--bar-height); display:flex; align-items:center; gap:1rem; padding:0 .85rem; background: rgba(13,15,17,0.72); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-bottom:1px solid var(--color-border); z-index:50; }
-/* Use flex:1 ghost spacers to allow an absolutely centered middle group while keeping theme toggle pinned right */
-.app-topbar-center { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); display:flex; justify-content:center; align-items:center; pointer-events:auto; padding:0 .25rem; }
-.app-topbar .theme-toggle { margin-left:auto; display:flex; align-items:center; }
+.app-topbar-center { flex:1; display:flex; justify-content:center; }
+.app-topbar-right { display:flex; align-items:center; gap: var(--gap-md); }
+.app-topbar .theme-toggle { display:flex; align-items:center; }
 /* Category select inherits natural width; no explicit min-width to maintain centering */
 .ui-select { appearance:none; -webkit-appearance:none; background: var(--color-surface); color: var(--color-text); border:1px solid var(--color-border); padding:.45rem .8rem; border-radius: var(--radius-pill); font-size: var(--font-size-sm); line-height:1.2; box-shadow: var(--shadow-sm); cursor:pointer; transition: background .25s, border .25s, box-shadow .25s; }
 .ui-select:focus { outline:none; border-color: var(--color-accent); box-shadow: 0 0 0 2px #ffb84d33; }
 .ui-select:hover { background: var(--color-surface-alt); }
 :root[data-theme='light'] .ui-select { background:#ffffff; }
 
-.app-logo { font-size:1.2rem; font-weight:600; background: var(--gradient-accent); -webkit-background-clip:text; background-clip:text; color:transparent; padding:0 .25rem; display:flex; align-items:center; line-height:1; height:100%; }
+.app-logo { font-size:1.05rem; font-weight:600; background: var(--gradient-accent); -webkit-background-clip:text; background-clip:text; color:transparent; text-decoration:none; display:inline-flex; align-items:center; }
 
 #editProfileForm button {
     padding: 10px;
@@ -221,6 +212,23 @@ button {
 
 .error-message .reload-button { background: var(--gradient-info); }
 .error-message .reload-button:hover { background: var(--gradient-info-rev); }
+
+/* Floating error notifications (fallback when toast utility unavailable) */
+.floating-error-root { position:fixed; bottom: calc(var(--bottom-nav-height) + .75rem); right:.85rem; display:flex; flex-direction:column; gap:.65rem; z-index:140; width: min(360px, calc(100vw - 1.5rem)); }
+.floating-error-notice { --accent: var(--color-danger, #ff3b30); background: rgba(30,32,38,0.88); backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%); border:1px solid var(--color-border); border-left:4px solid var(--accent); padding:.9rem 1rem .95rem 1rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); color: var(--color-text); font-size: var(--font-size-sm); line-height:1.35; position:relative; overflow:hidden; animation: fe-in .45s cubic-bezier(.4,0,.2,1); }
+:root[data-theme='light'] .floating-error-notice { background: rgba(255,255,255,0.86); }
+.floating-error-notice.closing { animation: fe-out .32s cubic-bezier(.4,0,.6,1) forwards; }
+.floating-error-notice .fe-title { font-size:.7rem; font-weight:600; letter-spacing:.45px; text-transform:uppercase; color: var(--color-text-dim); margin:0 0 .25rem; }
+.floating-error-notice .fe-text { margin:0 0 .55rem; white-space:pre-wrap; }
+.floating-error-notice .fe-actions { display:flex; gap:.5rem; flex-wrap:wrap; }
+.floating-error-notice .fe-btn { background: var(--gradient-info); color:#fff; border:none; padding:.45rem .85rem; border-radius: var(--radius-sm); font-size:.7rem; letter-spacing:.3px; cursor:pointer; box-shadow: var(--shadow-sm); }
+.floating-error-notice .fe-btn:hover { filter:brightness(1.07); }
+.floating-error-notice .fe-reload { background: var(--gradient-info); }
+.floating-error-notice .fe-close { position:absolute; top:.4rem; right:.4rem; background:none; border:none; color: var(--color-text-dim); font-size:.85rem; cursor:pointer; padding:.35rem; border-radius: var(--radius-sm); }
+.floating-error-notice .fe-close:hover { background: var(--color-surface-alt); color: var(--color-text); }
+@keyframes fe-in { from { opacity:0; transform: translateY(8px) scale(.96);} to { opacity:1; transform: translateY(0) scale(1);} }
+@keyframes fe-out { to { opacity:0; transform: translateY(4px) scale(.96);} }
+@media (max-width:600px){ .floating-error-root { bottom: calc(var(--bottom-nav-height) + .75rem); right:.75rem; left:.75rem; width:auto; } }
 
 /* Video item styling for search and saved pages */
 .video-item {

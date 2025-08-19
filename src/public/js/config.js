@@ -234,55 +234,69 @@ window.ApplicationUtilities = {
    * @param {string} errorMessage - Error message to display
    * @param {boolean} allowReload - Whether to offer page reload option
    */
-  displayUserError: function(errorMessage, allowReload = true) {
+  displayUserError: function(errorMessage, allowReload = true, opts = {}) {
     const MODULE_NAME = 'ApplicationUtilities';
     const FUNCTION_NAME = 'displayUserError';
-    
-    this.errorLog(MODULE_NAME, FUNCTION_NAME, 'Displaying user error', { errorMessage });
-    
-    // Create or get the error overlay
-    let errorOverlay = document.getElementById('error-overlay');
-    if (!errorOverlay) {
-      errorOverlay = this.createErrorOverlay();
+    this.errorLog(MODULE_NAME, FUNCTION_NAME, 'Displaying user error (floating)', { errorMessage });
+
+    // Prefer existing toast utility if available & positioned; otherwise create custom floating notice
+    if (window.toast && typeof window.toast.error === 'function') {
+      window.toast.error(errorMessage, { duration: opts.duration || 4800, title: 'Error' });
+      return;
     }
-    
-    // Update the error message content
-    const errorText = errorOverlay.querySelector('.error-text');
-    const errorActions = errorOverlay.querySelector('.error-actions');
-    
-    errorText.textContent = errorMessage;
-    
-    // Clear existing buttons
-    errorActions.innerHTML = '';
-    
-    // Add dismiss button
-    const dismissButton = document.createElement('button');
-    dismissButton.textContent = 'Dismiss';
-    dismissButton.onclick = () => {
-      this.hideErrorOverlay();
-    };
-    errorActions.appendChild(dismissButton);
-    
-    // Add reload button if allowed
+
+    const rootId = 'floating-error-root';
+    let root = document.getElementById(rootId);
+    if (!root) {
+      root = document.createElement('div');
+      root.id = rootId;
+      root.className = 'floating-error-root';
+      document.body.appendChild(root);
+    }
+
+    const notice = document.createElement('div');
+    notice.className = 'floating-error-notice';
+    notice.setAttribute('role', 'status');
+    notice.innerHTML = `
+      <div class="fe-content">
+        <div class="fe-title">Error</div>
+        <div class="fe-text"></div>
+        <div class="fe-actions"></div>
+        <button class="fe-close" aria-label="Dismiss">✕</button>
+      </div>`;
+    notice.querySelector('.fe-text').textContent = errorMessage;
+
+    const actions = notice.querySelector('.fe-actions');
     if (allowReload) {
-      const reloadButton = document.createElement('button');
-      reloadButton.className = 'reload-button';
-      reloadButton.textContent = 'Reload Page';
-      reloadButton.onclick = () => {
-        this.debugLog(MODULE_NAME, FUNCTION_NAME, 'User chose to reload page');
-        window.location.reload();
-      };
-      errorActions.appendChild(reloadButton);
+      const reloadBtn = document.createElement('button');
+      reloadBtn.type = 'button';
+      reloadBtn.className = 'fe-btn fe-reload';
+      reloadBtn.textContent = 'Reload';
+      reloadBtn.onclick = () => window.location.reload();
+      actions.appendChild(reloadBtn);
     }
-    
-    // Show the overlay
-    this.showErrorOverlay();
+    const closeBtn = notice.querySelector('.fe-close');
+    const dismiss = () => {
+      if (notice.dataset.closing) return;
+      notice.dataset.closing = 'true';
+      notice.classList.add('closing');
+      setTimeout(() => notice.remove(), 320);
+    };
+    closeBtn.addEventListener('click', dismiss);
+
+    const ttl = opts.duration || 4800;
+    if (ttl > 0) setTimeout(dismiss, ttl);
+
+    root.appendChild(notice);
+    // Force reflow then animate in
+    requestAnimationFrame(() => notice.classList.add('enter'));
   },
 
   /**
    * Create the error overlay element
    * @returns {HTMLElement} - The created error overlay
    */
+  /* Deprecated overlay creation retained for backward compatibility (not used now) */
   createErrorOverlay: function() {
     const overlay = document.createElement('div');
     overlay.id = 'error-overlay';

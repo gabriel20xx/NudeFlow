@@ -117,6 +117,14 @@ const initializeMediaService = async () => {
       AppUtils.warnLog(MODULE_NAME, FUNCTION_NAME, 'Media directory missing at startup (will create & remain empty)', { mediaDir });
       await fs.mkdir(mediaDir, { recursive: true });
     }
+    else {
+      try {
+        const sample = (await fs.readdir(mediaDir)).slice(0,5);
+        AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Media directory present', { mediaDir, sampleEntries: sample });
+      } catch (lsErr) {
+        AppUtils.warnLog(MODULE_NAME, FUNCTION_NAME, 'Could not list media dir contents', { mediaDir, error: lsErr.message });
+      }
+    }
   } catch (dirErr) {
     AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Failed during media directory validation', dirErr);
   }
@@ -180,15 +188,36 @@ const searchMedia = (query) => {
 const getMediaPath = (relativePath) => {
   const FUNCTION_NAME = 'getMediaPath';
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Getting absolute media path', { relativePath });
-  
+
   if (!relativePath) {
     AppUtils.warnLog(MODULE_NAME, FUNCTION_NAME, 'No relative path provided');
     return null;
   }
-  
-  const absolutePath = path.resolve(getMediaDirectory(), relativePath);
-  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Media path resolved', { absolutePath });
-  
+
+  // Primary resolution
+  const primaryBase = getMediaDirectory();
+  let absolutePath = path.resolve(primaryBase, relativePath);
+  const fsSync = require('fs');
+
+  // If file missing, attempt fallback bases (helps when MEDIA_PATH was misconfigured e.g. '/media' in Windows env)
+  if (!fsSync.existsSync(absolutePath)) {
+    const fallbackBases = [
+      path.resolve(PROJECT_ROOT, '../media'),           // sibling to project (documented default)
+      path.join(PROJECT_ROOT, 'media'),                 // inside project (legacy)
+      path.resolve(process.cwd(), 'media')              // current working directory
+    ].filter((p, idx, arr) => arr.indexOf(p) === idx); // unique
+
+    for (const base of fallbackBases) {
+      const candidate = path.resolve(base, relativePath);
+      if (fsSync.existsSync(candidate)) {
+        AppUtils.warnLog(MODULE_NAME, FUNCTION_NAME, 'Primary media path missing; using fallback', { primaryBase, chosenFallbackBase: base, relativePath });
+        absolutePath = candidate;
+        break;
+      }
+    }
+  }
+
+  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Media path resolved', { absolutePath, exists: fsSync.existsSync(absolutePath) });
   return absolutePath;
 };
 

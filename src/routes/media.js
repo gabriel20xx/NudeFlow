@@ -73,7 +73,9 @@ mediaRouter.get("/*", (request, response) => {
         // The sendFile method will handle Content-Type and other headers
         response.sendFile(mediaPath, (err) => {
             if (err) {
-                AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'File not found or error sending file', { path: mediaPath, error: err.message });
+                const fsSync = require('fs');
+                const exists = fsSync.existsSync(mediaPath);
+                AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'File not found or error sending file', { path: mediaPath, exists, basePath, relativePath: decodedPath, nodeError: err.message });
                 if (!response.headersSent) {
                     response.status(404).json(AppUtils.createErrorResponse("Media not found"));
                 }
