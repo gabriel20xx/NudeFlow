@@ -19,13 +19,15 @@ body {
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overscroll-behavior: none;
+:root { --bar-height:56px; --topbar-height: var(--bar-height); --bottom-nav-height: var(--bar-height); }
 }
 
 .body-container {
-  display: flex;
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; background: rgba(13,15,17,0.82); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-top: 1px solid var(--color-border); height: var(--bottom-nav-height); display:flex; }
+.bottom-nav ul { list-style:none; display:flex; justify-content:space-around; align-items:center; gap:.5rem; padding:0; margin:0; width:100%; }
+.bottom-nav a { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.25rem; font-size:.65rem; text-decoration:none; color:var(--color-text-dim); font-weight:500; letter-spacing:.3px; position:relative; padding:.2rem .4rem; height:100%; box-sizing:border-box; transition:color var(--transition-fast); }
   flex-direction: column;
-  min-height: 100vh;
+#home-container { position: fixed; top: var(--topbar-height); left:0; right:0; bottom: var(--bottom-nav-height); width:100%; overflow:hidden; }
   width: 100%;
     overflow-x: hidden;
     overflow-y: hidden; /* main feed handles scroll by custom wheel events */
@@ -47,6 +49,23 @@ body {
 
 /* Remove legacy bottom padding; we'll anchor feed between fixed header & nav */
 body { padding-bottom: 0; }
+
+/* Toast / notification system (shared) */
+.toast-root { position:fixed; top:calc(var(--topbar-height) + .75rem); right:.85rem; display:flex; flex-direction:column; gap:.65rem; z-index:120; width: min(340px, calc(100vw - 1.5rem)); pointer-events:none; }
+.toast { --_bg: var(--color-surface); --_border: var(--color-border); --_accent: var(--color-accent); display:flex; align-items:flex-start; gap:.75rem; background:var(--_bg); color:var(--color-text); border:1px solid var(--_border); border-left:4px solid var(--_accent); padding:.85rem .95rem .85rem .95rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); font-size: var(--font-size-sm); line-height:1.3; position:relative; overflow:hidden; isolation:isolate; pointer-events:auto; animation: toast-in .45s cubic-bezier(.4,0,.2,1); }
+.toast.toast-info { --_accent: var(--color-info, var(--color-accent)); }
+.toast.toast-success { --_accent: var(--color-success, #2ecc71); }
+.toast.toast-warn { --_accent: var(--color-warning, #ffcc00); }
+.toast.toast-error { --_accent: var(--color-danger, #ff3b30); }
+.toast h4 { margin:0 0 .2rem 0; font-size: var(--font-size-sm); font-weight:600; letter-spacing:.3px; }
+.toast .toast-body { flex:1; text-align:left; }
+.toast button.toast-close { position:absolute; top:.35rem; right:.35rem; background:none; border:none; color:var(--color-text-dim); cursor:pointer; padding:.35rem; line-height:1; font-size:.85rem; border-radius: var(--radius-sm); }
+.toast button.toast-close:hover { color:var(--color-text); background: var(--color-surface-alt); }
+.toast-progress { position:absolute; left:0; bottom:0; height:3px; background:var(--_accent); width:100%; transform-origin:left; animation: toast-progress linear forwards; }
+@keyframes toast-in { from { opacity:0; transform:translateY(-6px) scale(.97);} to { opacity:1; transform:translateY(0) scale(1);} }
+@keyframes toast-out { to { opacity:0; transform:translateY(-6px) scale(.97);} }
+@keyframes toast-progress { from { transform:scaleX(1);} to { transform:scaleX(0);} }
+@media (max-width:600px){ .toast-root { top:auto; bottom: calc(var(--bottom-nav-height) + .75rem); right:.75rem; left:.75rem; width:auto; } }
 
 /* Media feed container */
 /* Feed occupies exact viewport between header and bottom nav (avoids gaps) */
@@ -70,25 +89,17 @@ body { padding-bottom: 0; }
 
 
 /* Top Brand / Category Bar */
-.app-topbar { position: fixed; top:0; left:0; right:0; height: var(--topbar-height); display:flex; align-items:center; gap:1rem; padding:0 .85rem; background: rgba(13,15,17,0.72); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-bottom:1px solid var(--color-border); z-index:40; }
-.app-topbar-center { flex:1; display:flex; justify-content:center; }
-.app-category-select { min-width:200px; }
+.app-topbar { position: fixed; top:0; left:0; right:0; height: var(--bar-height); display:flex; align-items:center; gap:1rem; padding:0 .85rem; background: rgba(13,15,17,0.72); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-bottom:1px solid var(--color-border); z-index:40; }
+.app-topbar { position: fixed; top:0; left:0; right:0; height: var(--bar-height); display:flex; align-items:center; gap:1rem; padding:0 .85rem; background: rgba(13,15,17,0.72); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-bottom:1px solid var(--color-border); z-index:40; }
+/* Absolutely center the middle container so dropdown is always visually centered regardless of left/right widths */
+.app-topbar-center { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); display:flex; justify-content:center; align-items:center; pointer-events:auto; }
+/* Category select inherits natural width; no explicit min-width to maintain centering */
 .ui-select { appearance:none; -webkit-appearance:none; background: var(--color-surface); color: var(--color-text); border:1px solid var(--color-border); padding:.45rem .8rem; border-radius: var(--radius-pill); font-size: var(--font-size-sm); line-height:1.2; box-shadow: var(--shadow-sm); cursor:pointer; transition: background .25s, border .25s, box-shadow .25s; }
 .ui-select:focus { outline:none; border-color: var(--color-accent); box-shadow: 0 0 0 2px #ffb84d33; }
 .ui-select:hover { background: var(--color-surface-alt); }
 :root[data-theme='light'] .ui-select { background:#ffffff; }
 
-.app-logo {
-    font-size: 1.2rem;
-    font-weight: 600;
-    background: var(--gradient-accent);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    /* Removed legacy duplicate simplistic layout & button blocks for cleanliness */
-    padding: 10px;
-    margin-bottom: 10px;
-}
+.app-logo { font-size:1.2rem; font-weight:600; background: var(--gradient-accent); -webkit-background-clip:text; background-clip:text; color:transparent; padding:0 .25rem; display:flex; align-items:center; line-height:1; height:100%; }
 
 #editProfileForm button {
     padding: 10px;
