@@ -2,6 +2,9 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const path = require("path");
+const http = require('http');
+const https = require('https');
+const fs = require('fs');
 const AppUtils = require("./utils/AppUtils");
 const mediaService = require("./services/mediaService");
 
@@ -132,15 +135,54 @@ const configureGracefulShutdown = () => {
 };
 
 // Start server function
+const ENABLE_HTTPS = (process.env.HTTPS === 'true' || process.env.ENABLE_HTTPS === 'true');
+const SSL_KEY_PATH = process.env.SSL_KEY_PATH || '';
+const SSL_CERT_PATH = process.env.SSL_CERT_PATH || '';
+
+function buildServer(appInstance) {
+  if (!ENABLE_HTTPS) return http.createServer(appInstance);
+  let key; let cert;
+  const haveProvided = SSL_KEY_PATH && SSL_CERT_PATH && fs.existsSync(SSL_KEY_PATH) && fs.existsSync(SSL_CERT_PATH);
+  if (haveProvided) {
+    try {
+      key = fs.readFileSync(SSL_KEY_PATH);
+      cert = fs.readFileSync(SSL_CERT_PATH);
+      AppUtils.infoLog(MODULE_NAME, 'HTTPS', 'Loaded provided SSL key & cert', { SSL_KEY_PATH, SSL_CERT_PATH });
+    } catch (e) {
+      AppUtils.errorLog(MODULE_NAME, 'HTTPS', 'Failed reading provided key/cert, will self-sign', e);
+    }
+  }
+  if (!key || !cert) {
+    try {
+      // eslint-disable-next-line global-require, import/no-extraneous-dependencies
+      const selfsigned = require('selfsigned');
+      const attrs = [{ name: 'commonName', value: 'localhost' }];
+      const pems = selfsigned.generate(attrs, { days: 365, keySize: 2048, algorithm: 'sha256' });
+      key = pems.private;
+      cert = pems.cert;
+      AppUtils.warnLog(MODULE_NAME, 'HTTPS', 'Using generated self-signed certificate (development only)');
+    } catch (e) {
+      AppUtils.errorLog(MODULE_NAME, 'HTTPS', 'Failed to generate self-signed cert. Falling back to HTTP.', e);
+      return http.createServer(appInstance);
+    }
+  }
+  return https.createServer({ key, cert }, appInstance);
+}
+
+let serverRef; // store created server
+
 const startServer = () => {
   const FUNCTION_NAME = 'startServer';
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Starting Express server');
   
-  expressApplication.listen(serverPort, () => {
-  AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'NudeFlow server started successfully', { 
-      serverPort,
-      environment: process.env.NODE_ENV || 'development'
-    });
+  if (!serverRef) serverRef = buildServer(expressApplication);
+  serverRef.listen(serverPort, () => {
+    const protocol = ENABLE_HTTPS ? 'https' : 'http';
+    AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'NudeFlow server started successfully', { 
+        serverPort,
+        protocol,
+        environment: process.env.NODE_ENV || 'development'
+      });
   });
 };
 
