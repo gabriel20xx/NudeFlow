@@ -27,9 +27,39 @@ body {
   flex-direction: column;
   min-height: 100vh;
   width: 100%;
-  overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: hidden; /* main feed handles scroll by custom wheel events */
   position: relative;
 }
+
+/* Bottom Navigation (mobile-first) */
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; background: rgba(13,15,17,0.82); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-top: 1px solid var(--color-border); padding: .35rem .5rem .55rem; }
+.bottom-nav ul { list-style:none; display:flex; justify-content:space-around; align-items:center; gap:.5rem; }
+.bottom-nav a { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.25rem; font-size:.65rem; text-decoration:none; color:var(--color-text-dim); font-weight:500; letter-spacing:.3px; position:relative; padding:.3rem .4rem; transition:color var(--transition-fast); }
+.bottom-nav a i { font-size:1.05rem; }
+.bottom-nav a.active, .bottom-nav a:hover { color: var(--color-accent); }
+.bottom-nav a.active::after { content:""; position:absolute; bottom:-.3rem; left:50%; transform:translateX(-50%); width:18px; height:3px; background: var(--gradient-accent); border-radius:2px; }
+body { padding-bottom: 70px; } /* ensure content above nav; approximate nav height */
+
+/* Media feed container */
+#home-container { position: relative; width:100%; height: calc(100vh - var(--topbar-height) - 70px); margin-top: var(--topbar-height); overflow: hidden; }
+.media { position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; transform:translateY(30px); transition: opacity 420ms var(--transition-normal), transform 420ms var(--transition-normal); display:block; }
+.media.active { opacity:1; transform:translateY(0); }
+
+/* Fly animations (JS adds combinations) */
+.fly-in-up { animation: flyInUp .45s ease forwards; }
+.fly-out-up { animation: flyOutUp .45s ease forwards; }
+.fly-in-down { animation: flyInDown .45s ease forwards; }
+.fly-out-down { animation: flyOutDown .45s ease forwards; }
+
+@keyframes flyInUp { from { opacity:0; transform:translateY(35px) scale(.98);} to { opacity:1; transform:translateY(0) scale(1);} }
+@keyframes flyOutUp { from { opacity:1; transform:translateY(0) scale(1);} to { opacity:0; transform:translateY(-35px) scale(.98);} }
+@keyframes flyInDown { from { opacity:0; transform:translateY(-35px) scale(.98);} to { opacity:1; transform:translateY(0) scale(1);} }
+@keyframes flyOutDown { from { opacity:1; transform:translateY(0) scale(1);} to { opacity:0; transform:translateY(35px) scale(.98);} }
+
+/* Hide non-active media fully after animation completes (JS toggles active class) */
+.media:not(.active) { pointer-events:none; }
+
 
 /* Top Brand / Category Bar */
 .app-topbar {
