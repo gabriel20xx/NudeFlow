@@ -15,6 +15,7 @@ try {
 }
 
 const MODULE_NAME = 'MainServer';
+const SITE_TITLE = process.env.SITE_TITLE || 'NudeFlow';
 // Factory pattern to allow tests to build app without starting HTTP listener
 let expressApplication; // lazily created
 
@@ -62,6 +63,8 @@ const configureRoutes = () => {
   const apiRoutesModule = require("./api/apiRoutes");
 
   expressApplication.use("/media", mediaRoutesModule);
+  // Inject siteTitle into all view renders
+  expressApplication.use((req, res, next)=>{ res.locals.siteTitle = SITE_TITLE; next(); });
   expressApplication.use("/", viewRoutesModule);
   expressApplication.use("/api", apiRoutesModule);
   // Simple health probe (no heavy deps)

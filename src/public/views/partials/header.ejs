@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-	<title>NudeFlow - <%= title %></title>
+	<title><%= (typeof siteTitle !== 'undefined' ? siteTitle : 'NudeFlow') %> - <%= title %></title>
 	<meta name="theme-color" content="#ff9800" />
 	<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 	<link rel="stylesheet" href="/css/style.css">
@@ -17,7 +17,7 @@
 	<!-- Toast / notification stack (shared) -->
 	<div id="toast-root" class="toast-root" aria-live="polite" aria-atomic="false"></div>
 	<header class="app-topbar" role="banner">
-	  <a href="/" class="app-logo" aria-label="Go to home feed">NudeFlow</a>
+	  <a href="/" class="app-logo" aria-label="Go to home feed"><%= (typeof siteTitle !== 'undefined' ? siteTitle : 'NudeFlow') %></a>
 	  <div class="app-topbar-center">
 		<div class="app-category-select" aria-label="Select category">
 			<select id="dropdown" class="ui-select" name="category" aria-label="Categories" onchange="redirectToOption()">
