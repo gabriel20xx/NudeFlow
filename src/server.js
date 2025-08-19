@@ -21,7 +21,7 @@ let expressApplication; // lazily created
 // Configuration
 const serverPort = process.env.PORT || 3000;
 
-AppUtils.infoLog(MODULE_NAME, 'SERVER_INIT', 'Starting XXXTok server initialization', {
+AppUtils.infoLog(MODULE_NAME, 'SERVER_INIT', 'Starting NudeFlow server initialization', {
   serverPort
 });
 
@@ -128,7 +128,7 @@ const startServer = () => {
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Starting Express server');
   
   expressApplication.listen(serverPort, () => {
-    AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'XXXTok server started successfully', { 
+  AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'NudeFlow server started successfully', { 
       serverPort,
       environment: process.env.NODE_ENV || 'development'
     });

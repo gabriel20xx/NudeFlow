@@ -1,4 +1,4 @@
-# NudeTok
+# NudeFlow
 
 A video streaming application similar to TikTok, built with Node.js and Express with file-based media management.
 
@@ -21,8 +21,8 @@ A video streaming application similar to TikTok, built with Node.js and Express 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/gabriel20xx/XXXTok.git
-cd XXXTok
+git clone https://github.com/gabriel20xx/NudeFlow.git
+cd NudeFlow
 ```
 
 2. Install dependencies:
@@ -86,7 +86,7 @@ Media files are scanned from the configured media path and categorized based on 
 ## Directory Structure
 
 ```
-XXXTok/
+NudeFlow/
 ├── .env.example            # Environment configuration template
 ├── src/
 │   ├── api/                # API route handlers
@@ -140,8 +140,8 @@ The application uses environment variables for configuration. Key settings inclu
 A Dockerfile is included for containerized deployment:
 
 ```bash
-docker build -t xxxtok .
-docker run -p 5000:5000 xxxtok
+docker build -t nudeflow .
+docker run -p 5000:5000 nudeflow
 ```
 
 ## Contributing
