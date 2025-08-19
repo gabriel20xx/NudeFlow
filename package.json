@@ -1,11 +1,11 @@
 {
   "name": "nudeflow",
   "version": "1.0.0",
-  "main": "src/server.js",
+  "main": "src/app.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "debug": "node --inspect src/server.js",
+  "start": "node src/app.js",
+  "dev": "nodemon src/app.js",
+  "debug": "node --inspect src/app.js",
     "lint": "eslint \"src/**/*.js\" --max-warnings=0",
     "lint:fix": "eslint \"src/**/*.js\" --fix",
     "check": "npm run lint",

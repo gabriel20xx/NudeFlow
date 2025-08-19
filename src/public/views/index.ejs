@@ -1,3 +1,6 @@
-<%- include("partials/header") %>
-<div id="home-container" aria-live="polite" aria-label="Media feed"></div>
-<%- include("partials/navbar") %>
+<%- include('partials/header') %>
+<main style="padding-top:var(--topbar-height);padding-bottom:var(--bottom-nav-height);display:flex;align-items:center;justify-content:center;min-height:50vh;">
+	<p style="font-size:var(--font-size-base);color:var(--color-text-dim);">Redirecting...</p>
+</main>
+<script>window.location.replace('/');</script>
+<%- include('partials/navbar', { title: '' }) %>

@@ -17,7 +17,7 @@ viewsRouter.get("/", (request, response) => {
   
   try {
     AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering home page');
-    response.render("index", { title: "Home" });
+  response.render("home", { title: "Home" });
     AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Home page rendered successfully');
   } catch (error) {
     AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error rendering home page', error);

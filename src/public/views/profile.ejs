@@ -1,87 +1,70 @@
-<%- include("partials/header") %>
-<main id="profile-container" class="page-wrapper" aria-label="User profile">
-    <h1 class="page-title">Profile</h1>
-    <div class="profile-info">
-        <img id="profilePicture" src="/images/default-avatar.png" alt="User profile picture">
-        <div class="profile-fields">
-            <p><strong>Username:</strong> <span id="username">Loading...</span></p>
-            <p><strong>Email:</strong> <span id="email">Loading...</span></p>
-            <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
+<%- include('partials/header') %>
+<main id="profile-container" class="profile-page" aria-label="User profile" style="padding-top:var(--topbar-height);padding-bottom:var(--bottom-nav-height);">
+    <section class="profile-card">
+        <div class="profile-header">
+            <div class="avatar-wrapper">
+                <img id="profilePicture" class="profile-avatar" src="/images/default-avatar.png" alt="User avatar" />
+            </div>
+            <div class="identity">
+                <h1 class="profile-title">Profile</h1>
+                <p class="profile-username" id="username">Loading...</p>
+                <p class="profile-email" id="email">Loading...</p>
+            </div>
+            <div class="profile-actions">
+                <button id="editProfileButton" type="button" class="btn btn-info" style="margin:0;">Edit</button>
+            </div>
         </div>
-    </div>
-    <button id="editProfileButton" type="button" class="mt-md">Edit Profile</button>
-    <form id="editProfileForm" class="hidden" novalidate>
-        <h2 class="page-title" style="font-size:1.1rem;">Edit Profile</h2>
-        <label for="usernameInput" class="muted">Username</label>
-        <input type="text" id="usernameInput" autocomplete="username" />
-        <label for="emailInput" class="muted">Email</label>
-        <input type="email" id="emailInput" autocomplete="email" />
-        <label for="bioInput" class="muted">Bio</label>
-        <textarea id="bioInput" rows="3"></textarea>
-        <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
-            <button type="button" onclick="saveProfileChanges()">Save</button>
-            <button type="button" onclick="cancelEdit()" style="background:linear-gradient(135deg,#5b6775,#404a53);">Cancel</button>
+        <div class="profile-body">
+            <div class="bio-block">
+                <h2 class="section-label">Bio</h2>
+                <p id="bio" class="bio-text">Loading...</p>
+            </div>
+            <form id="editProfileForm" class="profile-edit" style="display:none;" novalidate>
+                <h2 class="section-label" style="margin-top:0;">Edit Profile</h2>
+                <label for="usernameInput" class="field-label">Username</label>
+                <input type="text" id="usernameInput" class="field-input" autocomplete="username" />
+                <label for="emailInput" class="field-label">Email</label>
+                <input type="email" id="emailInput" class="field-input" autocomplete="email" />
+                <label for="bioInput" class="field-label">Bio</label>
+                <textarea id="bioInput" class="field-input" rows="3"></textarea>
+                <div class="edit-actions">
+                    <button type="button" class="btn btn-success-solid" onclick="saveProfileChanges()">Save</button>
+                    <button type="button" class="btn btn-danger-solid" onclick="cancelEdit()">Cancel</button>
+                </div>
+            </form>
         </div>
-    </form>
+    </section>
 </main>
-
-    <script>
-        async function fetchUserProfile() {
-            try {
-                const response = await fetch('/api/profile');
-                const apiResponse = await response.json();
-
-                if (apiResponse.success && apiResponse.data) {
-                    const user = apiResponse.data;
-                    document.getElementById('username').textContent = user.username || 'Not set';
-                    document.getElementById('email').textContent = user.email || 'Not set';
-                    document.getElementById('bio').textContent = user.bio || 'No bio available';
-                    document.getElementById('profilePicture').src = user.profilePicture || '/images/default-avatar.png';
-                } else {
-                    console.error('Failed to fetch profile:', apiResponse.message);
-                    document.getElementById('username').textContent = 'Error loading profile';
-                }
-            } catch (error) {
-                console.error('Error fetching profile:', error);
-                document.getElementById('username').textContent = 'Error loading profile';
-            }
-        }
-
-        function editProfile() {
-            document.getElementById('editProfileForm').style.display = 'block';
-            document.getElementById('usernameInput').value = document.getElementById('username').textContent;
-            document.getElementById('emailInput').value = document.getElementById('email').textContent;
-            document.getElementById('bioInput').value = document.getElementById('bio').textContent;
-        }
-
-        function cancelEdit() {
-            document.getElementById('editProfileForm').style.display = 'none';
-        }
-
-        async function saveProfileChanges() {
-            const updatedProfile = {
-                username: document.getElementById('usernameInput').value,
-                email: document.getElementById('emailInput').value,
-                bio: document.getElementById('bioInput').value,
-            };
-
-            const response = await fetch('/api/profile', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(updatedProfile),
-            });
-
-            if (response.ok) {
-                fetchUserProfile();
-                cancelEdit();
-            } else {
-                alert('Error saving profile.');
-            }
-        }
-
-    document.getElementById('editProfileButton').addEventListener('click', editProfile);
-    fetchUserProfile();
-    </script>
-<%- include("partials/navbar") %>
+<script>
+async function fetchUserProfile(){
+    try { const res = await fetch('/api/profile'); const data = await res.json(); if(data.success && data.data){ const u=data.data; username.textContent=u.username||'Anonymous'; email.textContent=u.email||'Not set'; bio.textContent=u.bio||'No bio yet.'; profilePicture.src=u.profilePicture||'/images/default-avatar.png'; } else { toast?.error('Failed to load profile'); } } catch(e){ console.error(e); toast?.error('Profile load error'); }
+}
+function editProfile(){ editProfileForm.style.display='block'; usernameInput.value=username.textContent; emailInput.value=email.textContent; bioInput.value=bio.textContent; }
+function cancelEdit(){ editProfileForm.style.display='none'; }
+async function saveProfileChanges(){ const payload={ username:usernameInput.value, email:emailInput.value, bio:bioInput.value }; try { const r= await fetch('/api/profile',{ method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); if(r.ok){ toast?.success('Profile updated'); fetchUserProfile(); cancelEdit(); } else { toast?.error('Save failed'); } } catch(e){ toast?.error('Network error'); } }
+document.addEventListener('DOMContentLoaded',()=>{ editProfileButton.addEventListener('click', editProfile); fetchUserProfile(); });
+</script>
+<style>
+/* Shared profile styles (duplicated here; consider extraction) */
+.profile-page { max-width:960px; margin:0 auto; padding:1.25rem 1.25rem 0; box-sizing:border-box; }
+.profile-card { background:var(--color-panel-bg); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); padding:1.4rem 1.5rem 1.75rem; display:flex; flex-direction:column; gap:1.4rem; }
+.profile-header { display:flex; align-items:center; gap:1.4rem; flex-wrap:wrap; }
+.avatar-wrapper { width:92px; height:92px; border-radius:50%; overflow:hidden; background:var(--color-surface); border:2px solid var(--color-border-strong, var(--color-border)); box-shadow:var(--shadow-sm); flex-shrink:0; }
+.profile-avatar { width:100%; height:100%; object-fit:cover; display:block; }
+.identity { display:flex; flex-direction:column; gap:.35rem; min-width:200px; }
+.profile-title { margin:0; font-size:1.35rem; line-height:1.1; background:var(--gradient-accent); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:600; }
+.profile-username { margin:0; font-size:.95rem; font-weight:500; color:var(--color-text); }
+.profile-email { margin:0; font-size:.7rem; letter-spacing:.3px; text-transform:uppercase; font-weight:600; color:var(--color-text-dim); }
+.profile-actions { margin-left:auto; display:flex; gap:.6rem; }
+.profile-body { display:flex; flex-direction:column; gap:1.5rem; }
+.bio-block { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:1rem 1.1rem; line-height:1.45; font-size:.9rem; position:relative; }
+.section-label { margin:0 0 .65rem; font-size:.75rem; letter-spacing:.4px; font-weight:600; text-transform:uppercase; color:var(--color-text-dim); }
+.bio-text { margin:0; white-space:pre-line; }
+.profile-edit { display:flex; flex-direction:column; gap:.65rem; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:1rem 1.1rem 1.2rem; }
+.field-label { font-size:.7rem; text-transform:uppercase; letter-spacing:.4px; font-weight:600; color:var(--color-text-dim); }
+.field-input, .profile-edit textarea { background:var(--color-input-bg,#181c24); border:1px solid var(--color-input-border,#333); border-radius: var(--radius-sm); padding:.55rem .65rem; font-size:.85rem; color:var(--color-text); font-family:inherit; resize:vertical; }
+.field-input:focus, .profile-edit textarea:focus { outline:none; border-color:var(--color-accent); box-shadow:0 0 0 2px #ffb84d33; }
+.edit-actions { display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.4rem; }
+@media (max-width:640px){ .profile-card { padding:1.1rem 1.1rem 1.35rem; } .profile-header { gap:1rem; } .avatar-wrapper { width:78px; height:78px; } .profile-title { font-size:1.2rem; } }
+</style>
+<%- include('partials/navbar', { title: 'Profile' }) %>

@@ -99,7 +99,7 @@ NudeFlow/
 │   │   └── views/          # EJS templates (partials + pages)
 │   ├── routes/             # Express routes
 │   ├── utils/              # Utility functions
-│   └── server.js           # Main server file
+│   └── app.js              # Main server entry (was server.js)
 ├── scripts/                # Utility scripts
 ├── logs/                   # Application logs
 ├── tests/                  # Test files

@@ -34,15 +34,15 @@ body {
   position: relative;
 }
 
-/* Bottom Navigation (mobile-first) */
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; background: rgba(13,15,17,0.82); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-top: 1px solid var(--color-border); padding: .35rem .5rem .55rem; }
-.bottom-nav ul { list-style:none; display:flex; justify-content:space-around; align-items:center; gap:.5rem; }
-.bottom-nav a { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.25rem; font-size:.65rem; text-decoration:none; color:var(--color-text-dim); font-weight:500; letter-spacing:.3px; position:relative; padding:.3rem .4rem; transition:color var(--transition-fast); }
+/* Bottom Navigation (unified style with NudeForge) */
+.bottom-nav { position:fixed; bottom:0; left:0; right:0; height: var(--bottom-nav-height); background: rgba(13,15,17,0.82); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-top:1px solid var(--color-border); z-index:60; display:flex; }
+.bottom-nav ul { list-style:none; margin:0; padding:0; display:flex; width:100%; justify-content:space-around; align-items:center; }
+.bottom-nav a { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.25rem; font-size: var(--font-size-xs); color: var(--color-text-dim); text-decoration:none; position:relative; height:100%; padding:.2rem .4rem; letter-spacing:.3px; transition: color var(--transition-fast); }
 .bottom-nav a i { font-size:1.05rem; }
 .bottom-nav a.active, .bottom-nav a:hover { color: var(--color-accent); }
-.bottom-nav a.active::after { content:""; position:absolute; bottom:-.3rem; left:50%; transform:translateX(-50%); width:18px; height:3px; background: var(--gradient-accent); border-radius:2px; }
+.bottom-nav a.active::after { content:""; position:absolute; bottom:.15rem; left:50%; transform:translateX(-50%); width:18px; height:3px; background: var(--gradient-accent); border-radius:2px; }
 /* Define nav height token (used for layout calculations) */
-:root { --bottom-nav-height: 70px; }
+:root { --bottom-nav-height: var(--bar-height); }
 
 /* Shared sizing scale (align with NudeForge) */
 :root { --font-size-xs:.65rem; --font-size-sm:.75rem; --font-size-base:.9rem; --font-size-md:1rem; --font-size-lg:1.2rem; --gap-xs:.25rem; --gap-sm:.4rem; --gap-md:.65rem; --gap-lg:1rem; }
@@ -89,10 +89,10 @@ body { padding-bottom: 0; }
 
 
 /* Top Brand / Category Bar */
-.app-topbar { position: fixed; top:0; left:0; right:0; height: var(--bar-height); display:flex; align-items:center; gap:1rem; padding:0 .85rem; background: rgba(13,15,17,0.72); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-bottom:1px solid var(--color-border); z-index:40; }
-.app-topbar { position: fixed; top:0; left:0; right:0; height: var(--bar-height); display:flex; align-items:center; gap:1rem; padding:0 .85rem; background: rgba(13,15,17,0.72); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-bottom:1px solid var(--color-border); z-index:40; }
-/* Absolutely center the middle container so dropdown is always visually centered regardless of left/right widths */
-.app-topbar-center { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); display:flex; justify-content:center; align-items:center; pointer-events:auto; }
+.app-topbar { position:fixed; top:0; left:0; right:0; height: var(--bar-height); display:flex; align-items:center; gap:1rem; padding:0 .85rem; background: rgba(13,15,17,0.72); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-bottom:1px solid var(--color-border); z-index:50; }
+/* Use flex:1 ghost spacers to allow an absolutely centered middle group while keeping theme toggle pinned right */
+.app-topbar-center { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); display:flex; justify-content:center; align-items:center; pointer-events:auto; padding:0 .25rem; }
+.app-topbar .theme-toggle { margin-left:auto; display:flex; align-items:center; }
 /* Category select inherits natural width; no explicit min-width to maintain centering */
 .ui-select { appearance:none; -webkit-appearance:none; background: var(--color-surface); color: var(--color-text); border:1px solid var(--color-border); padding:.45rem .8rem; border-radius: var(--radius-pill); font-size: var(--font-size-sm); line-height:1.2; box-shadow: var(--shadow-sm); cursor:pointer; transition: background .25s, border .25s, box-shadow .25s; }
 .ui-select:focus { outline:none; border-color: var(--color-accent); box-shadow: 0 0 0 2px #ffb84d33; }
