@@ -143,30 +143,12 @@ window.ApplicationUtilities = {
   fatalLog: function(moduleName, functionName, message, additionalData = {}) {
     this.clientLog('FATAL', moduleName, functionName, message, additionalData);
   },
-
-  /**
-   * Error logging function for frontend
-   * @param {string} moduleName - Name of the module
-   * @param {string} functionName - Name of the function
-   * @param {string} message - Error message
-   * @param {Error} error - Error object
-   */
-  errorLog: function(moduleName, functionName, message, error = null) {
-    const timestamp = new Date().toISOString();
-    const logData = {
-      timestamp,
-      module: moduleName,
-      function: functionName,
-      message,
-      error: error ? {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      } : null
-    };
-    
-    console.error(`[FRONTEND ERROR] [${moduleName}] [${functionName}] ${message}`, logData);
-  },
+  // Legacy compatibility aliases (in case older scripts used these names)
+  logDebug: function(...args) { this.debugLog(...args); },
+  logInfo: function(...args) { this.infoLog(...args); },
+  logWarn: function(...args) { this.warnLog(...args); },
+  logError: function(...args) { this.errorLog(...args); },
+  logFatal: function(...args) { this.fatalLog(...args); },
 
   /**
    * Build full URL for API calls

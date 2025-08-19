@@ -1,31 +1,29 @@
 <%- include("partials/header") %>
-<%- include("partials/title") %>
-<div id="profile-container">
-        <h2>Profile</h2>
-
-        <div class="profile-info">
-            <img id="profilePicture" src="/images/default-avatar.png" alt="Profile Picture">
-            <div>
-                <p><strong>Username:</strong> <span id="username">Loading...</span></p>
-                <p><strong>Email:</strong> <span id="email">Loading...</span></p>
-                <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
-            </div>
-        </div>
-
-        <button id="editProfileButton">Edit Profile</button>
-
-        <div id="editProfileForm" style="display:none;">
-            <h3>Edit Profile</h3>
-            <label for="usernameInput">Username:</label>
-            <input type="text" id="usernameInput">
-            <label for="emailInput">Email:</label>
-            <input type="email" id="emailInput">
-            <label for="bioInput">Bio:</label>
-            <textarea id="bioInput"></textarea>
-            <button onclick="saveProfileChanges()">Save Changes</button>
-            <button onclick="cancelEdit()">Cancel</button>
+<main id="profile-container" class="page-wrapper" aria-label="User profile">
+    <h1 class="page-title">Profile</h1>
+    <div class="profile-info">
+        <img id="profilePicture" src="/images/default-avatar.png" alt="User profile picture">
+        <div class="profile-fields">
+            <p><strong>Username:</strong> <span id="username">Loading...</span></p>
+            <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+            <p><strong>Bio:</strong> <span id="bio">Loading...</span></p>
         </div>
     </div>
+    <button id="editProfileButton" type="button" class="mt-md">Edit Profile</button>
+    <form id="editProfileForm" class="hidden" novalidate>
+        <h2 class="page-title" style="font-size:1.1rem;">Edit Profile</h2>
+        <label for="usernameInput" class="muted">Username</label>
+        <input type="text" id="usernameInput" autocomplete="username" />
+        <label for="emailInput" class="muted">Email</label>
+        <input type="email" id="emailInput" autocomplete="email" />
+        <label for="bioInput" class="muted">Bio</label>
+        <textarea id="bioInput" rows="3"></textarea>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+            <button type="button" onclick="saveProfileChanges()">Save</button>
+            <button type="button" onclick="cancelEdit()" style="background:linear-gradient(135deg,#5b6775,#404a53);">Cancel</button>
+        </div>
+    </form>
+</main>
 
     <script>
         async function fetchUserProfile() {
@@ -83,9 +81,8 @@
             }
         }
 
-        document.getElementById('editProfileButton').addEventListener('click', editProfile);
-
-        fetchUserProfile();
+    document.getElementById('editProfileButton').addEventListener('click', editProfile);
+    fetchUserProfile();
     </script>
 <%- include("partials/navbar") %>
 <%- include("partials/footer") %>

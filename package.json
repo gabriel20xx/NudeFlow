@@ -5,11 +5,11 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "node tests/basic-test.js",
-    "test:watch": "nodemon tests/basic-test.js",
     "debug": "node --inspect src/server.js",
-    "lint": "echo 'Linting not configured yet'",
-    "clean": "npm ci"
+    "lint": "eslint \"src/**/*.js\" --max-warnings=0",
+    "lint:fix": "eslint \"src/**/*.js\" --fix",
+    "check": "npm run lint",
+    "prepare": "echo 'No build step'"
   },
   "keywords": [
     "video",
@@ -24,11 +24,18 @@
   "description": "Video streaming application similar to TikTok with dynamic content management",
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.21.2",
+    "helmet": "^7.1.0",
     "sharp": "^0.33.5"
   },
   "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-n": "^16.6.2",
+    "eslint-plugin-promise": "^6.1.1",
     "nodemon": "^3.0.1"
   },
   "engines": {

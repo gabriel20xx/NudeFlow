@@ -1,9 +1,9 @@
 <%- include("partials/header") %>
-<%- include("partials/title") %>
-<div id="saved-container">
-        <h2>Saved Videos</h2>
-        <div id="savedVideos"></div>
-    </div>
+<main id="saved-container" class="page-wrapper" aria-label="Saved media">
+    <h1 class="page-title">Saved</h1>
+    <p class="muted mt-sm">Your bookmarked media appears here.</p>
+    <section id="savedVideos" class="results-grid" aria-live="polite"></section>
+</main>
 
     <script>
         async function fetchSavedVideos() {
@@ -47,7 +47,7 @@
             alert('Remove saved video functionality not yet implemented');
         }
 
-        fetchSavedVideos();
+    fetchSavedVideos();
     </script>
 <%- include("partials/navbar") %>
 <%- include("partials/footer") %>

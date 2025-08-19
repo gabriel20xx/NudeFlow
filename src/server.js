@@ -1,11 +1,22 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const path = require("path");
 const AppUtils = require("./utils/AppUtils");
 const mediaService = require("./services/mediaService");
 
+// Load environment variables early
+try {
+  // Optional dependency; wrap in try in case dotenv not installed in prod image
+  // eslint-disable-next-line global-require, import/no-extraneous-dependencies
+  require("dotenv").config();
+} catch (e) {
+  // Silent if dotenv not available
+}
+
 const MODULE_NAME = 'MainServer';
-const expressApplication = express();
+// Factory pattern to allow tests to build app without starting HTTP listener
+let expressApplication; // lazily created
 
 // Configuration
 const serverPort = process.env.PORT || 3000;
@@ -25,6 +36,9 @@ const configureMiddleware = () => {
   };
   
   expressApplication.use(cors(corsOptions));
+  expressApplication.use(helmet({
+    contentSecurityPolicy: false // Disable CSP by default; can be configured later
+  }));
   expressApplication.use(express.json({ limit: process.env.MAX_FILE_SIZE || '10mb' }));
   expressApplication.use(express.urlencoded({ extended: true, limit: process.env.MAX_FILE_SIZE || '10mb' }));
 
@@ -57,23 +71,39 @@ const configureErrorHandling = () => {
   const FUNCTION_NAME = 'configureErrorHandling';
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Setting up error handling middleware');
   
-  // Global error handler
+  // Handle 404 routes first (no error object supplied)
+  expressApplication.use((request, response, next) => {
+    if (request.accepts('html')) {
+      AppUtils.debugLog(MODULE_NAME, '404_HANDLER', 'Route not found (html)', { 
+        requestedUrl: request.url,
+        requestMethod: request.method 
+      });
+      return response.status(404).render('404', { title: 'Page Not Found' });
+    }
+    if (request.accepts('json')) {
+      AppUtils.debugLog(MODULE_NAME, '404_HANDLER', 'Route not found (json)', { 
+        requestedUrl: request.url,
+        requestMethod: request.method 
+      });
+      return response.status(404).json(AppUtils.createErrorResponse('Not Found', 404));
+    }
+    return response.status(404).type('txt').send('Not Found');
+  });
+
+  // Global error handler (must have 4 args)
+  // eslint-disable-next-line no-unused-vars
   expressApplication.use((error, request, response, next) => {
-    AppUtils.errorLog(MODULE_NAME, 'GLOBAL_ERROR_HANDLER', 'Unhandled application error', { 
-      error: error.message,
+    AppUtils.errorLog(MODULE_NAME, 'GLOBAL_ERROR_HANDLER', 'Unhandled application error', error, { 
       requestUrl: request.url,
       requestMethod: request.method
     });
-    response.status(500).json(AppUtils.createErrorResponse("Something went wrong!"));
-  });
-
-  // Handle 404 routes
-  expressApplication.use((request, response) => {
-    AppUtils.debugLog(MODULE_NAME, '404_HANDLER', 'Route not found', { 
-      requestedUrl: request.url,
-      requestMethod: request.method 
-    });
-    response.status(404).render('404', { title: 'Page Not Found' });
+    if (response.headersSent) return; // If headers already sent, let Express handle
+    const wantsJson = request.accepts('json') && !request.accepts('html');
+    if (wantsJson) {
+      response.status(500).json(AppUtils.createErrorResponse('Internal Server Error', 500));
+    } else {
+      response.status(500).render('error', { title: 'Server Error', message: 'Something went wrong!' });
+    }
   });
   
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Error handling middleware configured');
@@ -111,13 +141,14 @@ const initializeServer = async () => {
   AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Beginning server initialization sequence');
   
   try {
-    await mediaService.initializeMediaService();
-    
-    configureMiddleware();
-    configureRoutes();
-    configureErrorHandling();
-    configureGracefulShutdown();
-    
+    if (!expressApplication) {
+      expressApplication = express();
+      await mediaService.initializeMediaService();
+      configureMiddleware();
+      configureRoutes();
+      configureErrorHandling();
+      configureGracefulShutdown();
+    }
     startServer();
     
     AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Server initialization completed successfully');
@@ -127,5 +158,21 @@ const initializeServer = async () => {
   }
 };
 
-// Start the application
-initializeServer();
+// Build app (without starting listener) for testing purposes
+const createApp = async () => {
+  if (!expressApplication) {
+    expressApplication = express();
+    await mediaService.initializeMediaService();
+    configureMiddleware();
+    configureRoutes();
+    configureErrorHandling();
+  }
+  return expressApplication;
+};
+
+if (require.main === module) {
+  // Start the application only when executed directly
+  initializeServer();
+}
+
+module.exports = { createApp, initializeServer };

@@ -1,13 +1,13 @@
 <%- include("partials/header") %>
-<%- include("partials/title") %>
- <div id="search-container">
-        <input type="text" id="searchInput" placeholder="Search videos...">
-        <button onclick="searchVideos()">Search</button>
+<main id="search-container" class="page-wrapper" aria-label="Search media">
+    <h1 class="page-title">Search</h1>
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search media..." aria-label="Search query" autocomplete="off" />
+        <button type="button" onclick="searchVideos()">Search</button>
     </div>
-
-    <div id="searchResults"></div>
-
-    <script>
+    <section id="searchResults" class="results-grid" aria-live="polite" aria-label="Search results"></section>
+</main>
+<script>
         async function searchVideos() {
             try {
                 const query = document.getElementById('searchInput').value;
@@ -27,18 +27,18 @@
                     return;
                 }
 
-                apiResponse.data.forEach(video => {
-                    const videoElement = document.createElement('div');
-                    videoElement.classList.add('video-item');
-                    videoElement.innerHTML = `
-                        <div class="video-thumbnail">
-                            <img src="${video.thumbnail || video.url}" alt="${video.name}" onclick="playVideo('${video.url}')">
-                            <p>${video.name}</p>
-                            <small>Category: ${video.category}</small>
-                        </div>
-                    `;
-                    resultsContainer.appendChild(videoElement);
-                });
+                                apiResponse.data.forEach(video => {
+                                    const videoElement = document.createElement('article');
+                                    videoElement.classList.add('video-item');
+                                    videoElement.innerHTML = `
+                                        <div class="video-thumbnail" role="button" tabindex="0" aria-label="Open ${video.name}" onclick="playVideo('${video.url}')" onkeypress="if(event.key==='Enter'){playVideo('${video.url}')}" >
+                                            <img src="${video.thumbnail || video.url}" alt="${video.name}">
+                                        </div>
+                                        <p title="${video.name}">${video.name}</p>
+                                        <small>Category: ${video.category}</small>
+                                    `;
+                                    resultsContainer.appendChild(videoElement);
+                                });
             } catch (error) {
                 console.error('Search error:', error);
                 document.getElementById('searchResults').innerHTML = '<p>Error occurred while searching. Please try again.</p>';
@@ -50,7 +50,7 @@
         }
 
         // Allow search on Enter key
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 searchVideos();
             }

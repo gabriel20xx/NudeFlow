@@ -1,79 +1,9 @@
 <%- include("partials/header") %>
-<%- include("partials/title") %>
- <div id="categories-container">
-        <h2>Categories</h2>
-
-        <div id="categoriesList" class="categories-list">
-            <!-- Categories will be loaded here -->
-        </div>
-
-        <div id="categoryVideos" class="category-videos" style="display:none;">
-            <h3>Videos in <span id="categoryName"></span> category</h3>
-            <div id="videosList"></div>
-            <button onclick="backToCategories()">Back to Categories</button>
-        </div>
-    </div>
-
-    <script>
-        async function fetchCategories() {
-            const response = await fetch('/api/categories');
-            const categories = await response.json();
-
-            const categoriesContainer = document.getElementById('categoriesList');
-            categoriesContainer.innerHTML = '';
-
-            if (categories.length === 0) {
-                categoriesContainer.innerHTML = '<p>No categories available.</p>';
-                return;
-            }
-
-            categories.forEach(category => {
-                const categoryElement = document.createElement('div');
-                categoryElement.classList.add('category-item');
-                categoryElement.innerHTML = `
-                    <button onclick="viewCategoryVideos('${category.name}')">${category.name}</button>
-                `;
-                categoriesContainer.appendChild(categoryElement);
-            });
-        }
-
-        async function viewCategoryVideos(categoryName) {
-            const response = await fetch(`/api/categories/${categoryName}`);
-            const videos = await response.json();
-
-            document.getElementById('categoryName').textContent = categoryName;
-            const videosList = document.getElementById('videosList');
-            videosList.innerHTML = '';
-
-            if (videos.length === 0) {
-                videosList.innerHTML = '<p>No videos found in this category.</p>';
-                return;
-            }
-
-            videos.forEach(video => {
-                const videoElement = document.createElement('div');
-                videoElement.classList.add('video-item');
-                videoElement.innerHTML = `
-                    <a href="/videos/${video.id}">
-                        <img src="${video.thumbnail}" alt="${video.title}">
-                        <p>${video.title}</p>
-                    </a>
-                `;
-                videosList.appendChild(videoElement);
-            });
-
-            document.getElementById('categoriesList').style.display = 'none';
-            document.getElementById('categoryVideos').style.display = 'block';
-        }
-
-        function backToCategories() {
-            document.getElementById('categoriesList').style.display = 'block';
-            document.getElementById('categoryVideos').style.display = 'none';
-        }
-
-        fetchCategories();
-    </script>
-
-    <script src="/js/categories.js"></script>
+<main id="categories-container" class="page-wrapper" aria-label="Browse categories">
+    <h1 class="page-title">Categories</h1>
+    <p class="muted mt-sm">Tap a category to open its feed.</p>
+    <div id="categories-container" class="categories-list" aria-live="polite"></div>
+</main>
+<script src="/js/categories.js"></script>
 <%- include("partials/navbar") %>
 <%- include("partials/footer") %>

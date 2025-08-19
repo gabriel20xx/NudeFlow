@@ -50,14 +50,15 @@ mediaRouter.get("/*", (request, response) => {
     AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Processing specific media request', { relativePath });
 
     try {
-        const decodedPath = decodeURIComponent(relativePath);
-        // Convert URL path separators to system path separators
-        const systemPath = decodedPath.replace(/\//g, path.sep);
+        const decodedPath = decodeURIComponent(relativePath || '');
+        // Normalize and build absolute path
+        const systemPath = decodedPath.replace(/\+/g, ' ').replace(/\//g, path.sep);
         const mediaPath = mediaService.getMediaPath(systemPath);
+        const basePath = mediaService.getMediaBasePath();
 
-        // Security check to prevent path traversal
-        if (!mediaPath.startsWith(mediaService.getMediaBasePath())) {
-             AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Attempted path traversal', { relativePath });
+        // Security check to prevent path traversal (ensure path is inside base path)
+        if (!mediaPath || !mediaPath.startsWith(basePath + path.sep) && mediaPath !== basePath) {
+             AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Attempted path traversal', { relativePath, resolved: mediaPath });
              return response.status(403).send("Forbidden");
         }
 

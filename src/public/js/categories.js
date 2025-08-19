@@ -2,7 +2,7 @@
 (function() {
 const MODULE_NAME = 'CategoriesModule';
 
-window.onload = async function() {
+window.addEventListener('load', async function() {
     const FUNCTION_NAME = 'initializeCategoriesPage';
     ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Initializing categories page');
     
@@ -56,6 +56,6 @@ window.onload = async function() {
         });
         ApplicationUtilities.displayUserError('Failed to load categories');
     }
-};
+});
 
 })(); // End of IIFE

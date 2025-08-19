@@ -5,7 +5,7 @@ const MODULE_NAME = 'DropdownModule';
 /**
  * Initialize dropdown functionality when page loads
  */
-window.onload = async function initializeDropdownOnLoad() {
+window.addEventListener('load', async function initializeDropdownOnLoad() {
     const FUNCTION_NAME = 'initializeDropdownOnLoad';
     ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Initializing dropdown on page load');
     
@@ -16,7 +16,7 @@ window.onload = async function initializeDropdownOnLoad() {
         ApplicationUtilities.errorLog(MODULE_NAME, FUNCTION_NAME, 'Failed to initialize dropdown', { error: initializationError.message });
         ApplicationUtilities.displayUserError('Failed to load navigation options');
     }
-};
+});
 
 /**
  * Populate dropdown with available routes from API

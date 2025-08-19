@@ -172,7 +172,7 @@ const getMediaPath = (relativePath) => {
     return null;
   }
   
-  const absolutePath = path.join(getMediaDirectory(), relativePath);
+  const absolutePath = path.resolve(getMediaDirectory(), relativePath);
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Media path resolved', { absolutePath });
   
   return absolutePath;
@@ -182,9 +182,7 @@ const getMediaPath = (relativePath) => {
  * Get the base media directory path for security checks.
  * @returns {string} - The absolute path to the media directory.
  */
-const getMediaBasePath = () => {
-  return getMediaDirectory();
-};
+const getMediaBasePath = () => getMediaDirectory();
 
 module.exports = {
   initializeMediaService,
