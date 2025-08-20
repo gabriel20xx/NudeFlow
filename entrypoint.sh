@@ -1,5 +1,4 @@
 #!/bin/bash
-#!/bin/bash
 set -e
 
 # Ensure we are in the repo directory
