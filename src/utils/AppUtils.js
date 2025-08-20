@@ -2,6 +2,9 @@
 const fs = require("fs").promises;
 const fsSync = require("fs");
 const path = require("path");
+// Shared logger (local stub or copied from NudeShared by entrypoint)
+let Logger;
+try { Logger = require("./logger"); } catch (e) { Logger = { debug(){}, info(){}, warn(){}, error(){}, success(){} }; }
 
 class AppUtils {
   /**
@@ -24,19 +27,16 @@ class AppUtils {
    * @param {object} data - Optional data to log
    */
   static log(severity, moduleName, functionName, message, data = null) {
-    const now = new Date();
-    const timestamp = now.getFullYear() + '-' + 
-                     String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-                     String(now.getDate()).padStart(2, '0') + ' ' + 
-                     String(now.getHours()).padStart(2, '0') + ':' + 
-                     String(now.getMinutes()).padStart(2, '0') + ':' + 
-                     String(now.getSeconds()).padStart(2, '0');
-    const logMessage = `[${timestamp}] [${severity}] [${moduleName}:${functionName}] ${message}`;
-    
-    if (data) {
-      console.log(logMessage, data);
-    } else {
-      console.log(logMessage);
+    const lvl = severity.toUpperCase();
+    const msg = `[${functionName}] ${message}`;
+    const args = data ? [data] : [];
+    switch (lvl) {
+      case this.LOG_LEVELS.DEBUG: return Logger.debug(moduleName, msg, ...args);
+      case this.LOG_LEVELS.INFO: return Logger.info(moduleName, msg, ...args);
+      case this.LOG_LEVELS.WARN: return Logger.warn(moduleName, msg, ...args);
+      case this.LOG_LEVELS.ERROR: return Logger.error(moduleName, msg, ...args);
+      case this.LOG_LEVELS.FATAL: return Logger.error(moduleName, `[FATAL] ${msg}`, ...args);
+      default: return Logger.info(moduleName, msg, ...args);
     }
   }
 
