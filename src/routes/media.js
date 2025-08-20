@@ -1,7 +1,8 @@
-const express = require("express");
-const path = require("path");
-const mediaService = require("../services/mediaService");
-const AppUtils = require('../utils/AppUtils');
+import express from 'express';
+import path from 'path';
+import * as mediaService from '../services/mediaService.js';
+import AppUtils from '../utils/AppUtils.js';
+import fs from 'fs';
 
 const mediaRouter = express.Router();
 const MODULE_NAME = 'MediaRouter';
@@ -63,8 +64,7 @@ mediaRouter.get("/*", (request, response) => {
         }
 
         // Check if the path is a directory (category)
-        const fs = require('fs');
-        if (fs.existsSync(mediaPath) && fs.lstatSync(mediaPath).isDirectory()) {
+    if (fs.existsSync(mediaPath) && fs.lstatSync(mediaPath).isDirectory()) {
             // If it's a directory, redirect to get a random media from that category
             AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Directory requested, redirecting to random media', { category: decodedPath });
             return response.redirect(`/media/random/${decodedPath}`);
@@ -73,8 +73,7 @@ mediaRouter.get("/*", (request, response) => {
         // The sendFile method will handle Content-Type and other headers
         response.sendFile(mediaPath, (err) => {
             if (err) {
-                const fsSync = require('fs');
-                const exists = fsSync.existsSync(mediaPath);
+                const exists = fs.existsSync(mediaPath);
                 AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'File not found or error sending file', { path: mediaPath, exists, basePath, relativePath: decodedPath, nodeError: err.message });
                 if (!response.headersSent) {
                     response.status(404).json(AppUtils.createErrorResponse("Media not found"));
@@ -100,4 +99,4 @@ mediaRouter.get("/*", (request, response) => {
 });
 
 
-module.exports = mediaRouter;
+export default mediaRouter;

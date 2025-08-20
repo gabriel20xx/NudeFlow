@@ -1,19 +1,21 @@
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const path = require("path");
-const http = require('http');
-const https = require('https');
-const fs = require('fs');
-const AppUtils = require("./utils/AppUtils");
-const mediaService = require("./services/mediaService");
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import http from 'http';
+import https from 'https';
+import fs from 'fs';
+import AppUtils from './utils/AppUtils.js';
+import * as mediaService from './services/mediaService.js';
 
 // Load environment variables early
 try {
   // Optional dependency; wrap in try in case dotenv not installed in prod image
-  // eslint-disable-next-line global-require, import/no-extraneous-dependencies
-  require("dotenv").config();
-} catch (e) {
+  (await import('dotenv')).config();
+} catch {
   // Silent if dotenv not available
 }
 
@@ -52,18 +54,21 @@ const configureMiddleware = () => {
   expressApplication.set("views", path.join(__dirname, "public", "views"));
   // Serve static assets from src/public (unified monorepo convention)
   expressApplication.use(express.static(path.join(__dirname, 'public')));
+  // Shared client assets (logger etc.)
+  expressApplication.use('/shared', express.static(path.join(__dirname, '..', '..', 'NudeShared')));
+  AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Mounted shared static assets at /shared', { dir: path.join(__dirname, '..', '..', 'NudeShared') });
   
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Express middleware configuration completed');
 };
 
 // Routes configuration
-const configureRoutes = () => {
+const configureRoutes = async () => {
   const FUNCTION_NAME = 'configureRoutes';
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Setting up application routes');
   
-  const mediaRoutesModule = require("./routes/media");
-  const viewRoutesModule = require("./routes/views");
-  const apiRoutesModule = require("./api/apiRoutes");
+  const mediaRoutesModule = (await import('./routes/media.js')).default;
+  const viewRoutesModule = (await import('./routes/views.js')).default;
+  const apiRoutesModule = (await import('./api/apiRoutes.js')).default;
 
   expressApplication.use("/media", mediaRoutesModule);
   // Inject siteTitle into all view renders
@@ -84,7 +89,7 @@ const configureErrorHandling = () => {
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Setting up error handling middleware');
   
   // Handle 404 routes first (no error object supplied)
-  expressApplication.use((request, response, next) => {
+  expressApplication.use((request, response) => {
     if (request.accepts('html')) {
       AppUtils.debugLog(MODULE_NAME, '404_HANDLER', 'Route not found (html)', { 
         requestedUrl: request.url,
@@ -139,7 +144,7 @@ const ENABLE_HTTPS = (process.env.HTTPS === 'true' || process.env.ENABLE_HTTPS =
 const SSL_KEY_PATH = process.env.SSL_KEY_PATH || '';
 const SSL_CERT_PATH = process.env.SSL_CERT_PATH || '';
 
-function buildServer(appInstance) {
+async function buildServer(appInstance) {
   if (!ENABLE_HTTPS) return http.createServer(appInstance);
   let key; let cert;
   const haveProvided = SSL_KEY_PATH && SSL_CERT_PATH && fs.existsSync(SSL_KEY_PATH) && fs.existsSync(SSL_CERT_PATH);
@@ -154,8 +159,7 @@ function buildServer(appInstance) {
   }
   if (!key || !cert) {
     try {
-      // eslint-disable-next-line global-require, import/no-extraneous-dependencies
-      const selfsigned = require('selfsigned');
+  const selfsigned = (await import('selfsigned')).default;
       const attrs = [{ name: 'commonName', value: 'localhost' }];
       const pems = selfsigned.generate(attrs, { days: 365, keySize: 2048, algorithm: 'sha256' });
       key = pems.private;
@@ -171,11 +175,11 @@ function buildServer(appInstance) {
 
 let serverRef; // store created server
 
-const startServer = () => {
+const startServer = async () => {
   const FUNCTION_NAME = 'startServer';
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Starting Express server');
   
-  if (!serverRef) serverRef = buildServer(expressApplication);
+  if (!serverRef) serverRef = await buildServer(expressApplication);
   serverRef.listen(serverPort, () => {
     const protocol = ENABLE_HTTPS ? 'https' : 'http';
     AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'NudeFlow server started successfully', { 
@@ -196,11 +200,11 @@ const initializeServer = async () => {
       expressApplication = express();
       await mediaService.initializeMediaService();
       configureMiddleware();
-      configureRoutes();
+  await configureRoutes();
       configureErrorHandling();
       configureGracefulShutdown();
     }
-    startServer();
+  await startServer();
     
     AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Server initialization completed successfully');
   } catch (initializationError) {
@@ -215,15 +219,14 @@ const createApp = async () => {
     expressApplication = express();
     await mediaService.initializeMediaService();
     configureMiddleware();
-    configureRoutes();
+  await configureRoutes();
     configureErrorHandling();
   }
   return expressApplication;
 };
 
-if (require.main === module) {
-  // Start the application only when executed directly
+if (import.meta.url === `file://${process.argv[1]}`) {
   initializeServer();
 }
 
-module.exports = { createApp, initializeServer };
+export { createApp, initializeServer };

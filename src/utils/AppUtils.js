@@ -1,10 +1,8 @@
-// Utility functions for the application
-const fs = require("fs").promises;
-const fsSync = require("fs");
-const path = require("path");
-// Shared logger (local stub or copied from NudeShared by entrypoint)
-let Logger;
-try { Logger = require("./logger"); } catch (e) { Logger = { debug(){}, info(){}, warn(){}, error(){}, success(){} }; }
+// Utility functions for the application (ESM)
+import { promises as fs } from 'fs';
+import fsSync from 'fs';
+import path from 'path';
+import Logger from './logger.js';
 
 class AppUtils {
   /**
@@ -398,4 +396,4 @@ class AppUtils {
   }
 }
 
-module.exports = AppUtils;
+export default AppUtils;

@@ -1,6 +1,5 @@
 // UI enhancements for modern layout
 (function() {
-  const MODULE = 'UIModule';
   document.addEventListener('DOMContentLoaded', () => {
     try {
       // Highlight active nav (fallback if server-side class missing)

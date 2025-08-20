@@ -1,21 +1,23 @@
 # NudeFlow
 
-A video streaming application similar to TikTok, built with Node.js and Express with file-based media management.
+Short‑form media (video/image) streaming application (TikTok‑style) built with Express – now fully **ESM (type=module)** and integrated with the external **NudeShared** repository for a unified theme (`theme.css`) and shared logging utility (`logger.js`).
 
-## Features
+## Features (Current)
 
-- Video streaming with swipe navigation
+- Native ESM codebase (no CommonJS)
+- Video streaming with swipe / next navigation
 - Dynamic category-based content
 - Search functionality
 - User profiles (basic implementation)
 - Responsive design for mobile and desktop
-- Configurable environment settings
-- File-based media management with automatic scanning
+- Configurable environment settings (dotenv + runtime overrides)
+- Shared theme + logger auto-synced on container startup (via `entrypoint.sh`)
 
 ## Prerequisites
 
-- Node.js (v14 or higher)
-- NPM or Yarn
+- Node.js >= 18.18.0
+- npm >= 10
+- Optional: Docker / container environment using `entrypoint.sh`
 
 ## Installation
 
@@ -35,12 +37,7 @@ npm install
 cp .env.example .env
 ```
 
-4. (Optional) Install dotenv for .env file support:
-```bash
-npm install dotenv
-```
-
-5. Edit `.env` file with your configuration:
+4. Edit `.env` file with your configuration:
 ```bash
 # Paths are relative to project root using ../
 MEDIA_PATH=../media
@@ -59,9 +56,9 @@ npm run dev
 npm start
 ```
 
-The application will be available at `http://localhost:8080` (or your configured port).
+Application defaults to `http://localhost:8080` (override with `PORT`).
 
-## Media Management
+## Media Management Overview
 
 The application uses file-based media management with automatic scanning:
 - **Directory-based organization**: Media files organized by categories in folders
@@ -72,7 +69,7 @@ The application uses file-based media management with automatic scanning:
 
 Media files are scanned from the configured media path and categorized based on their directory structure.
 
-## API Endpoints
+## API Endpoints (Core)
 
 - `GET /api/routes` - Get available dynamic routes (categories)
 - `GET /api/search?q=query` - Search for videos
@@ -83,27 +80,29 @@ Media files are scanned from the configured media path and categorized based on 
 - `GET /media/random/:category?` - Get random video (optionally from category)
 - `GET /media/:relativePath` - Get specific media file
 
-## Directory Structure (Updated)
+## Project Structure (Current)
 
 ```
 NudeFlow/
-├── .env.example            # Environment configuration template
+├── entrypoint.sh            # Startup (syncs NudeShared theme + logger)
 ├── src/
-│   ├── api/                # API route handlers
-│   ├── controllers/        # Business logic controllers
-│   ├── models/             # Database models
-│   ├── public/             # Static assets + views/ (EJS templates now here)
-│   │   ├── css/            # Styles (theme + style)
-│   │   ├── js/             # Frontend scripts
-│   │   ├── images/         # Static images
-│   │   └── views/          # EJS templates (partials + pages)
-│   ├── routes/             # Express routes
-│   ├── utils/              # Utility functions
-│   └── app.js              # Main server entry (was server.js)
-├── scripts/                # Utility scripts
-├── logs/                   # Application logs
-├── tests/                  # Test files
-└── mnt/                    # Mounted media directories
+│   ├── app.js               # Express server bootstrap (ESM)
+│   ├── routes/
+│   │   ├── views.js         # Page route handlers (EJS)
+│   │   └── media.js         # Media API routes
+│   ├── services/
+│   │   └── mediaService.js  # File system media discovery / caching
+│   ├── utils/
+│   │   ├── AppUtils.js      # Generic helpers
+│   │   └── logger.js        # Synced shared logger proxy
+│   ├── public/
+│   │   ├── css/
+│   │   │   ├── theme.css    # From NudeShared
+│   │   │   └── style.css    # Local styles
+│   │   ├── js/              # Frontend scripts
+│   │   └── views/           # EJS templates (+partials)
+├── package.json             # Scripts + deps (type=module)
+└── README.md
 ```
 
 ## Configuration
@@ -116,7 +115,7 @@ The application uses environment variables for configuration. Key settings inclu
 - **Security**: CORS settings, file size limits
 - **Features**: Enable/disable features via flags
 
-### Environment Variables
+### Environment Variables (Key)
 
 - `PORT`: Server port (default: 8080)
 - `MEDIA_PATH`: Path to media files directory (default: ../media, relative to project root)
@@ -130,7 +129,7 @@ The application uses environment variables for configuration. Key settings inclu
 - `ENABLE_PROFILES`: Enable profile functionality (default: true)
 - `NODE_ENV`: Environment mode (development/production)
 
-## Security Features
+## Security / Hardening
 
 - Input validation and sanitization
 - Path traversal protection
@@ -138,7 +137,7 @@ The application uses environment variables for configuration. Key settings inclu
 - Error handling and logging
 - CORS configuration
 
-## Docker Support
+## Docker / Container Support
 
 A Dockerfile is included for containerized deployment:
 
@@ -157,7 +156,7 @@ docker run -p 5000:5000 nudeflow
 
 ## License
 
-ISC License
+ISC License. Shared assets sourced from NudeShared may have separate licensing details.
 
 ## Support
 

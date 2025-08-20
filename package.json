@@ -9,7 +9,8 @@
     "lint": "eslint \"src/**/*.js\" --max-warnings=0",
     "lint:fix": "eslint \"src/**/*.js\" --fix",
     "check": "npm run lint",
-    "prepare": "echo 'No build step'"
+  "prepare": "echo 'No build step'",
+  "test": "powershell -Command \"$env:NODE_ENV='test'; node --experimental-vm-modules test/sharedLogger.test.mjs\""
   },
   "keywords": [
     "video",
@@ -22,26 +23,25 @@
   "author": "",
   "license": "ISC",
   "description": "Video streaming application similar to TikTok with dynamic content management",
+  "type": "module",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.21.2",
     "helmet": "^7.1.0",
-  "sharp": "^0.33.5",
-  "selfsigned": "^2.4.1"
+    "sharp": "^0.33.5",
+    "selfsigned": "^2.4.1"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
-    "eslint-config-standard": "^17.1.0",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-n": "^16.6.2",
-    "eslint-plugin-promise": "^6.1.1",
-    "nodemon": "^3.0.1"
+    "eslint": "^9.9.0",
+    "@eslint/js": "^9.9.0",
+    "globals": "^15.9.0",
+    "nodemon": "^3.1.0"
   },
   "engines": {
-    "node": ">=14.0.0",
-    "npm": ">=6.0.0"
+    "node": ">=18.18.0",
+    "npm": ">=10.0.0"
   },
   "repository": {
     "type": "git",

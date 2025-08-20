@@ -1,6 +1,6 @@
-const express = require("express");
-const mediaService = require("../services/mediaService");
-const AppUtils = require("../utils/AppUtils");
+import express from 'express';
+import * as mediaService from '../services/mediaService.js';
+import AppUtils from '../utils/AppUtils.js';
 
 const MODULE_NAME = 'MainAPIRoutes';
 const apiRouter = express.Router();
@@ -151,4 +151,4 @@ apiRouter.get("/profile", (request, response) => {
   response.json(AppUtils.createSuccessResponse(mockProfile, 'Profile retrieved'));
 });
 
-module.exports = apiRouter;
+export default apiRouter;

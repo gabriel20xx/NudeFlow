@@ -1,6 +1,11 @@
-const express = require('express');
-const path = require("path");
-const AppUtils = require('../utils/AppUtils');
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import AppUtils from '../utils/AppUtils.js';
+
+// __dirname shim for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const viewsRouter = express.Router();
 const MODULE_NAME = 'ViewsRouter';
@@ -93,4 +98,4 @@ viewsRouter.get("/saved", (request, response) => {
   }
 });
 
-module.exports = viewsRouter;
+export default viewsRouter;

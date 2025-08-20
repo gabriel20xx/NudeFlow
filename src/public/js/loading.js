@@ -15,8 +15,8 @@ ApplicationUtilities.debugLog(MODULE_NAME, 'MODULE_INIT', 'Loading module initia
   preLoadImageCount 
 });
 
-const domainPattern = /^https?:\/\/[^\/]+\/?$/;
-const categoryPattern = /^https?:\/\/[^\/]+(\/.+[^\/])$/;
+const domainPattern = /^https?:\/\/[^/]+\/?$/;
+const categoryPattern = /^https?:\/\/[^/]+(\/.+[^/])$/;
 
 // Preload images
 loadContent();
@@ -237,6 +237,6 @@ function changeImage(side) {
 }
 
 // Legacy helper no longer needed with explicit mapping above (kept for compatibility if referenced elsewhere)
-function toggleFlyAnimation() { /* deprecated */ }
+// Removed deprecated toggleFlyAnimation helper (was unused)
 
 })(); // End of IIFE
