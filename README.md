@@ -4,16 +4,8 @@ Short‑form media (video/image) streaming application (TikTok‑style) built wi
 
 ## Features (Current)
 
-- Native ESM codebase (no CommonJS)
-- Video streaming with swipe / next navigation
-- Dynamic category-based content
-- Search functionality
-- User profiles (basic implementation)
-- Responsive design for mobile and desktop
-- Configurable environment settings (dotenv + runtime overrides)
-- Shared theme + logger auto-synced on container startup (via `entrypoint.sh`)
 
-## Prerequisites
+ Shared logging and theme via NudeShared. Set `NUDESHARED_DIR` to explicitly point to the shared assets directory in containerized deployments if automatic relative path detection fails.
 
 - Node.js >= 18.18.0
 - npm >= 10
