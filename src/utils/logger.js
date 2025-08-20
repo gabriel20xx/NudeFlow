@@ -21,7 +21,9 @@ async function loadSharedLogger() {
 				if (mod && mod.default) return mod.default;
 				return mod;
 			}
-		} catch {}
+		} catch (err) { // swallowing individual path load errors is intentional; they are expected when probing
+			void err; // ensure block is non-empty for eslint no-empty rule
+		}
 	}
 	return {
 		debug: () => {},
