@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 async function loadSharedLogger() {
 	const candidates = new Set();
 	if (process.env.NUDESHARED_DIR) candidates.add(path.join(process.env.NUDESHARED_DIR, 'logger.js'));
+	candidates.add(path.join(path.sep, 'app', 'NudeShared', 'src', 'logger.js'));
 	candidates.add(path.join(__dirname, '..', '..', '..', 'NudeShared', 'logger.js'));
 	candidates.add(path.join(__dirname, '..', '..', 'NudeShared', 'logger.js'));
 	candidates.add(path.join(__dirname, '..', 'NudeShared', 'logger.js'));

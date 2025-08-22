@@ -5,7 +5,7 @@ Short‑form media (video/image) streaming application (TikTok‑style) built wi
 ## Features (Current)
 
 
- Shared logging and theme via NudeShared. Set `NUDESHARED_DIR` to explicitly point to the shared assets directory in containerized deployments if automatic relative path detection fails.
+ Shared logging and theme via NudeShared. In containers, set `NUDESHARED_DIR=/app/NudeShared/src` so the app can locate `theme.css` and `logger.js` reliably.
 
 - Node.js >= 18.18.0
 - npm >= 10
