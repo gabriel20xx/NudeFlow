@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
+import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,9 +55,11 @@ const configureMiddleware = () => {
   expressApplication.set("views", path.join(__dirname, "public", "views"));
   // Serve static assets from src/public (unified monorepo convention)
   expressApplication.use(express.static(path.join(__dirname, 'public')));
-  // Shared client assets (logger etc.)
-  expressApplication.use('/shared', express.static(path.join(__dirname, '..', '..', 'NudeShared')));
-  AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Mounted shared static assets at /shared', { dir: path.join(__dirname, '..', '..', 'NudeShared') });
+  // Shared client assets (from installed package)
+  const require = createRequire(import.meta.url);
+  const sharedDir = path.dirname(require.resolve('@gabriel20xx/nude-shared/package.json'));
+  expressApplication.use('/shared', express.static(sharedDir));
+  AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Mounted shared static assets at /shared', { dir: sharedDir });
   
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Express middleware configuration completed');
 };

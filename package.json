@@ -25,6 +25,7 @@
   "description": "Video streaming application similar to TikTok with dynamic content management",
   "type": "module",
   "dependencies": {
+  "@gabriel20xx/nude-shared": "^1.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
