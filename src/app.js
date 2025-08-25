@@ -57,7 +57,7 @@ const configureMiddleware = () => {
   expressApplication.use(express.static(path.join(__dirname, 'public')));
   // Shared client assets (from installed package)
   const require = createRequire(import.meta.url);
-  const sharedDir = path.dirname(require.resolve('@gabriel20xx/nude-shared/package.json'));
+  const sharedDir = path.dirname(require.resolve('@gabriel20xx/nude-shared/clientLogger.js'));
   expressApplication.use('/shared', express.static(sharedDir));
   AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Mounted shared static assets at /shared', { dir: sharedDir });
   
@@ -228,8 +228,15 @@ const createApp = async () => {
   return expressApplication;
 };
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  initializeServer();
+// Start when executed directly (robust on Windows and POSIX)
+try {
+  const executedScript = process.argv[1] ? path.resolve(process.argv[1]) : '';
+  const currentModule = path.resolve(fileURLToPath(import.meta.url));
+  if (executedScript && executedScript === currentModule) {
+    initializeServer();
+  }
+} catch {
+  // no-op
 }
 
 export { createApp, initializeServer };
