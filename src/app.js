@@ -55,19 +55,15 @@ const configureMiddleware = () => {
   expressApplication.set("views", path.join(__dirname, "public", "views"));
   // Serve static assets from src/public (unified monorepo convention)
   expressApplication.use(express.static(path.join(__dirname, 'public')));
-  // Shared client assets (from installed package)
-  const require = createRequire(import.meta.url);
-  const sharedDir = path.dirname(require.resolve('@gabriel20xx/nude-shared/clientLogger.js'));
-  expressApplication.use('/shared', express.static(sharedDir));
-  AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Mounted shared static assets at /shared', { dir: sharedDir });
+  // Mount shared client logger from repo-local shared folder
+  expressApplication.use('/shared', express.static(path.join(__dirname, '..', '..', 'shared')));
+  AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Mounted shared static assets at /shared (repo local)');
 
-  // Serve shared theme.css directly from npm package
-  try {
-    const themePath = require.resolve('@gabriel20xx/nude-shared/theme.css');
-    expressApplication.get('/assets/theme.css', (req, res) => res.sendFile(themePath));
-    AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Exposed shared theme at /assets/theme.css', { themePath });
-  } catch (e) {
-    AppUtils.warnLog(MODULE_NAME, 'STARTUP', 'shared theme.css not found; skipping route', { message: e.message });
+  // Serve theme.css from app public if present (synced from shared)
+  const themeLocal = path.join(__dirname, 'public', 'css', 'theme.css');
+  if (fs.existsSync(themeLocal)) {
+    expressApplication.get('/assets/theme.css', (req, res) => res.sendFile(themeLocal));
+    AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Exposed local theme at /assets/theme.css', { themeLocal });
   }
   
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Express middleware configuration completed');

@@ -2,7 +2,7 @@
 import { promises as fs } from 'fs';
 import fsSync from 'fs';
 import path from 'path';
-import Logger from '@gabriel20xx/nude-shared/serverLogger.js';
+import Logger from '../../shared/serverLogger.js';
 
 class AppUtils {
   /**
