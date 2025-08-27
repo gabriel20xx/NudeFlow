@@ -55,9 +55,27 @@ const configureMiddleware = () => {
   expressApplication.set("views", path.join(__dirname, "public", "views"));
   // Serve static assets from src/public (unified monorepo convention)
   expressApplication.use(express.static(path.join(__dirname, 'public')));
-  // Mount shared client logger from repo-local shared folder
-  expressApplication.use('/shared', express.static(path.join(__dirname, '..', '..', 'shared')));
-  AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Mounted shared static assets at /shared (repo local)');
+  // Mount shared client assets; prefer external NudeShared checkout if provided
+  const sharedCandidates = [
+    process.env.NUDESHARED_DIR,
+    '/app/NudeShared',
+    path.join(__dirname, '..', '..', 'shared')
+  ].filter(Boolean);
+  let mountedSharedFrom = '';
+  for (const candidate of sharedCandidates) {
+    try {
+      if (candidate && fs.existsSync(candidate)) {
+        expressApplication.use('/shared', express.static(candidate));
+        mountedSharedFrom = candidate;
+        break;
+      }
+    } catch { /* no-op */ }
+  }
+  if (mountedSharedFrom) {
+    AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Mounted shared static assets at /shared', { from: mountedSharedFrom });
+  } else {
+    AppUtils.warnLog(MODULE_NAME, 'STARTUP', 'No shared assets directory found; /shared not mounted');
+  }
 
   // Serve theme.css from app public if present (synced from shared)
   const themeLocal = path.join(__dirname, 'public', 'css', 'theme.css');
