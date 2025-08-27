@@ -80,9 +80,9 @@ body { padding-bottom: 0; }
 
 
 /* Top Bar (unified with NudeForge) */
-.app-topbar { position:fixed; top:0; left:0; right:0; height: var(--bar-height); display:flex; align-items:center; gap:1rem; padding:0 .85rem; background: rgba(13,15,17,0.72); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-bottom:1px solid var(--color-border); z-index:50; }
-.app-topbar-center { flex:1; display:flex; justify-content:center; }
-.app-topbar-right { display:flex; align-items:center; gap: var(--gap-md); }
+.app-topbar { position:fixed; top:0; left:0; right:0; height: var(--bar-height); display:grid; grid-template-columns: 1fr auto 1fr; align-items:center; gap:1rem; padding:0 .85rem; background: rgba(13,15,17,0.72); backdrop-filter: blur(18px) saturate(180%); -webkit-backdrop-filter: blur(18px) saturate(180%); border-bottom:1px solid var(--color-border); z-index:50; }
+.app-topbar-center { justify-self:center; }
+.app-topbar-right { justify-self:end; display:flex; align-items:center; gap: var(--gap-md); }
 .app-topbar .theme-toggle { display:flex; align-items:center; }
 /* Category select inherits natural width; no explicit min-width to maintain centering */
 .ui-select { appearance:none; -webkit-appearance:none; background: var(--color-surface); color: var(--color-text); border:1px solid var(--color-border); padding:.45rem .8rem; border-radius: var(--radius-pill); font-size: var(--font-size-sm); line-height:1.2; box-shadow: var(--shadow-sm); cursor:pointer; transition: background .25s, border .25s, box-shadow .25s; }
@@ -90,7 +90,7 @@ body { padding-bottom: 0; }
 .ui-select:hover { background: var(--color-surface-alt); }
 :root[data-theme='light'] .ui-select { background:#ffffff; }
 
-.app-logo { font-size:1.05rem; font-weight:600; background: var(--gradient-accent); -webkit-background-clip:text; background-clip:text; color:transparent; text-decoration:none; display:inline-flex; align-items:center; }
+.app-logo { font-size:1.05rem; font-weight:600; background: var(--gradient-accent); -webkit-background-clip:text; background-clip:text; color:transparent; text-decoration:none; display:inline-flex; align-items:center; justify-self:start; }
 
 #editProfileForm button {
     padding: 10px;
