@@ -77,11 +77,24 @@ const configureMiddleware = () => {
     AppUtils.warnLog(MODULE_NAME, 'STARTUP', 'No shared assets directory found; /shared not mounted');
   }
 
-  // Serve theme.css from app public if present (synced from shared)
+  // Serve theme.css from app public if present (synced from shared), otherwise fall back to NudeShared
   const themeLocal = path.join(__dirname, 'public', 'css', 'theme.css');
   if (fs.existsSync(themeLocal)) {
     expressApplication.get('/assets/theme.css', (req, res) => res.sendFile(themeLocal));
     AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Exposed local theme at /assets/theme.css', { themeLocal });
+  } else {
+    const themeCandidates = [
+      path.resolve(__dirname, '..', '..', 'NudeShared', 'theme.css'),
+      path.resolve(__dirname, '..', '..', 'shared', 'theme.css'),
+      '/app/NudeShared/theme.css'
+    ];
+    const foundTheme = themeCandidates.find(p => { try { return p && fs.existsSync(p); } catch { return false; } });
+    if (foundTheme) {
+      expressApplication.get('/assets/theme.css', (req, res) => res.sendFile(foundTheme));
+      AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Exposed shared theme at /assets/theme.css', { foundTheme });
+    } else {
+      AppUtils.warnLog(MODULE_NAME, 'STARTUP', 'theme.css not found locally or in shared paths; /assets/theme.css will 404');
+    }
   }
   
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Express middleware configuration completed');
