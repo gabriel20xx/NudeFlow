@@ -14,17 +14,56 @@
 
     <script>
         const SAVED_STORE_KEY = 'nf_savedMedia_v1';
+    // Guard to prevent accidental opens right after a removal re-renders the list
+    window._suppressSavedOpenUntil = 0;
 
         function getSavedList(){
             try { const raw = localStorage.getItem(SAVED_STORE_KEY); const arr = raw ? JSON.parse(raw) : []; return Array.isArray(arr)?arr:[]; } catch { return []; }
         }
         function saveSavedList(list){ try { localStorage.setItem(SAVED_STORE_KEY, JSON.stringify(list)); } catch{} }
-    function removeSaved(id){ const next = getSavedList().filter(x=>x.id!==id); saveSavedList(next); renderSaved(); if(typeof window._currentSavedIndex==='number'){ const list=getSavedList(); if(window._currentSavedIndex>=list.length){ window._currentSavedIndex=list.length-1; } if(list.length===0){ closeSavedOverlay(); } else { renderOverlayFromIndex(); } } }
-    function removeSavedClick(ev, id){ try{ ev?.stopPropagation(); ev?.preventDefault(); }catch{} removeSaved(id); }
+    function removeSaved(id){
+        const next = getSavedList().filter(x=>x.id!==id);
+        saveSavedList(next);
+        const overlayEl = document.getElementById('savedOverlay');
+        const overlayOpen = !!(overlayEl && overlayEl.classList.contains('open'));
+        renderSaved();
+        if(overlayOpen){
+            const list = getSavedList();
+            if(typeof window._currentSavedIndex !== 'number' || window._currentSavedIndex < 0){
+                window._currentSavedIndex = 0;
+            }
+            if(window._currentSavedIndex >= list.length){
+                window._currentSavedIndex = list.length - 1;
+            }
+            if(list.length === 0){
+                closeSavedOverlay();
+            } else {
+                renderOverlayFromIndex();
+            }
+        } else {
+            // Ensure we don't treat overlay as active when it's not open
+            window._currentSavedIndex = -1;
+        }
+    }
+    function removeSavedClick(ev, id){
+        try{
+            ev?.stopPropagation();
+            ev?.stopImmediatePropagation?.();
+            ev?.preventDefault();
+        }catch{}
+        // Briefly suppress any open actions triggered by DOM reflow after removal
+        window._suppressSavedOpenUntil = Date.now() + 500;
+        removeSaved(id);
+    }
 
         // Overlay navigation state
         window._currentSavedIndex = -1;
-        function openSavedByIndex(i){ const list=getSavedList(); if(!list.length) return; window._currentSavedIndex = Math.max(0, Math.min(i, list.length-1)); renderOverlayFromIndex(); }
+        function openSavedByIndex(i){
+            if(Date.now() < (window._suppressSavedOpenUntil || 0)) return;
+            const list=getSavedList(); if(!list.length) return;
+            window._currentSavedIndex = Math.max(0, Math.min(i, list.length-1));
+            renderOverlayFromIndex();
+        }
         function renderOverlayFromIndex(){
             const list = getSavedList();
             const idx = window._currentSavedIndex;

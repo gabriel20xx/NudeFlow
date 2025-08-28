@@ -26,16 +26,51 @@ ApplicationUtilities.debugLog(MODULE_NAME, 'MODULE_INIT', 'Loading module initia
 });
 
 const domainPattern = /^https?:\/\/[^/]+\/?$/;
-const categoryPattern = /^https?:\/\/[^/]+(\/.+[^/])$/;
+const categoryPattern = /^https?:\/\/[^/]+\/(.+[^/])$/;
 
-// Preload images
-loadContent();
-
-// Build floating controls (only on pages with home-container)
+// Only run on pages that have the home feed container
 if (mediaContainer) {
+  // Preload images
+  loadContent();
+
+  // Build floating controls (only on pages with home-container)
   buildFloatingControls();
   setupInactivityAutoHide();
   preventMobilePullToRefresh();
+
+  // Interaction listeners relevant to the feed
+  window.addEventListener("touchstart", e => {
+    startY = e.touches[0].clientY;
+    lastTouchY = startY;
+    revealControlsTemporarily();
+  });
+
+  window.addEventListener("touchend", e => {
+    let endY = e.changedTouches[0].clientY;
+    let diff = startY - endY;
+
+    if (diff > 50) {
+      changeImage(true); // Swipe up
+    } else if (diff < -50) {
+      changeImage(false); // Swipe down
+    }
+    scheduleControlsHide();
+  });
+
+  window.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown") changeImage(true);
+    if (e.key === "ArrowUp") changeImage(false);
+    revealControlsTemporarily();
+  });
+
+  window.addEventListener("wheel", e => {
+    if (e.deltaY > 0) {
+      changeImage(true); // Scroll down
+    } else if (e.deltaY < 0) {
+      changeImage(false); // Scroll up
+    }
+    revealControlsTemporarily();
+  });
 }
 
 function getUrl() {
@@ -48,7 +83,12 @@ function getUrl() {
     const match = currentUrl.match(categoryPattern);
     if (match && match[1]) {
         let category = match[1];
-        let url = `${baseUrl}/api/media/random${category}`;
+        // Update header title if present
+        try {
+          const titleEl = document.querySelector('.app-category-title');
+          if (titleEl) titleEl.textContent = ApplicationUtilities.formatDisplayText(category.replace(/^\//,''));
+        } catch {}
+        let url = `${baseUrl}/api/media/random/${category.replace(/^\//,'')}`;
         ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Category page detected', { category, url });
         return url;
     }
@@ -165,38 +205,7 @@ function loadContent() {
    });
 }
 
-window.addEventListener("touchstart", e => {
-  startY = e.touches[0].clientY;
-  lastTouchY = startY;
-  revealControlsTemporarily();
-});
-
-window.addEventListener("touchend", e => {
-  let endY = e.changedTouches[0].clientY;
-  let diff = startY - endY;
-
-  if (diff > 50) {
-    changeImage(true); // Swipe up
-  } else if (diff < -50) {
-    changeImage(false); // Swipe down
-  }
-  scheduleControlsHide();
-});
-
-window.addEventListener("keydown", e => {
-  if (e.key === "ArrowDown") changeImage(true);
-  if (e.key === "ArrowUp") changeImage(false);
-  revealControlsTemporarily();
-});
-
-window.addEventListener("wheel", e => {
-  if (e.deltaY > 0) {
-    changeImage(true); // Scroll down
-  } else if (e.deltaY < 0) {
-    changeImage(false); // Scroll up
-  }
-  revealControlsTemporarily();
-});
+// Note: Do not attach feed interaction listeners on pages without the feed
 
 function changeImage(side) {
   const FUNCTION_NAME = 'changeImage';
@@ -488,6 +497,11 @@ function scheduleControlsHide(ms) {
   if (inactivityTimer) clearTimeout(inactivityTimer);
   inactivityTimer = setTimeout(() => {
     if (!controlsRoot) return;
+    // When controls auto-hide, also close the duration panel if open
+    try {
+      const panelEl = controlsRoot.querySelector('.float-panel');
+      if (panelEl) panelEl.hidden = true;
+    } catch {}
     controlsRoot.classList.add('hidden');
     controlsRoot.classList.remove('visible');
   }, hideMs);

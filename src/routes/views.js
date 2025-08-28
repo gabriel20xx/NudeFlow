@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import AppUtils from '../utils/AppUtils.js';
+import * as mediaService from '../services/mediaService.js';
 
 // __dirname shim for ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -95,6 +96,27 @@ viewsRouter.get("/saved", (request, response) => {
   } catch (error) {
     AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error rendering saved page', error);
     response.status(500).render('error', { message: 'Failed to load saved page' });
+  }
+});
+
+/**
+ * Category view route handler (renders Home view but filtered by category)
+ * This only handles known categories; otherwise, it defers to next routes (e.g., /api, /profile).
+ */
+viewsRouter.get('/:categoryName', (request, response, next) => {
+  const FUNCTION_NAME = 'handleCategoryHomeView';
+  const { categoryName } = request.params;
+
+  try {
+    const categories = mediaService.getCategories() || [];
+    const match = categories.find(c => c.name.toLowerCase() === String(categoryName || '').toLowerCase());
+    if (!match) return next();
+    const display = match.displayName || AppUtils.formatRouteNameForDisplay(match.name);
+    AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering home view for category', { categoryName: match.name, display });
+    return response.render('home', { title: 'Home', currentCategoryDisplay: display });
+  } catch (error) {
+    AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error handling category home view', error, { categoryName });
+    return next();
   }
 });
 
