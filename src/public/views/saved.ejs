@@ -3,6 +3,11 @@
     <h1 class="page-title">Saved</h1>
     <p class="muted mt-sm">Your bookmarked media appears here.</p>
     <section id="savedVideos" class="results-grid" aria-live="polite"></section>
+    <div id="savedOverlay" class="media-overlay" role="dialog" aria-modal="true" aria-label="Saved media viewer">
+        <div class="media-frame" id="savedFrame">
+            <button class="close-btn" type="button" aria-label="Close" onclick="closeSavedOverlay()">✕</button>
+        </div>
+    </div>
 </main>
 
     <script>
@@ -13,7 +18,35 @@
         }
         function saveSavedList(list){ try { localStorage.setItem(SAVED_STORE_KEY, JSON.stringify(list)); } catch{} }
         function removeSaved(id){ const next = getSavedList().filter(x=>x.id!==id); saveSavedList(next); renderSaved(); }
-        function playVideo(url){ window.location.href = '/?video=' + encodeURIComponent(url); }
+        function openSavedMedia(item){
+            const overlay = document.getElementById('savedOverlay');
+            const frame = document.getElementById('savedFrame');
+            // remove previous media nodes
+            Array.from(frame.querySelectorAll('img,video')).forEach(n=>n.remove());
+            let node;
+            if(item.mediaType==="static" || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(item.url)){
+                node = document.createElement('img');
+                node.src = item.url;
+                node.alt = item.name || 'Saved media';
+            } else {
+                node = document.createElement('video');
+                node.src = item.url;
+                node.controls = true;
+                node.autoplay = true;
+                node.loop = true;
+                node.muted = false;
+                node.playsInline = true;
+            }
+            frame.appendChild(node);
+            overlay.classList.add('open');
+        }
+        function closeSavedOverlay(){
+            const overlay = document.getElementById('savedOverlay');
+            const frame = document.getElementById('savedFrame');
+            const vid = frame.querySelector('video');
+            if(vid){ try{ vid.pause(); }catch{} }
+            overlay.classList.remove('open');
+        }
 
         function renderSaved(){
             const data = getSavedList();
@@ -23,14 +56,15 @@
             data.forEach(video => {
                 const el = document.createElement('div');
                 el.className = 'video-item';
+                const encoded = encodeURIComponent(JSON.stringify(video));
                 el.innerHTML = `
-                    <div class="video-thumbnail">
+                    <div class="video-thumbnail" role="button" tabindex="0" aria-label="Open ${video.name||'media'}" onclick='openSavedMedia(JSON.parse(decodeURIComponent("${encoded}")))' onkeypress='if(event.key==="Enter"){openSavedMedia(JSON.parse(decodeURIComponent("${encoded}")))}'>
                         <img src="${video.thumbnail || video.url}" alt="${video.name}">
                     </div>
                     <p>${video.name || 'Media'}</p>
                     <small>Category: ${video.category || ''}</small>
                     <div>
-                        <button onclick="playVideo('${video.url}')">Open</button>
+                        <button onclick='openSavedMedia(JSON.parse(decodeURIComponent("${encoded}")))'>Open</button>
                         <button onclick="removeSaved('${video.id}')">Remove</button>
                     </div>
                 `;

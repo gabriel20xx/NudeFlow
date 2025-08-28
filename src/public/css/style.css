@@ -19,6 +19,9 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
 /* Prevent pull-to-refresh / overscroll glow on mobile within the app */
 html, body { overscroll-behavior-y: contain; }
 
+/* Generic page wrapper for non-feed pages so header/nav don't overlap content */
+.page-wrapper { padding-top: var(--topbar-height); padding-bottom: var(--bottom-nav-height); min-height: calc(100vh - var(--bottom-nav-height)); }
+
 
 
 /* Bottom Navigation centralized in theme.css */
@@ -77,6 +80,14 @@ body { padding-bottom: 0; }
 :root[data-theme='light'] .float-panel { background: rgba(255,255,255,0.92); }
 .float-panel .float-panel-row { font-size: .85rem; margin-bottom: .4rem; }
 .float-panel .ap-range { width: 100%; }
+
+/* Inline media overlay for Saved tab */
+.media-overlay { position: fixed; inset: 0; z-index: 160; background: rgba(0,0,0,0.86); display: none; align-items: center; justify-content: center; padding: calc(var(--topbar-height) + 1rem) 1rem calc(var(--bottom-nav-height) + 1rem); }
+.media-overlay.open { display: flex; }
+.media-overlay .media-frame { position: relative; width: min(96vw, 1100px); height: min(74vh, calc(100vh - var(--topbar-height) - var(--bottom-nav-height) - 2rem)); display:flex; align-items:center; justify-content:center; }
+.media-overlay .media-frame img, .media-overlay .media-frame video { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--radius-md); box-shadow: var(--shadow-2xl, 0 10px 40px rgba(0,0,0,.6)); background: #000; }
+.media-overlay .close-btn { position: absolute; top: .75rem; right: .75rem; width: 42px; height: 42px; border-radius: 999px; border: 1px solid var(--color-border); background: rgba(30,32,38,0.85); color: var(--color-text); display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: var(--shadow-md); }
+:root[data-theme='light'] .media-overlay .close-btn { background: rgba(255,255,255,0.92); }
 
 
 /* Top Bar moved to shared theme.css */
