@@ -62,6 +62,7 @@ body { padding-bottom: 0; }
 :root[data-theme='light'] .float-btn { background: rgba(255,255,255,0.86); }
 .float-btn:hover { filter: brightness(1.08); }
 .float-btn i { font-size: 1rem; }
+.float-btn--save[aria-pressed="true"] i { color: var(--color-accent, #ff9800); }
 
 /* Mobile: container already excludes bottom nav; keep equal margins and respect safe-area */
 @media (max-width: 420px) {

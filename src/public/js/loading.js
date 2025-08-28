@@ -14,6 +14,7 @@ let isAutoscrollOn = false;
 let isFullscreen = false;
 let lastKnownKey = null;
 let currentAutoDurationMs = null;
+const SAVED_STORE_KEY = 'nf_savedMedia_v1';
 
 const preLoadImageCount = ApplicationConfiguration?.userInterfaceSettings?.preLoadImageCount || 5;
 const mediaContainer = document.getElementById("home-container");
@@ -121,6 +122,12 @@ function loadContent() {
   // Tag element with a stable media key for per-media settings
   const mediaKey = mediaInfo.filename || mediaInfo.id || mediaInfo.url || `idx-${toLoadImageIndex}`;
   mediaElement.dataset.mediaKey = String(mediaKey);
+  // Attach metadata for saving
+  mediaElement.dataset.url = mediaUrl;
+  mediaElement.dataset.name = mediaInfo.name || mediaInfo.filename || 'Media';
+  mediaElement.dataset.category = mediaInfo.category || 'homepage';
+  mediaElement.dataset.mediaType = mediaInfo.mediaType || 'video';
+  mediaElement.dataset.thumbnail = mediaInfo.thumbnail || mediaUrl;
 
       // Handle audio unmuting for videos on user interaction
       if (mediaType !== 'static' && toLoadImageIndex == 0) {
@@ -236,6 +243,8 @@ function changeImage(side) {
     }
 
     currentImageIndex = newImageIndex;
+  // Sync save button state for newly active media
+  try { syncSaveUi(); } catch {}
 
     if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
       loadContent();
@@ -289,6 +298,13 @@ function buildFloatingControls() {
     autoBtn.setAttribute('aria-label', 'Toggle autoscroll');
     autoBtn.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i>';
 
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'float-btn float-btn--save';
+  saveBtn.setAttribute('type', 'button');
+  saveBtn.setAttribute('aria-pressed', 'false');
+  saveBtn.setAttribute('aria-label', 'Save current media');
+  saveBtn.innerHTML = '<i class="fas fa-bookmark" aria-hidden="true"></i>';
+
     const timerBtn = document.createElement('button');
     timerBtn.className = 'float-btn float-btn--timer';
     timerBtn.setAttribute('type', 'button');
@@ -312,6 +328,7 @@ function buildFloatingControls() {
 
   controlsRoot.appendChild(fsBtn);
   controlsRoot.appendChild(autoBtn);
+  controlsRoot.appendChild(saveBtn);
   controlsRoot.appendChild(timerBtn);
   controlsRoot.appendChild(panel);
     mediaContainer.appendChild(controlsRoot);
@@ -325,6 +342,11 @@ function buildFloatingControls() {
     autoBtn.addEventListener('click', () => {
       revealControlsTemporarily();
       toggleAutoscroll(autoBtn);
+    });
+
+    saveBtn.addEventListener('click', () => {
+      revealControlsTemporarily();
+      toggleSaveForActive(saveBtn);
     });
 
     timerBtn.addEventListener('click', () => {
@@ -354,6 +376,8 @@ function buildFloatingControls() {
     });
 
     ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Floating controls initialized');
+  // initial save button state
+  syncSaveUi();
   } catch (err) {
     ApplicationUtilities.errorLog(MODULE_NAME, FUNCTION_NAME, 'Failed to build floating controls', { error: err?.message });
   }
@@ -427,6 +451,17 @@ function syncFullscreenUi() {
       ? '<i class="fas fa-compress" aria-hidden="true"></i>'
       : '<i class="fas fa-expand" aria-hidden="true"></i>';
   }
+}
+
+function syncSaveUi() {
+  const btn = controlsRoot?.querySelector('.float-btn--save');
+  if (!btn) return;
+  const key = getCurrentMediaKey();
+  const saved = isSaved(key);
+  btn.setAttribute('aria-pressed', String(!!saved));
+  btn.innerHTML = saved
+    ? '<i class="fas fa-bookmark" aria-hidden="true" style="color: var(--color-accent, #ff9800);"></i>'
+    : '<i class="fas fa-bookmark" aria-hidden="true"></i>';
 }
 
 function setupInactivityAutoHide() {
@@ -549,6 +584,78 @@ function toggleDurationPanel(panel) {
     valueEl.textContent = String(seconds);
   }
   panel.hidden = !willShow;
+}
+
+// --- Saved list helpers (localStorage, client-side) ---
+function getActiveMediaMeta() {
+  const el = document.querySelector('#home-container .media.active');
+  if (!el) return null;
+  return {
+    id: el.dataset.mediaKey,
+    name: el.dataset.name || 'Media',
+    url: el.dataset.url,
+    thumbnail: el.dataset.thumbnail || el.dataset.url,
+    category: el.dataset.category || 'homepage',
+    mediaType: el.dataset.mediaType || 'video'
+  };
+}
+
+function getSavedList() {
+  try {
+    const raw = localStorage.getItem(SAVED_STORE_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return arr;
+    }
+  } catch {}
+  return [];
+}
+
+function saveSavedList(list) {
+  try { localStorage.setItem(SAVED_STORE_KEY, JSON.stringify(list)); } catch {}
+}
+
+function isSaved(id) {
+  if (!id) return false;
+  return getSavedList().some(x => x.id === id);
+}
+
+function addSaved(item) {
+  if (!item?.id) return false;
+  const list = getSavedList();
+  if (list.some(x => x.id === item.id)) return true;
+  list.unshift(item);
+  saveSavedList(list);
+  return true;
+}
+
+function removeSavedById(id) {
+  const list = getSavedList();
+  const next = list.filter(x => x.id !== id);
+  saveSavedList(next);
+}
+
+function toggleSaveForActive(btn) {
+  const meta = getActiveMediaMeta();
+  if (!meta) return;
+  if (isSaved(meta.id)) {
+    removeSavedById(meta.id);
+    notify('info', 'Removed from saved');
+  } else {
+    addSaved(meta);
+    notify('success', 'Saved');
+  }
+  syncSaveUi();
+}
+
+function notify(type, message) {
+  try {
+    if (window.toast && typeof window.toast[type] === 'function') {
+      window.toast[type](message, { duration: 2200 });
+      return;
+    }
+  } catch {}
+  try { alert(message); } catch {}
 }
 
 function getEffectiveDurationMs(key) {
