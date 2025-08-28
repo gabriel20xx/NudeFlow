@@ -102,6 +102,8 @@
             }
             frame.appendChild(node);
             overlay.classList.add('open');
+            // Prevent background scroll while overlay is open
+            try { document.body.classList.add('no-scroll'); document.documentElement.classList.add('no-scroll'); } catch{}
             // update nav button disabled state
             const prev = overlay.querySelector('.prev-btn');
             const next = overlay.querySelector('.next-btn');
@@ -116,6 +118,8 @@
             const vid = frame.querySelector('video');
             if(vid){ try{ vid.pause(); }catch{} }
             overlay.classList.remove('open');
+            // Restore background scroll
+            try { document.body.classList.remove('no-scroll'); document.documentElement.classList.remove('no-scroll'); } catch{}
         }
 
         function renderSaved(){

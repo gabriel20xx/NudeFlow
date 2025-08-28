@@ -686,14 +686,17 @@ function removeSavedById(id, url) {
 function toggleSaveForActive(btn) {
   const meta = getActiveMediaMeta();
   if (!meta) return;
+  if (btn?.dataset?.busy === '1') return; // prevent re-entry
+  if (btn) btn.dataset.busy = '1';
   if (isSaved(meta.id, meta.url)) {
     removeSavedById(meta.id, meta.url);
-  // Suppress toast on homepage save toggle
+    // Suppress toast on homepage save toggle
   } else {
     addSaved(meta);
-  // Suppress toast on homepage save toggle
+    // Suppress toast on homepage save toggle
   }
   syncSaveUi();
+  if (btn) delete btn.dataset.busy;
 }
 
 function notify(type, message) {

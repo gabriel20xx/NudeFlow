@@ -16,6 +16,9 @@ html, body { height: 100%; }
 
 body { font-family: var(--font-stack); background: var(--color-bg); color: var(--color-text); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 
+/* Disable background scrolling when an overlay is open */
+html.no-scroll, body.no-scroll { overflow: hidden !important; }
+
 /* Prevent pull-to-refresh / overscroll glow on mobile within the app */
 html, body { overscroll-behavior-y: contain; }
 
@@ -82,7 +85,7 @@ body { padding-bottom: 0; }
 .float-panel .ap-range { width: 100%; }
 
 /* Inline media overlay for Saved tab */
-.media-overlay { --overlay-gap: .75rem; position: fixed; inset: 0; z-index: 160; background: rgba(0,0,0,0.86); display: none; align-items: center; justify-content: center; padding: calc(var(--topbar-height) + 1rem) 1rem calc(var(--bottom-nav-height) + 1rem); }
+.media-overlay { --overlay-gap: .75rem; position: fixed; inset: 0; z-index: 160; background: rgba(0,0,0,0.86); display: none; align-items: center; justify-content: center; padding: calc(var(--topbar-height) + var(--overlay-gap)) var(--overlay-gap) calc(var(--bottom-nav-height) + var(--overlay-gap)); }
 .media-overlay.open { display: flex; }
 .media-overlay .media-frame { position: relative; width: min(96vw, 1100px); height: min(74vh, calc(100vh - var(--topbar-height) - var(--bottom-nav-height) - 2rem)); display:flex; align-items:center; justify-content:center; }
 .media-overlay .media-frame img, .media-overlay .media-frame video { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--radius-md); box-shadow: var(--shadow-2xl, 0 10px 40px rgba(0,0,0,.6)); background: #000; }
@@ -98,14 +101,16 @@ body { padding-bottom: 0; }
     .media-overlay.open {
         display: grid;
         grid-template-columns: auto auto;
-        grid-template-rows: 1fr auto; /* media row fills, controls row sits at bottom */
+    grid-template-rows: 1fr auto; /* media row fills, controls row sits at bottom */
         justify-content: center;      /* center the grid horizontally */
         justify-items: center;        /* center items in their columns */
         align-content: stretch;       /* stretch rows to container height */
         align-items: center;          /* center items within their grid areas */
         column-gap: var(--overlay-gap);
         row-gap: var(--overlay-gap);
-        padding-bottom: calc(var(--bottom-nav-height) + var(--overlay-gap));
+    padding-bottom: calc(var(--bottom-nav-height) + var(--overlay-gap) + env(safe-area-inset-bottom, 0px));
+    padding-left: calc(var(--overlay-gap) + env(safe-area-inset-left, 0px));
+    padding-right: calc(var(--overlay-gap) + env(safe-area-inset-right, 0px));
     }
     .media-overlay .media-frame { grid-column: 1 / -1; grid-row: 1; }
     .media-overlay .nav-btn {
