@@ -63,9 +63,12 @@ body { padding-bottom: 0; }
 .float-btn:hover { filter: brightness(1.08); }
 .float-btn i { font-size: 1rem; }
 
-/* Place on left for very narrow screens to avoid clashing with bottom-nav */
+/* Mobile: container already excludes bottom nav; keep equal margins and respect safe-area */
 @media (max-width: 420px) {
-    .floating-controls { right: .65rem; bottom: calc(var(--bottom-nav-height) + .65rem); }
+    .floating-controls { 
+        right: calc(env(safe-area-inset-right, 0px) + .65rem); 
+        bottom: calc(env(safe-area-inset-bottom, 0px) + .65rem); 
+    }
 }
 
 /* Timer panel */
