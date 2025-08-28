@@ -82,11 +82,11 @@ body { padding-bottom: 0; }
 .float-panel .ap-range { width: 100%; }
 
 /* Inline media overlay for Saved tab */
-.media-overlay { position: fixed; inset: 0; z-index: 160; background: rgba(0,0,0,0.86); display: none; align-items: center; justify-content: center; padding: calc(var(--topbar-height) + 1rem) 1rem calc(var(--bottom-nav-height) + 1rem); }
+.media-overlay { --overlay-gap: .75rem; position: fixed; inset: 0; z-index: 160; background: rgba(0,0,0,0.86); display: none; align-items: center; justify-content: center; padding: calc(var(--topbar-height) + 1rem) 1rem calc(var(--bottom-nav-height) + 1rem); }
 .media-overlay.open { display: flex; }
 .media-overlay .media-frame { position: relative; width: min(96vw, 1100px); height: min(74vh, calc(100vh - var(--topbar-height) - var(--bottom-nav-height) - 2rem)); display:flex; align-items:center; justify-content:center; }
 .media-overlay .media-frame img, .media-overlay .media-frame video { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--radius-md); box-shadow: var(--shadow-2xl, 0 10px 40px rgba(0,0,0,.6)); background: #000; }
-.media-overlay .close-btn { position: absolute; top: .75rem; right: .75rem; width: 42px; height: 42px; border-radius: 999px; border: 1px solid var(--color-border); background: rgba(30,32,38,0.85); color: var(--color-text); display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: var(--shadow-md); }
+.media-overlay .close-btn { position: absolute; top: var(--overlay-gap); right: var(--overlay-gap); width: 42px; height: 42px; border-radius: 999px; border: 1px solid var(--color-border); background: rgba(30,32,38,0.85); color: var(--color-text); display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: var(--shadow-md); }
 :root[data-theme='light'] .media-overlay .close-btn { background: rgba(255,255,255,0.92); }
 .media-overlay .nav-btn { position:absolute; top:50%; transform: translateY(-50%); width:48px; height:48px; border-radius:999px; border:1px solid var(--color-border); background: rgba(30,32,38,0.8); color: var(--color-text); display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: var(--shadow-md); font-size: 1.2rem; }
 .media-overlay .prev-btn { left: .75rem; }
@@ -95,21 +95,24 @@ body { padding-bottom: 0; }
 
 /* On mobile, place navigation buttons below the media instead of overlaying it */
 @media (max-width: 600px) {
-    .media-overlay.open { 
-        display: grid; 
-        grid-template-columns: auto auto; 
-        grid-template-rows: auto auto; 
-        align-content: center; 
-        justify-content: center; 
-        place-items: center; 
+    .media-overlay.open {
+        display: grid;
+        grid-template-columns: auto auto;
+        grid-template-rows: auto auto;
+        align-content: center;
+        justify-content: center;
+        place-items: center;
+        column-gap: var(--overlay-gap);
+        row-gap: var(--overlay-gap);
+        padding-bottom: calc(var(--bottom-nav-height) + var(--overlay-gap));
     }
     .media-overlay .media-frame { grid-column: 1 / -1; grid-row: 1; }
-    .media-overlay .nav-btn { 
-        position: static; 
-        transform: none; 
-        margin-top: .75rem; 
-        width: 44px; 
-        height: 44px; 
+    .media-overlay .nav-btn {
+        position: static;
+        transform: none;
+        margin-top: 0;
+        width: 44px;
+        height: 44px;
     }
     .media-overlay .prev-btn { grid-column: 1; grid-row: 2; justify-self: end; }
     .media-overlay .next-btn { grid-column: 2; grid-row: 2; justify-self: start; }
