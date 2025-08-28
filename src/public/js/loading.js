@@ -6,6 +6,13 @@ let toLoadImageIndex = 0; // Track the page number for fetching images
 let currentImageIndex = 0; // Track the current visible image
 let isTransitioning = false;
 let startY = 0;
+let lastTouchY = 0;
+let inactivityTimer = null;
+let controlsRoot = null;
+let autoAdvanceTimer = null;
+let isAutoscrollOn = false;
+let isFullscreen = false;
+
 const preLoadImageCount = ApplicationConfiguration?.userInterfaceSettings?.preLoadImageCount || 5;
 const mediaContainer = document.getElementById("home-container");
 const currentUrl = window.location.href;
@@ -20,6 +27,13 @@ const categoryPattern = /^https?:\/\/[^/]+(\/.+[^/])$/;
 
 // Preload images
 loadContent();
+
+// Build floating controls (only on pages with home-container)
+if (mediaContainer) {
+  buildFloatingControls();
+  setupInactivityAutoHide();
+  preventMobilePullToRefresh();
+}
 
 function getUrl() {
   const FUNCTION_NAME = 'getUrl';
@@ -138,6 +152,8 @@ function loadContent() {
 
 window.addEventListener("touchstart", e => {
   startY = e.touches[0].clientY;
+  lastTouchY = startY;
+  revealControlsTemporarily();
 });
 
 window.addEventListener("touchend", e => {
@@ -149,11 +165,13 @@ window.addEventListener("touchend", e => {
   } else if (diff < -50) {
     changeImage(false); // Swipe down
   }
+  scheduleControlsHide();
 });
 
 window.addEventListener("keydown", e => {
   if (e.key === "ArrowDown") changeImage(true);
   if (e.key === "ArrowUp") changeImage(false);
+  revealControlsTemporarily();
 });
 
 window.addEventListener("wheel", e => {
@@ -162,6 +180,7 @@ window.addEventListener("wheel", e => {
   } else if (e.deltaY < 0) {
     changeImage(false); // Scroll up
   }
+  revealControlsTemporarily();
 });
 
 function changeImage(side) {
@@ -238,5 +257,197 @@ function changeImage(side) {
 
 // Legacy helper no longer needed with explicit mapping above (kept for compatibility if referenced elsewhere)
 // Removed deprecated toggleFlyAnimation helper (was unused)
+
+// --- Floating Controls & UX Enhancements ---
+
+function buildFloatingControls() {
+  const FUNCTION_NAME = 'buildFloatingControls';
+  try {
+    // Create wrapper
+    controlsRoot = document.createElement('div');
+    controlsRoot.className = 'floating-controls visible';
+
+    // Buttons
+    const fsBtn = document.createElement('button');
+    fsBtn.className = 'float-btn float-btn--fs';
+    fsBtn.setAttribute('type', 'button');
+    fsBtn.setAttribute('aria-label', 'Toggle fullscreen');
+    fsBtn.innerHTML = '<i class="fas fa-expand" aria-hidden="true"></i>';
+
+    const autoBtn = document.createElement('button');
+    autoBtn.className = 'float-btn float-btn--auto';
+    autoBtn.setAttribute('type', 'button');
+    autoBtn.setAttribute('aria-pressed', 'false');
+    autoBtn.setAttribute('aria-label', 'Toggle autoscroll');
+    autoBtn.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i>';
+
+  // Show fullscreen button on all devices (desktop & mobile)
+
+    controlsRoot.appendChild(fsBtn);
+    controlsRoot.appendChild(autoBtn);
+    mediaContainer.appendChild(controlsRoot);
+
+    // Handlers
+    fsBtn.addEventListener('click', () => {
+      revealControlsTemporarily();
+      toggleFullscreen();
+    });
+
+    autoBtn.addEventListener('click', () => {
+      revealControlsTemporarily();
+      toggleAutoscroll(autoBtn);
+    });
+
+    // Fullscreen changes
+    ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(evt => {
+      document.addEventListener(evt, syncFullscreenUi);
+    });
+
+    ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Floating controls initialized');
+  } catch (err) {
+    ApplicationUtilities.errorLog(MODULE_NAME, FUNCTION_NAME, 'Failed to build floating controls', { error: err?.message });
+  }
+}
+
+function toggleAutoscroll(autoBtn) {
+  const FUNCTION_NAME = 'toggleAutoscroll';
+  const intervalMs = ApplicationConfiguration?.userInterfaceSettings?.autoAdvanceMs || 6000;
+
+  if (isAutoscrollOn) {
+    clearInterval(autoAdvanceTimer);
+    autoAdvanceTimer = null;
+  }
+
+  isAutoscrollOn = !isAutoscrollOn;
+
+  if (isAutoscrollOn) {
+    autoAdvanceTimer = setInterval(() => {
+      try { changeImage(true); } catch {}
+    }, intervalMs);
+  }
+
+  if (autoBtn) {
+    autoBtn.setAttribute('aria-pressed', String(isAutoscrollOn));
+    autoBtn.innerHTML = isAutoscrollOn
+      ? '<i class="fas fa-pause" aria-hidden="true"></i>'
+      : '<i class="fas fa-play" aria-hidden="true"></i>';
+  }
+
+  ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Autoscroll toggled', { on: isAutoscrollOn, intervalMs });
+}
+
+function getFullscreenElement() {
+  return document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || null;
+}
+
+function requestFsFor(el) {
+  if (!el) return Promise.reject('No element');
+  if (el.requestFullscreen) return el.requestFullscreen();
+  if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+  if (el.mozRequestFullScreen) return el.mozRequestFullScreen();
+  if (el.msRequestFullscreen) return el.msRequestFullscreen();
+  return Promise.reject('Fullscreen API not supported');
+}
+
+function exitFs() {
+  if (document.exitFullscreen) return document.exitFullscreen();
+  if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+  if (document.mozCancelFullScreen) return document.mozCancelFullScreen();
+  if (document.msExitFullscreen) return document.msExitFullscreen();
+}
+
+function toggleFullscreen() {
+  const FUNCTION_NAME = 'toggleFullscreen';
+  const active = document.querySelector('#home-container .media.active');
+  const target = mediaContainer || document.documentElement;
+
+  // Try Fullscreen API first on the container
+  const currentlyFs = !!getFullscreenElement();
+  const next = currentlyFs ? exitFs() : requestFsFor(target);
+
+  next.catch(() => {
+    // Fallback: if a video is active on iOS, try native video fullscreen
+    if (!currentlyFs && active && active.tagName === 'VIDEO' && typeof active.webkitEnterFullscreen === 'function') {
+      try { active.webkitEnterFullscreen(); } catch {}
+    }
+  }).finally(() => {
+    setTimeout(syncFullscreenUi, 50);
+  });
+}
+
+function syncFullscreenUi() {
+  isFullscreen = !!getFullscreenElement();
+  const fsBtn = controlsRoot?.querySelector('.float-btn--fs');
+  if (fsBtn) {
+    fsBtn.innerHTML = isFullscreen
+      ? '<i class="fas fa-compress" aria-hidden="true"></i>'
+      : '<i class="fas fa-expand" aria-hidden="true"></i>';
+  }
+}
+
+function setupInactivityAutoHide() {
+  const FUNCTION_NAME = 'setupInactivityAutoHide';
+  const hideMs = ApplicationConfiguration?.userInterfaceSettings?.controlsHideMs || 2600;
+  const events = ['mousemove','mousedown','keydown','touchstart','pointermove','click'];
+  const onAny = () => revealControlsTemporarily();
+  events.forEach(evt => document.addEventListener(evt, onAny, { passive: true }));
+  scheduleControlsHide(hideMs);
+  ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Inactivity auto-hide initialized', { hideMs });
+}
+
+function revealControlsTemporarily() {
+  if (!controlsRoot) return;
+  controlsRoot.classList.add('visible');
+  controlsRoot.classList.remove('hidden');
+  scheduleControlsHide();
+}
+
+function scheduleControlsHide(ms) {
+  const hideMs = ms ?? (ApplicationConfiguration?.userInterfaceSettings?.controlsHideMs || 2600);
+  if (inactivityTimer) clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => {
+    if (!controlsRoot) return;
+    controlsRoot.classList.add('hidden');
+    controlsRoot.classList.remove('visible');
+  }, hideMs);
+}
+
+function preventMobilePullToRefresh() {
+  // CSS does most via overscroll-behavior; as extra guard, prevent rubber-band on this view
+  const handler = (e) => {
+    // One-finger vertical pan only
+    if (e.touches && e.touches.length === 1) {
+      const currentY = e.touches[0].clientY;
+      const dy = currentY - lastTouchY;
+      lastTouchY = currentY;
+      // If attempting to scroll down at top of page, prevent default to avoid refresh
+      const scroller = document.scrollingElement || document.documentElement;
+      const atTop = (scroller?.scrollTop || 0) <= 0;
+      if (dy > 0 && atTop) {
+        e.preventDefault();
+      }
+    }
+  };
+  window.addEventListener('touchmove', handler, { passive: false });
+}
+
+// Pause autoscroll when tab is hidden; resume when visible if still enabled
+document.addEventListener('visibilitychange', () => {
+  const intervalMs = ApplicationConfiguration?.userInterfaceSettings?.autoAdvanceMs || 6000;
+  if (document.hidden) {
+    if (autoAdvanceTimer) {
+      clearInterval(autoAdvanceTimer);
+      autoAdvanceTimer = null;
+      ApplicationUtilities.debugLog(MODULE_NAME, 'visibilitychange', 'Autoscroll paused (tab hidden)');
+    }
+  } else {
+    if (isAutoscrollOn && !autoAdvanceTimer) {
+      autoAdvanceTimer = setInterval(() => {
+        try { changeImage(true); } catch {}
+      }, intervalMs);
+      ApplicationUtilities.debugLog(MODULE_NAME, 'visibilitychange', 'Autoscroll resumed (tab visible)', { intervalMs });
+    }
+  }
+});
 
 })(); // End of IIFE
