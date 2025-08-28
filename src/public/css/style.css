@@ -93,6 +93,28 @@ body { padding-bottom: 0; }
 .media-overlay .next-btn { right: .75rem; }
 .media-overlay .nav-btn:disabled { opacity: .45; cursor: default; }
 
+/* On mobile, place navigation buttons below the media instead of overlaying it */
+@media (max-width: 600px) {
+    .media-overlay.open { 
+        display: grid; 
+        grid-template-columns: auto auto; 
+        grid-template-rows: auto auto; 
+        align-content: center; 
+        justify-content: center; 
+        place-items: center; 
+    }
+    .media-overlay .media-frame { grid-column: 1 / -1; grid-row: 1; }
+    .media-overlay .nav-btn { 
+        position: static; 
+        transform: none; 
+        margin-top: .75rem; 
+        width: 44px; 
+        height: 44px; 
+    }
+    .media-overlay .prev-btn { grid-column: 1; grid-row: 2; justify-self: end; }
+    .media-overlay .next-btn { grid-column: 2; grid-row: 2; justify-self: start; }
+}
+
 
 /* Top Bar moved to shared theme.css */
 /* Category select styles centralized in theme.css */

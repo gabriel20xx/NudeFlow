@@ -658,10 +658,10 @@ function toggleSaveForActive(btn) {
   if (!meta) return;
   if (isSaved(meta.id, meta.url)) {
     removeSavedById(meta.id, meta.url);
-    notify('info', 'Removed from saved');
+  // Suppress toast on homepage save toggle
   } else {
     addSaved(meta);
-    notify('success', 'Saved');
+  // Suppress toast on homepage save toggle
   }
   syncSaveUi();
 }
