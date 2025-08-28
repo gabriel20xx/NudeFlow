@@ -147,6 +147,8 @@ function loadContent() {
         mediaType,
         elementType: mediaElement.tagName 
       });
+  // If this is the very first media, sync save button state now
+  try { if (toLoadImageIndex === 0) syncSaveUi(); } catch {}
       
       toLoadImageIndex++;
 
@@ -552,7 +554,8 @@ function setDurationForMedia(mediaKey, ms) {
 }
 
 function getCurrentMediaKey() {
-  const el = document.querySelector('#home-container .media.active');
+  const list = document.querySelectorAll('#home-container .media');
+  const el = list && list[currentImageIndex] ? list[currentImageIndex] : document.querySelector('#home-container .media.active');
   return el?.dataset?.mediaKey || null;
 }
 

@@ -61,8 +61,6 @@
                     <div class="video-thumbnail" role="button" tabindex="0" aria-label="Open ${video.name||'media'}" onclick='openSavedMedia(JSON.parse(decodeURIComponent("${encoded}")))' onkeypress='if(event.key==="Enter"){openSavedMedia(JSON.parse(decodeURIComponent("${encoded}")))}'>
                         <img src="${video.thumbnail || video.url}" alt="${video.name}">
                     </div>
-                    <p>${video.name || 'Media'}</p>
-                    <small>Category: ${video.category || ''}</small>
                     <div>
                         <button onclick='openSavedMedia(JSON.parse(decodeURIComponent("${encoded}")))'>Open</button>
                         <button onclick="removeSaved('${video.id}')">Remove</button>
