@@ -22,11 +22,21 @@
         }
         function saveSavedList(list){ try { localStorage.setItem(SAVED_STORE_KEY, JSON.stringify(list)); } catch{} }
     function removeSaved(id){
-        const next = getSavedList().filter(x=>x.id!==id);
+        const current = getSavedList();
+        const removedItem = current.find(x => x.id === id);
+        const next = current.filter(x=>x.id!==id);
         saveSavedList(next);
         const overlayEl = document.getElementById('savedOverlay');
         const overlayOpen = !!(overlayEl && overlayEl.classList.contains('open'));
         renderSaved();
+        // Toast notification for deletion (defer until DOM updated)
+        try {
+            const name = removedItem && (removedItem.name || removedItem.title);
+            const msg = name ? `Removed “${name}” from Saved` : 'Removed from Saved';
+            if (window.toast && typeof window.toast.success === 'function') {
+                window.toast.success(msg, { duration: 2000, title: 'Saved' });
+            }
+        } catch {}
         if(overlayOpen){
             const list = getSavedList();
             if(typeof window._currentSavedIndex !== 'number' || window._currentSavedIndex < 0){

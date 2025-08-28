@@ -22,16 +22,19 @@ window.addEventListener('load', async function() {
     for (const route of routes) {
             // Create grid item
             const item = document.createElement('div');
-            item.className = 'category-card';
+            // Reuse saved/search card styles for consistent design
+            item.className = 'video-item';
             item.setAttribute('role','button');
             item.setAttribute('tabindex','0');
             item.setAttribute('aria-label', `Open ${ApplicationUtilities.formatDisplayText(route)}`);
 
             // Preview wrapper
             const preview = document.createElement('div');
-            preview.className = 'category-preview';
+            // Use the same thumbnail wrapper as saved cards
+            preview.className = 'video-thumbnail';
 
             const title = document.createElement('div');
+            // Title styling will inherit from .video-item text rules
             title.className = 'category-title';
             title.textContent = ApplicationUtilities.formatDisplayText(route);
 
