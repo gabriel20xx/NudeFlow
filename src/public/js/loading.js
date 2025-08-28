@@ -12,6 +12,8 @@ let controlsRoot = null;
 let autoAdvanceTimer = null; // setTimeout id
 let isAutoscrollOn = false;
 let isFullscreen = false;
+let lastKnownKey = null;
+let currentAutoDurationMs = null;
 
 const preLoadImageCount = ApplicationConfiguration?.userInterfaceSettings?.preLoadImageCount || 5;
 const mediaContainer = document.getElementById("home-container");
@@ -303,7 +305,7 @@ function buildFloatingControls() {
       <div class="float-panel-row">
         <label>Autoplay: <span class="apv">6</span>s</label>
       </div>
-      <input class="ap-range" type="range" min="2" max="20" step="1" value="6" aria-label="Autoplay seconds">
+      <input class="ap-range" type="range" min="1" max="30" step="1" value="6" aria-label="Autoplay seconds">
     `;
 
   // Show fullscreen button on all devices (desktop & mobile)
@@ -334,11 +336,14 @@ function buildFloatingControls() {
     const range = panel.querySelector('.ap-range');
     const valueEl = panel.querySelector('.apv');
     range.addEventListener('input', () => {
-      const seconds = Number(range.value) || 6;
+      const seconds = clamp(Number(range.value) || 6, 1, 30);
       valueEl.textContent = String(seconds);
       const key = getCurrentMediaKey();
       if (key) {
-        setDurationForMedia(key, seconds * 1000);
+        const ms = seconds * 1000;
+        setDurationForMedia(key, ms);
+        lastKnownKey = key;
+        currentAutoDurationMs = ms;
         if (isAutoscrollOn) scheduleNextAutoAdvance(true);
       }
     });
@@ -520,7 +525,9 @@ function scheduleNextAutoAdvance(restart) {
   if (!isAutoscrollOn) return;
   if (restart && autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
   const key = getCurrentMediaKey();
-  const ms = key ? getDurationForMedia(key) : (ApplicationConfiguration?.userInterfaceSettings?.autoAdvanceMs || 6000);
+  lastKnownKey = key || lastKnownKey;
+  const ms = getEffectiveDurationMs(key);
+  currentAutoDurationMs = ms;
   autoAdvanceTimer = setTimeout(() => {
     try { changeImage(true); } catch {}
   }, ms);
@@ -531,14 +538,28 @@ function toggleDurationPanel(panel) {
   const willShow = panel.hidden;
   if (willShow) {
     const key = getCurrentMediaKey();
-    const ms = key ? getDurationForMedia(key) : (ApplicationConfiguration?.userInterfaceSettings?.autoAdvanceMs || 6000);
+    const ms = getEffectiveDurationMs(key);
     const range = panel.querySelector('.ap-range');
     const valueEl = panel.querySelector('.apv');
-    const seconds = Math.round(ms / 1000);
+    const seconds = clamp(Math.round(ms / 1000), 1, 30);
+    range.min = '1';
+    range.max = '30';
+    range.step = '1';
     range.value = String(seconds);
     valueEl.textContent = String(seconds);
   }
   panel.hidden = !willShow;
 }
+
+function getEffectiveDurationMs(key) {
+  const def = ApplicationConfiguration?.userInterfaceSettings?.autoAdvanceMs || 6000;
+  if (!key) return typeof currentAutoDurationMs === 'number' ? currentAutoDurationMs : def;
+  const map = getDurationsMap();
+  if (typeof map[key] === 'number' && map[key] > 0) return map[key];
+  if (key === lastKnownKey && typeof currentAutoDurationMs === 'number') return currentAutoDurationMs;
+  return def;
+}
+
+function clamp(n, min, max){ return Math.min(max, Math.max(min, n)); }
 
 })(); // End of IIFE
