@@ -629,27 +629,57 @@ function getSavedList() {
   return [];
 }
 
+function canonicalizeUrl(u) {
+  try {
+    const url = new URL(u, window.location?.origin || location?.origin || undefined);
+    return (url.origin + url.pathname).toLowerCase();
+  } catch {
+    return (u || '').toLowerCase();
+  }
+}
+
+function savedKey(id, url) {
+  if (id != null && String(id).trim() !== '') return 'id:' + String(id);
+  if (url) return 'url:' + canonicalizeUrl(url);
+  return null;
+}
+
+function dedupeSaved(list) {
+  const seen = new Set();
+  const out = [];
+  for (const x of Array.isArray(list) ? list : []) {
+    const key = savedKey(x?.id, x?.url) || JSON.stringify(x);
+    if (!seen.has(key)) { seen.add(key); out.push(x); }
+  }
+  return out;
+}
+
 function saveSavedList(list) {
-  try { localStorage.setItem(SAVED_STORE_KEY, JSON.stringify(list)); } catch {}
+  try { localStorage.setItem(SAVED_STORE_KEY, JSON.stringify(dedupeSaved(list))); } catch {}
 }
 
 function isSaved(id, url) {
+  const key = savedKey(id, url);
+  if (!key) return false;
   const list = getSavedList();
-  return list.some(x => (id && x.id === id) || (url && x.url === url));
+  return list.some(x => savedKey(x?.id, x?.url) === key);
 }
 
 function addSaved(item) {
   if (!item?.id && !item?.url) return false;
-  // Dedupe existing by id or url
-  const list = getSavedList().filter(x => !( (item.id && x.id === item.id) || (item.url && x.url === item.url) ));
-  list.unshift(item);
-  saveSavedList(list);
+  const key = savedKey(item.id, item.url);
+  const list = getSavedList();
+  // Remove any existing with same key, then add newest to front
+  const filtered = key ? list.filter(x => savedKey(x?.id, x?.url) !== key) : list.slice();
+  filtered.unshift(item);
+  saveSavedList(filtered);
   return true;
 }
 
 function removeSavedById(id, url) {
+  const key = savedKey(id, url);
   const list = getSavedList();
-  const next = list.filter(x => !((id && x.id === id) || (url && x.url === url)));
+  const next = key ? list.filter(x => savedKey(x?.id, x?.url) !== key) : list;
   saveSavedList(next);
 }
 

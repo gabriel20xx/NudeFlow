@@ -20,7 +20,10 @@
         function getSavedList(){
             try { const raw = localStorage.getItem(SAVED_STORE_KEY); const arr = raw ? JSON.parse(raw) : []; return Array.isArray(arr)?arr:[]; } catch { return []; }
         }
-        function saveSavedList(list){ try { localStorage.setItem(SAVED_STORE_KEY, JSON.stringify(list)); } catch{} }
+    function canonicalizeUrl(u){ try { const url=new URL(u, window.location?.origin||location?.origin||undefined); return (url.origin+url.pathname).toLowerCase(); } catch { return (u||'').toLowerCase(); } }
+    function savedKey(id,url){ if(id!=null && String(id).trim()!=='') return 'id:'+String(id); if(url) return 'url:'+canonicalizeUrl(url); return null; }
+    function dedupeSaved(list){ const seen=new Set(); const out=[]; for(const x of Array.isArray(list)?list:[]){ const key = savedKey(x?.id,x?.url) || JSON.stringify(x); if(!seen.has(key)){ seen.add(key); out.push(x);} } return out; }
+    function saveSavedList(list){ try { localStorage.setItem(SAVED_STORE_KEY, JSON.stringify(dedupeSaved(list))); } catch{} }
     function removeSaved(id){
         const current = getSavedList();
         const removedItem = current.find(x => x.id === id);

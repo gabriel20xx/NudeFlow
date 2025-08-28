@@ -98,10 +98,11 @@ body { padding-bottom: 0; }
     .media-overlay.open {
         display: grid;
         grid-template-columns: auto auto;
-        grid-template-rows: auto auto;
-        align-content: center;
-        justify-content: center;
-        place-items: center;
+        grid-template-rows: 1fr auto; /* media row fills, controls row sits at bottom */
+        justify-content: center;      /* center the grid horizontally */
+        justify-items: center;        /* center items in their columns */
+        align-content: stretch;       /* stretch rows to container height */
+        align-items: center;          /* center items within their grid areas */
         column-gap: var(--overlay-gap);
         row-gap: var(--overlay-gap);
         padding-bottom: calc(var(--bottom-nav-height) + var(--overlay-gap));
