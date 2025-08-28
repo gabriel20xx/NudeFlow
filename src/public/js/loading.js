@@ -9,7 +9,7 @@ let startY = 0;
 let lastTouchY = 0;
 let inactivityTimer = null;
 let controlsRoot = null;
-let autoAdvanceTimer = null;
+let autoAdvanceTimer = null; // setTimeout id
 let isAutoscrollOn = false;
 let isFullscreen = false;
 
@@ -115,6 +115,10 @@ function loadContent() {
       if (toLoadImageIndex == 0) {
         mediaElement.classList.add("active");
       }
+
+  // Tag element with a stable media key for per-media settings
+  const mediaKey = mediaInfo.filename || mediaInfo.id || mediaInfo.url || `idx-${toLoadImageIndex}`;
+  mediaElement.dataset.mediaKey = String(mediaKey);
 
       // Handle audio unmuting for videos on user interaction
       if (mediaType !== 'static' && toLoadImageIndex == 0) {
@@ -246,6 +250,8 @@ function changeImage(side) {
       previousImage.classList.remove("active");
       previousImage.classList.remove(`fly-out-up`, `fly-out-down`);
       isTransitioning = false;
+  // Reschedule autoscroll for the new active media
+  if (isAutoscrollOn) scheduleNextAutoAdvance(true);
   }, 520);
   } else {
     ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'No content change possible', { 
@@ -281,10 +287,31 @@ function buildFloatingControls() {
     autoBtn.setAttribute('aria-label', 'Toggle autoscroll');
     autoBtn.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i>';
 
+    const timerBtn = document.createElement('button');
+    timerBtn.className = 'float-btn float-btn--timer';
+    timerBtn.setAttribute('type', 'button');
+    timerBtn.setAttribute('aria-label', 'Set autoplay duration for this media');
+    timerBtn.innerHTML = '<i class="fas fa-clock" aria-hidden="true"></i>';
+
+    // Panel for per-media duration
+    const panel = document.createElement('div');
+    panel.className = 'float-panel';
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-label', 'Autoplay duration');
+    panel.hidden = true;
+    panel.innerHTML = `
+      <div class="float-panel-row">
+        <label>Autoplay: <span class="apv">6</span>s</label>
+      </div>
+      <input class="ap-range" type="range" min="2" max="20" step="1" value="6" aria-label="Autoplay seconds">
+    `;
+
   // Show fullscreen button on all devices (desktop & mobile)
 
-    controlsRoot.appendChild(fsBtn);
-    controlsRoot.appendChild(autoBtn);
+  controlsRoot.appendChild(fsBtn);
+  controlsRoot.appendChild(autoBtn);
+  controlsRoot.appendChild(timerBtn);
+  controlsRoot.appendChild(panel);
     mediaContainer.appendChild(controlsRoot);
 
     // Handlers
@@ -296,6 +323,24 @@ function buildFloatingControls() {
     autoBtn.addEventListener('click', () => {
       revealControlsTemporarily();
       toggleAutoscroll(autoBtn);
+    });
+
+    timerBtn.addEventListener('click', () => {
+      revealControlsTemporarily();
+      toggleDurationPanel(panel);
+    });
+
+    // Panel interactions
+    const range = panel.querySelector('.ap-range');
+    const valueEl = panel.querySelector('.apv');
+    range.addEventListener('input', () => {
+      const seconds = Number(range.value) || 6;
+      valueEl.textContent = String(seconds);
+      const key = getCurrentMediaKey();
+      if (key) {
+        setDurationForMedia(key, seconds * 1000);
+        if (isAutoscrollOn) scheduleNextAutoAdvance(true);
+      }
     });
 
     // Fullscreen changes
@@ -311,19 +356,13 @@ function buildFloatingControls() {
 
 function toggleAutoscroll(autoBtn) {
   const FUNCTION_NAME = 'toggleAutoscroll';
-  const intervalMs = ApplicationConfiguration?.userInterfaceSettings?.autoAdvanceMs || 6000;
-
-  if (isAutoscrollOn) {
-    clearInterval(autoAdvanceTimer);
-    autoAdvanceTimer = null;
-  }
+  // clear any pending timer
+  if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
 
   isAutoscrollOn = !isAutoscrollOn;
 
   if (isAutoscrollOn) {
-    autoAdvanceTimer = setInterval(() => {
-      try { changeImage(true); } catch {}
-    }, intervalMs);
+    scheduleNextAutoAdvance(true);
   }
 
   if (autoBtn) {
@@ -333,7 +372,7 @@ function toggleAutoscroll(autoBtn) {
       : '<i class="fas fa-play" aria-hidden="true"></i>';
   }
 
-  ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Autoscroll toggled', { on: isAutoscrollOn, intervalMs });
+  ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Autoscroll toggled', { on: isAutoscrollOn });
 }
 
 function getFullscreenElement() {
@@ -433,21 +472,73 @@ function preventMobilePullToRefresh() {
 
 // Pause autoscroll when tab is hidden; resume when visible if still enabled
 document.addEventListener('visibilitychange', () => {
-  const intervalMs = ApplicationConfiguration?.userInterfaceSettings?.autoAdvanceMs || 6000;
   if (document.hidden) {
-    if (autoAdvanceTimer) {
-      clearInterval(autoAdvanceTimer);
-      autoAdvanceTimer = null;
-      ApplicationUtilities.debugLog(MODULE_NAME, 'visibilitychange', 'Autoscroll paused (tab hidden)');
-    }
+    if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
+    ApplicationUtilities.debugLog(MODULE_NAME, 'visibilitychange', 'Autoscroll paused (tab hidden)');
   } else {
     if (isAutoscrollOn && !autoAdvanceTimer) {
-      autoAdvanceTimer = setInterval(() => {
-        try { changeImage(true); } catch {}
-      }, intervalMs);
-      ApplicationUtilities.debugLog(MODULE_NAME, 'visibilitychange', 'Autoscroll resumed (tab visible)', { intervalMs });
+      scheduleNextAutoAdvance(true);
+      ApplicationUtilities.debugLog(MODULE_NAME, 'visibilitychange', 'Autoscroll resumed (tab visible)');
     }
   }
 });
+
+// --- Per-media duration helpers ---
+const DURATION_STORE_KEY = 'nf_mediaAutoDurations_v1';
+
+function getDurationsMap() {
+  try {
+    const raw = localStorage.getItem(DURATION_STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return {};
+}
+
+function saveDurationsMap(map) {
+  try { localStorage.setItem(DURATION_STORE_KEY, JSON.stringify(map)); } catch {}
+}
+
+function getDurationForMedia(mediaKey) {
+  const map = getDurationsMap();
+  const ms = map[mediaKey];
+  if (typeof ms === 'number' && ms > 0) return ms;
+  return ApplicationConfiguration?.userInterfaceSettings?.autoAdvanceMs || 6000;
+}
+
+function setDurationForMedia(mediaKey, ms) {
+  const map = getDurationsMap();
+  map[mediaKey] = Math.max(1000, Math.floor(ms));
+  saveDurationsMap(map);
+}
+
+function getCurrentMediaKey() {
+  const el = document.querySelector('#home-container .media.active');
+  return el?.dataset?.mediaKey || null;
+}
+
+function scheduleNextAutoAdvance(restart) {
+  if (!isAutoscrollOn) return;
+  if (restart && autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
+  const key = getCurrentMediaKey();
+  const ms = key ? getDurationForMedia(key) : (ApplicationConfiguration?.userInterfaceSettings?.autoAdvanceMs || 6000);
+  autoAdvanceTimer = setTimeout(() => {
+    try { changeImage(true); } catch {}
+  }, ms);
+}
+
+function toggleDurationPanel(panel) {
+  if (!panel) return;
+  const willShow = panel.hidden;
+  if (willShow) {
+    const key = getCurrentMediaKey();
+    const ms = key ? getDurationForMedia(key) : (ApplicationConfiguration?.userInterfaceSettings?.autoAdvanceMs || 6000);
+    const range = panel.querySelector('.ap-range');
+    const valueEl = panel.querySelector('.apv');
+    const seconds = Math.round(ms / 1000);
+    range.value = String(seconds);
+    valueEl.textContent = String(seconds);
+  }
+  panel.hidden = !willShow;
+}
 
 })(); // End of IIFE
