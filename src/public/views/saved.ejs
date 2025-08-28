@@ -19,7 +19,8 @@
             try { const raw = localStorage.getItem(SAVED_STORE_KEY); const arr = raw ? JSON.parse(raw) : []; return Array.isArray(arr)?arr:[]; } catch { return []; }
         }
         function saveSavedList(list){ try { localStorage.setItem(SAVED_STORE_KEY, JSON.stringify(list)); } catch{} }
-        function removeSaved(id){ const next = getSavedList().filter(x=>x.id!==id); saveSavedList(next); renderSaved(); if(typeof window._currentSavedIndex==='number'){ const list=getSavedList(); if(window._currentSavedIndex>=list.length){ window._currentSavedIndex=list.length-1; } if(list.length===0){ closeSavedOverlay(); } else { renderOverlayFromIndex(); } } }
+    function removeSaved(id){ const next = getSavedList().filter(x=>x.id!==id); saveSavedList(next); renderSaved(); if(typeof window._currentSavedIndex==='number'){ const list=getSavedList(); if(window._currentSavedIndex>=list.length){ window._currentSavedIndex=list.length-1; } if(list.length===0){ closeSavedOverlay(); } else { renderOverlayFromIndex(); } } }
+    function removeSavedClick(ev, id){ try{ ev?.stopPropagation(); ev?.preventDefault(); }catch{} removeSaved(id); }
 
         // Overlay navigation state
         window._currentSavedIndex = -1;
@@ -78,8 +79,8 @@
                         <img src="${video.thumbnail || video.url}" alt="${video.name}">
                     </div>
                     <div>
-                        <button onclick='openSavedByIndex(${i})'>Open</button>
-                        <button onclick="removeSaved('${video.id}')">Remove</button>
+                        <button type="button" onclick='openSavedByIndex(${i})'>Open</button>
+                        <button type="button" onclick="removeSavedClick(event, '${video.id}')">Remove</button>
                     </div>
                 `;
                 container.appendChild(el);

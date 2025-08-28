@@ -591,7 +591,8 @@ function toggleDurationPanel(panel) {
 
 // --- Saved list helpers (localStorage, client-side) ---
 function getActiveMediaMeta() {
-  const el = document.querySelector('#home-container .media.active');
+  const list = document.querySelectorAll('#home-container .media');
+  const el = list && list[currentImageIndex] ? list[currentImageIndex] : document.querySelector('#home-container .media.active');
   if (!el) return null;
   return {
     id: el.dataset.mediaKey,
