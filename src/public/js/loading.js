@@ -119,8 +119,8 @@ function loadContent() {
         mediaElement.classList.add("active");
       }
 
-  // Tag element with a stable media key for per-media settings
-  const mediaKey = mediaInfo.filename || mediaInfo.id || mediaInfo.url || `idx-${toLoadImageIndex}`;
+  // Tag element with a stable media key for per-media settings (prefer URL for uniqueness)
+  const mediaKey = mediaInfo.url || mediaInfo.relativePath || mediaInfo.id || (mediaInfo.category && mediaInfo.filename ? `${mediaInfo.category}/${mediaInfo.filename}` : mediaInfo.filename) || `idx-${toLoadImageIndex}`;
   mediaElement.dataset.mediaKey = String(mediaKey);
   // Attach metadata for saving
   mediaElement.dataset.url = mediaUrl;
@@ -458,8 +458,8 @@ function syncFullscreenUi() {
 function syncSaveUi() {
   const btn = controlsRoot?.querySelector('.float-btn--save');
   if (!btn) return;
-  const key = getCurrentMediaKey();
-  const saved = isSaved(key);
+  const meta = getActiveMediaMeta();
+  const saved = isSaved(meta?.id, meta?.url);
   btn.setAttribute('aria-pressed', String(!!saved));
   btn.innerHTML = saved
     ? '<i class="fas fa-bookmark" aria-hidden="true" style="color: var(--color-accent, #ff9800);"></i>'
@@ -618,31 +618,31 @@ function saveSavedList(list) {
   try { localStorage.setItem(SAVED_STORE_KEY, JSON.stringify(list)); } catch {}
 }
 
-function isSaved(id) {
-  if (!id) return false;
-  return getSavedList().some(x => x.id === id);
+function isSaved(id, url) {
+  const list = getSavedList();
+  return list.some(x => (id && x.id === id) || (url && x.url === url));
 }
 
 function addSaved(item) {
-  if (!item?.id) return false;
-  const list = getSavedList();
-  if (list.some(x => x.id === item.id)) return true;
+  if (!item?.id && !item?.url) return false;
+  // Dedupe existing by id or url
+  const list = getSavedList().filter(x => !( (item.id && x.id === item.id) || (item.url && x.url === item.url) ));
   list.unshift(item);
   saveSavedList(list);
   return true;
 }
 
-function removeSavedById(id) {
+function removeSavedById(id, url) {
   const list = getSavedList();
-  const next = list.filter(x => x.id !== id);
+  const next = list.filter(x => !((id && x.id === id) || (url && x.url === url)));
   saveSavedList(next);
 }
 
 function toggleSaveForActive(btn) {
   const meta = getActiveMediaMeta();
   if (!meta) return;
-  if (isSaved(meta.id)) {
-    removeSavedById(meta.id);
+  if (isSaved(meta.id, meta.url)) {
+    removeSavedById(meta.id, meta.url);
     notify('info', 'Removed from saved');
   } else {
     addSaved(meta);

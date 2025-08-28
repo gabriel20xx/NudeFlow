@@ -4,9 +4,11 @@
     <p class="muted mt-sm">Your bookmarked media appears here.</p>
     <section id="savedVideos" class="results-grid" aria-live="polite"></section>
     <div id="savedOverlay" class="media-overlay" role="dialog" aria-modal="true" aria-label="Saved media viewer">
+        <button class="nav-btn prev-btn" type="button" aria-label="Previous" onclick="showPrevSaved()">&#10094;</button>
         <div class="media-frame" id="savedFrame">
             <button class="close-btn" type="button" aria-label="Close" onclick="closeSavedOverlay()">✕</button>
         </div>
+        <button class="nav-btn next-btn" type="button" aria-label="Next" onclick="showNextSaved()">&#10095;</button>
     </div>
 </main>
 
@@ -17,8 +19,16 @@
             try { const raw = localStorage.getItem(SAVED_STORE_KEY); const arr = raw ? JSON.parse(raw) : []; return Array.isArray(arr)?arr:[]; } catch { return []; }
         }
         function saveSavedList(list){ try { localStorage.setItem(SAVED_STORE_KEY, JSON.stringify(list)); } catch{} }
-        function removeSaved(id){ const next = getSavedList().filter(x=>x.id!==id); saveSavedList(next); renderSaved(); }
-        function openSavedMedia(item){
+        function removeSaved(id){ const next = getSavedList().filter(x=>x.id!==id); saveSavedList(next); renderSaved(); if(typeof window._currentSavedIndex==='number'){ const list=getSavedList(); if(window._currentSavedIndex>=list.length){ window._currentSavedIndex=list.length-1; } if(list.length===0){ closeSavedOverlay(); } else { renderOverlayFromIndex(); } } }
+
+        // Overlay navigation state
+        window._currentSavedIndex = -1;
+        function openSavedByIndex(i){ const list=getSavedList(); if(!list.length) return; window._currentSavedIndex = Math.max(0, Math.min(i, list.length-1)); renderOverlayFromIndex(); }
+        function renderOverlayFromIndex(){
+            const list = getSavedList();
+            const idx = window._currentSavedIndex;
+            if(!list.length || idx<0 || idx>=list.length){ closeSavedOverlay(); return; }
+            const item = list[idx];
             const overlay = document.getElementById('savedOverlay');
             const frame = document.getElementById('savedFrame');
             // remove previous media nodes
@@ -39,7 +49,14 @@
             }
             frame.appendChild(node);
             overlay.classList.add('open');
+            // update nav button disabled state
+            const prev = overlay.querySelector('.prev-btn');
+            const next = overlay.querySelector('.next-btn');
+            if(prev) prev.disabled = (idx<=0);
+            if(next) next.disabled = (idx>=list.length-1);
         }
+        function showPrevSaved(){ if(typeof window._currentSavedIndex!=='number') return; if(window._currentSavedIndex>0){ window._currentSavedIndex--; renderOverlayFromIndex(); } }
+        function showNextSaved(){ const list=getSavedList(); if(typeof window._currentSavedIndex!=='number') return; if(window._currentSavedIndex<list.length-1){ window._currentSavedIndex++; renderOverlayFromIndex(); } }
         function closeSavedOverlay(){
             const overlay = document.getElementById('savedOverlay');
             const frame = document.getElementById('savedFrame');
@@ -53,16 +70,15 @@
             const container = document.getElementById('savedVideos');
             container.innerHTML = '';
             if(!data.length){ container.innerHTML = '<p>No saved videos yet.</p>'; return; }
-            data.forEach(video => {
+            data.forEach((video, i) => {
                 const el = document.createElement('div');
                 el.className = 'video-item';
-                const encoded = encodeURIComponent(JSON.stringify(video));
                 el.innerHTML = `
-                    <div class="video-thumbnail" role="button" tabindex="0" aria-label="Open ${video.name||'media'}" onclick='openSavedMedia(JSON.parse(decodeURIComponent("${encoded}")))' onkeypress='if(event.key==="Enter"){openSavedMedia(JSON.parse(decodeURIComponent("${encoded}")))}'>
+                    <div class="video-thumbnail" role="button" tabindex="0" aria-label="Open ${video.name||'media'}" onclick='openSavedByIndex(${i})' onkeypress='if(event.key==="Enter"){openSavedByIndex(${i})}'>
                         <img src="${video.thumbnail || video.url}" alt="${video.name}">
                     </div>
                     <div>
-                        <button onclick='openSavedMedia(JSON.parse(decodeURIComponent("${encoded}")))'>Open</button>
+                        <button onclick='openSavedByIndex(${i})'>Open</button>
                         <button onclick="removeSaved('${video.id}')">Remove</button>
                     </div>
                 `;
