@@ -52,11 +52,14 @@ window.addEventListener('load', async function() {
             try {
                 const rnd = await ApplicationUtilities.performSafeFetch(`${window.location.origin}/api/media/random/${encodeURIComponent(route)}`);
                 const media = rnd?.data;
-                if (media && media.url) {
+        if (media && media.url) {
                     // Image or video element based on mediaType
                     if (media.mediaType === 'static' || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(media.url)) {
                         const img = document.createElement('img');
-                        img.src = media.thumbnail || media.url;
+            // Use server thumbnail route for faster category loading
+            const encoded = encodeURIComponent(media.relativePath || media.url.replace(/^\/?media\//,''));
+            img.loading = 'lazy';
+            img.src = `/media/thumb/${encoded}?w=360`;
                         img.alt = ApplicationUtilities.formatDisplayText(route);
                         preview.appendChild(img);
                     } else {

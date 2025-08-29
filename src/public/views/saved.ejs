@@ -1,6 +1,10 @@
 <%- include("partials/header") %>
 <main id="saved-container" class="page-wrapper" aria-label="Saved media">
     <section id="savedVideos" class="results-grid" aria-live="polite"></section>
+    <div class="toolbar" style="margin: .5rem 0 0; display:flex; gap:.5rem; align-items:center;">
+        <label for="savedPreloadRadius" style="font-size:.9rem; color:var(--fg-500)">Preload radius</label>
+        <input id="savedPreloadRadius" type="number" min="0" max="10" step="1" value="2" style="width:80px" />
+    </div>
     <div id="savedOverlay" class="media-overlay" role="dialog" aria-modal="true" aria-label="Saved media viewer">
         <button class="nav-btn prev-btn" type="button" aria-label="Previous" onclick="showPrevSaved()">&#10094;</button>
         <div class="media-frame" id="savedFrame">
@@ -75,6 +79,13 @@
             window._currentSavedIndex = Math.max(0, Math.min(i, list.length-1));
             renderOverlayFromIndex();
         }
+        const preloadCache = new Map();
+        function loadFull(url){
+            if(!url) return Promise.reject(new Error('no url'));
+            if(preloadCache.has(url)) return preloadCache.get(url);
+            const p = new Promise((resolve, reject)=>{ const im=new Image(); im.onload=()=>resolve(im); im.onerror=reject; im.src=url; });
+            preloadCache.set(url, p); return p;
+        }
         function renderOverlayFromIndex(){
             const list = getSavedList();
             const idx = window._currentSavedIndex;
@@ -87,8 +98,11 @@
             let node;
             if(item.mediaType==="static" || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(item.url)){
                 node = document.createElement('img');
-                node.src = item.url;
                 node.alt = item.name || 'Saved media';
+                frame.appendChild(node);
+                // progressive: show thumb then full
+                if(item.thumbnail){ node.src = item.thumbnail; }
+                loadFull(item.url).then(()=>{ node.src=item.url; }).catch(()=>{ node.src=item.url; });
             } else {
                 node = document.createElement('video');
                 node.src = item.url;
@@ -97,8 +111,8 @@
                 node.loop = true;
                 node.muted = false;
                 node.playsInline = true;
+                frame.appendChild(node);
             }
-            frame.appendChild(node);
             overlay.classList.add('open');
             // Prevent background scroll while overlay is open
             try { document.body.classList.add('no-scroll'); document.documentElement.classList.add('no-scroll'); } catch{}
@@ -107,6 +121,14 @@
             const next = overlay.querySelector('.next-btn');
             if(prev) prev.disabled = (idx<=0);
             if(next) next.disabled = (idx>=list.length-1);
+            // preload neighbors
+            const input = document.getElementById('savedPreloadRadius');
+            const radius = Math.max(0, Math.min(10, Number(input?.value)||0));
+            for(let d=1; d<=radius; d++){
+                const li = idx - d; const ri = idx + d;
+                if(li>=0 && list[li]) loadFull(list[li].url).catch(()=>{});
+                if(ri<list.length && list[ri]) loadFull(list[ri].url).catch(()=>{});
+            }
         }
         function showPrevSaved(){ if(typeof window._currentSavedIndex!=='number') return; if(window._currentSavedIndex>0){ window._currentSavedIndex--; renderOverlayFromIndex(); } }
         function showNextSaved(){ const list=getSavedList(); if(typeof window._currentSavedIndex!=='number') return; if(window._currentSavedIndex<list.length-1){ window._currentSavedIndex++; renderOverlayFromIndex(); } }
@@ -140,6 +162,14 @@
                 container.appendChild(el);
             });
         }
+
+        // Persist preload radius
+        (function(){
+            const KEY='nudeflow:saved:preloadRadius';
+            const input=document.getElementById('savedPreloadRadius');
+            try{ const s=localStorage.getItem(KEY); if(s!=null) input.value=String(Math.max(0,Math.min(10,Number(s)||0))); }catch{}
+            input.addEventListener('change', ()=>{ try{ localStorage.setItem(KEY, String(Math.max(0,Math.min(10,Number(input.value)||0)))); }catch{} });
+        })();
 
         renderSaved();
         function downloadSavedClick(ev, id){

@@ -21,7 +21,7 @@ apiRouter.get("/search", (request, response) => {
   const searchResults = mediaService.searchMedia(searchQuery);
   const formattedResults = searchResults.map(item => ({
     ...item,
-    thumbnail: `/media/${item.relativePath}`,
+    thumbnail: `/media/thumb/${item.relativePath}?w=360`,
     url: `/media/${item.relativePath}`
   }));
 
@@ -80,7 +80,7 @@ apiRouter.get("/categories/:categoryName", (request, response) => {
 
   const formattedMedia = categoryMedia.map(item => ({
     ...item,
-    thumbnail: `/media/${item.relativePath}`,
+    thumbnail: `/media/thumb/${item.relativePath}?w=360`,
     url: `/media/${item.relativePath}`
   }));
 
@@ -119,7 +119,7 @@ apiRouter.get("/media/random/:category?", (request, response) => {
     
     const mediaInfo = {
       ...randomMedia,
-      thumbnail: `/media/${randomMedia.relativePath}`,
+      thumbnail: `/media/thumb/${randomMedia.relativePath}?w=720`,
       url: `/media/${randomMedia.relativePath}`
     };
     
