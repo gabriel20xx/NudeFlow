@@ -129,12 +129,12 @@
                 const el = document.createElement('div');
                 el.className = 'video-item';
                 el.innerHTML = `
-                    <div class="video-thumbnail" role="button" tabindex="0" aria-label="Open ${video.name||'media'}" onclick='openSavedByIndex(${i})' onkeypress='if(event.key==="Enter"){openSavedByIndex(${i})}'>
+                    <div class="video-thumbnail media-contain" role="button" tabindex="0" aria-label="Open ${video.name||'media'}" onclick='openSavedByIndex(${i})' onkeypress='if(event.key==="Enter"){openSavedByIndex(${i})}'>
                         <img src="${video.thumbnail || video.url}" alt="${video.name}">
                     </div>
                     <div>
-                        <button type="button" onclick='openSavedByIndex(${i})'>Open</button>
-                        <button type="button" onclick="removeSavedClick(event, '${video.id}')">Remove</button>
+                        <button type="button" class="btn-download" onclick="downloadSavedClick(event, '${video.id}')">Download</button>
+                        <button type="button" class="btn-danger-solid" onclick="removeSavedClick(event, '${video.id}')">Remove</button>
                     </div>
                 `;
                 container.appendChild(el);
@@ -142,5 +142,37 @@
         }
 
         renderSaved();
+        function downloadSavedClick(ev, id){
+            try{ ev?.stopPropagation(); ev?.preventDefault(); }catch{}
+            const list = getSavedList();
+            const item = list.find(x=>String(x.id)===String(id));
+            if(!item || !item.url) return;
+            const nameFromMeta = (item.name || item.title || '').trim();
+            const urlName = (()=>{ try{ const u=new URL(item.url, location.origin); const p=u.pathname.split('/').filter(Boolean).pop()||'download'; return p; }catch{ return 'download'; }})();
+            const filename = nameFromMeta ? `${nameFromMeta}` : urlName;
+            downloadFile(item.url, filename);
+        }
+        function downloadFile(url, filename){
+            try{
+                fetch(url, {mode:'cors'}).then(r=>{
+                    if(!r.ok) throw new Error('net');
+                    return r.blob();
+                }).then(blob=>{
+                    const a=document.createElement('a');
+                    const href=URL.createObjectURL(blob);
+                    a.href=href; a.download=filename||'download';
+                    document.body.appendChild(a); a.click(); a.remove();
+                    setTimeout(()=>URL.revokeObjectURL(href), 1500);
+                }).catch(()=>{
+                    const a=document.createElement('a');
+                    a.href=url; a.download=filename||''; a.target='_blank'; a.rel='noopener';
+                    document.body.appendChild(a); a.click(); a.remove();
+                });
+            }catch{
+                const a=document.createElement('a');
+                a.href=url; a.download=filename||''; a.target='_blank'; a.rel='noopener';
+                document.body.appendChild(a); a.click(); a.remove();
+            }
+        }
     </script>
 <%- include("partials/navbar") %>
