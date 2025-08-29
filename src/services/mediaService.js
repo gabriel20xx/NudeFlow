@@ -98,7 +98,8 @@ const scanMediaFiles = async () => {
   mediaCache = tempMediaCache;
   categoriesCache = Array.from(tempCategoriesCache).map(name => ({
         name,
-        displayName: AppUtils.formatRouteNameForDisplay(name)
+        // Preserve original folder casing for display
+        displayName: name
     }));
 
     AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Media scan completed successfully', {

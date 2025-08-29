@@ -355,10 +355,12 @@ window.ApplicationUtilities = {
     
     this.debugLog(MODULE_NAME, FUNCTION_NAME, 'Formatting display text', { rawText });
     
-    const formattedText = rawText
-      .replace(/_/g, ' ')
-      .toLowerCase()
-      .replace(/\b\w/g, character => character.toUpperCase());
+    const normalized = String(rawText || '')
+      .replace(/[\-_]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+    const formattedText = normalized.replace(/\b\w/g, character => character.toUpperCase());
     
     this.debugLog(MODULE_NAME, FUNCTION_NAME, 'Text formatting completed', { formattedText });
     return formattedText;

@@ -38,7 +38,12 @@ window.addEventListener('load', async function() {
             const title = document.createElement('div');
             // Title styling will inherit from .video-item text rules
             title.className = 'category-title';
-            title.textContent = ApplicationUtilities.formatDisplayText(route);
+                                    try {
+                                        const decoded = decodeURIComponent(String(route)).replace(/\+/g,' ');
+                                        title.textContent = decoded;
+                                    } catch {
+                                        title.textContent = String(route);
+                                    }
 
             item.appendChild(preview);
             item.appendChild(title);

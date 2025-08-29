@@ -83,10 +83,12 @@ function getUrl() {
     const match = currentUrl.match(categoryPattern);
     if (match && match[1]) {
         let category = match[1];
-        // Update header title if present
+        // Update header title if present (decode URI components and plus signs)
         try {
+          const raw = category.replace(/^\//,'');
+          const decoded = decodeURIComponent(raw).replace(/\+/g, ' ');
           const titleEl = document.querySelector('.app-category-title');
-          if (titleEl) titleEl.textContent = ApplicationUtilities.formatDisplayText(category.replace(/^\//,''));
+          if (titleEl) titleEl.textContent = decoded;
         } catch {}
         let url = `${baseUrl}/api/media/random/${category.replace(/^\//,'')}`;
         ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Category page detected', { category, url });

@@ -113,7 +113,8 @@ viewsRouter.get('/:categoryName', (request, response, next) => {
   const decoded = decodeURIComponent(raw);
   const match = categories.find(c => c.name.toLowerCase() === decoded.toLowerCase());
     if (!match) return next();
-  const display = match.displayName || AppUtils.formatRouteNameForDisplay(match.name);
+  // Use original folder casing from cache; fall back to raw name
+  const display = match.displayName || match.name;
     AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering home view for category', { categoryName: match.name, display });
     return response.render('home', { title: 'Home', currentCategoryDisplay: display });
   } catch (error) {
