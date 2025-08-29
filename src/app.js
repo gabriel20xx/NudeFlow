@@ -22,6 +22,10 @@ try {
 
 const MODULE_NAME = 'MainServer';
 const SITE_TITLE = process.env.SITE_TITLE || 'NudeFlow';
+const PRELOAD_RADIUS = (function(){
+  const clamp = (n,min,max)=>{ n=Number(n); return Math.max(min, Math.min(max, Number.isFinite(n)?n:min)); };
+  return clamp(process.env.PRELOAD_RADIUS ?? process.env.PRELOAD_NEIGHBOR_RADIUS ?? 2, 0, 10);
+})();
 // Factory pattern to allow tests to build app without starting HTTP listener
 let expressApplication; // lazily created
 
@@ -111,7 +115,7 @@ const configureRoutes = async () => {
 
   expressApplication.use("/media", mediaRoutesModule);
   // Inject siteTitle into all view renders
-  expressApplication.use((req, res, next)=>{ res.locals.siteTitle = SITE_TITLE; next(); });
+  expressApplication.use((req, res, next)=>{ res.locals.siteTitle = SITE_TITLE; res.locals.preloadRadius = PRELOAD_RADIUS; next(); });
   expressApplication.use("/", viewRoutesModule);
   expressApplication.use("/api", apiRoutesModule);
   // Simple health probe (no heavy deps)
