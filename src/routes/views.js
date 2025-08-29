@@ -108,10 +108,12 @@ viewsRouter.get('/:categoryName', (request, response, next) => {
   const { categoryName } = request.params;
 
   try {
-    const categories = mediaService.getCategories() || [];
-    const match = categories.find(c => c.name.toLowerCase() === String(categoryName || '').toLowerCase());
+  const categories = mediaService.getCategories() || [];
+  const raw = String(categoryName || '');
+  const decoded = decodeURIComponent(raw);
+  const match = categories.find(c => c.name.toLowerCase() === decoded.toLowerCase());
     if (!match) return next();
-    const display = match.displayName || AppUtils.formatRouteNameForDisplay(match.name);
+  const display = match.displayName || AppUtils.formatRouteNameForDisplay(match.name);
     AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering home view for category', { categoryName: match.name, display });
     return response.render('home', { title: 'Home', currentCategoryDisplay: display });
   } catch (error) {

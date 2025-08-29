@@ -93,11 +93,11 @@ function getUrl() {
         return url;
     }
   } else if (domainPattern.test(currentUrl)) {
-        let url = `${baseUrl}/api/media/random/homepage`;
+        let url = `${baseUrl}/api/media/random/all`;
         ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Homepage detected', { url });
         return url;
   } else {
-    let url = `${baseUrl}/api/media/random/homepage`;
+    let url = `${baseUrl}/api/media/random/all`;
     ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'No specific page matched, using homepage', { currentUrl });
     return url;
   }

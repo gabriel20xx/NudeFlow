@@ -44,7 +44,7 @@ window.addEventListener('load', async function() {
             item.appendChild(title);
 
             // Click/keyboard open: go to home with category in path
-            const go = () => { window.location.href = `/${route}`; };
+            const go = () => { window.location.href = `/${encodeURIComponent(route)}`; };
             item.addEventListener('click', go);
             item.addEventListener('keypress', (e)=>{ if(e.key==='Enter'){ go(); }});
 
@@ -52,7 +52,8 @@ window.addEventListener('load', async function() {
 
             // Load random preview media for this category using the proper endpoint
             try {
-                const rnd = await ApplicationUtilities.performSafeFetch(`${window.location.origin}/api/media/random/${encodeURIComponent(route)}`);
+                const cat = String(route).toLowerCase() === 'all' ? 'all' : route;
+                const rnd = await ApplicationUtilities.performSafeFetch(`${window.location.origin}/api/media/random/${encodeURIComponent(cat)}`);
                 const media = rnd?.data;
         if (media && media.url) {
                     // Image or video element based on mediaType

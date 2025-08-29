@@ -107,12 +107,14 @@ apiRouter.get("/saved", (request, response) => {
  */
 apiRouter.get("/media/random/:category?", (request, response) => {
   const ENDPOINT_FUNCTION = 'handleRandomMediaInfoRequest';
-  const { category } = request.params;
+  let { category } = request.params;
   
   AppUtils.debugLog(MODULE_NAME, ENDPOINT_FUNCTION, 'Processing random media info request', { category });
   
   try {
-    const randomMedia = mediaService.getRandomMedia(category);
+    // Default and legacy mapping: homepage -> all
+    const picked = (category == null || String(category).trim() === '') ? 'all' : (String(category).toLowerCase() === 'homepage' ? 'all' : category);
+    const randomMedia = mediaService.getRandomMedia(picked);
     
     if (!randomMedia) {
       AppUtils.errorLog(MODULE_NAME, ENDPOINT_FUNCTION, 'No media found for the given criteria', { category });
@@ -126,7 +128,7 @@ apiRouter.get("/media/random/:category?", (request, response) => {
     };
     
     AppUtils.infoLog(MODULE_NAME, ENDPOINT_FUNCTION, 'Random media info retrieved successfully', { 
-      category,
+      category: picked,
       fileName: randomMedia.name,
       mediaType: randomMedia.mediaType 
     });

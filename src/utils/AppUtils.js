@@ -207,10 +207,13 @@ class AppUtils {
    */
   static formatRouteNameForDisplay(routeName) {
     AppUtils.debugLog('AppUtils', 'formatRouteNameForDisplay', 'Formatting route name', { routeName });
-    const formattedName = routeName
-      .replace(/_/g, ' ')
-      .toLowerCase()
-      .replace(/\b\w/g, c => c.toUpperCase());
+    // Replace underscores and hyphens with spaces, collapse multiple spaces, trim, then title-case
+    const normalized = String(routeName || '')
+      .replace(/[\-_]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+    const formattedName = normalized.replace(/\b\w/g, c => c.toUpperCase());
     AppUtils.debugLog('AppUtils', 'formatRouteNameForDisplay', 'Route name formatted', { formattedName });
     return formattedName;
   }
