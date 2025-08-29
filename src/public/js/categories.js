@@ -28,7 +28,8 @@ window.addEventListener('load', async function() {
             item.className = 'video-item';
             item.setAttribute('role','button');
             item.setAttribute('tabindex','0');
-            item.setAttribute('aria-label', `Open ${ApplicationUtilities.formatDisplayText(route)}`);
+            const routeIsAll = String(route).toLowerCase() === 'all';
+            item.setAttribute('aria-label', `Open ${routeIsAll ? 'All' : ApplicationUtilities.formatDisplayText(route)}`);
 
             // Preview wrapper
             const preview = document.createElement('div');
@@ -40,9 +41,9 @@ window.addEventListener('load', async function() {
             title.className = 'category-title';
                                     try {
                                         const decoded = decodeURIComponent(String(route)).replace(/\+/g,' ');
-                                        title.textContent = decoded;
+                                        title.textContent = routeIsAll ? 'All' : decoded;
                                     } catch {
-                                        title.textContent = String(route);
+                                        title.textContent = routeIsAll ? 'All' : String(route);
                                     }
 
             item.appendChild(preview);
