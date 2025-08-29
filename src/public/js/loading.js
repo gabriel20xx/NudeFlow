@@ -87,8 +87,9 @@ function getUrl() {
         try {
           const raw = category.replace(/^\//,'');
           const decoded = decodeURIComponent(raw).replace(/\+/g, ' ');
+          const isAll = decoded.trim().toLowerCase() === 'all';
           const titleEl = document.querySelector('.app-category-title');
-          if (titleEl) titleEl.textContent = decoded;
+          if (titleEl) titleEl.textContent = isAll ? 'All' : ApplicationUtilities.formatDisplayText(decoded);
         } catch {}
         let url = `${baseUrl}/api/media/random/${category.replace(/^\//,'')}`;
         ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Category page detected', { category, url });
