@@ -46,45 +46,57 @@ const scanMediaFiles = async () => {
     const items = await fs.readdir(mediaDirectory, { withFileTypes: true });
 
     for (const item of items) {
+      // Skip hidden entries (dotfiles and dotfolders)
+      if (!item || !item.name || item.name.startsWith('.')) continue;
       if (item.isDirectory()) {
         const categoryName = item.name;
         tempCategoriesCache.add(categoryName);
         const categoryPath = path.join(mediaDirectory, categoryName);
-        const files = await fs.readdir(categoryPath);
 
-        for (const file of files) {
-          if (AppUtils.validateMediaFileType(file)) {
-            tempMediaCache.push({
-              name: path.basename(file, path.extname(file)),
-              filename: file,
-              category: categoryName,
-              relativePath: `${categoryName}/${file}`, // Use forward slashes for URLs
-              mimeType: AppUtils.determineMimeType(file),
-              mediaType: AppUtils.getMediaType(file)
-            });
+        // Recursively walk subfolders to include nested media
+        const walk = async (currentDir, relativePrefix = '') => {
+          let entries = [];
+          try {
+            entries = await fs.readdir(currentDir, { withFileTypes: true });
+          } catch (e) {
+            AppUtils.warnLog(MODULE_NAME, FUNCTION_NAME, 'Failed to read directory (skipping)', { currentDir, error: e.message });
+            return;
           }
-        }
+          for (const entry of entries) {
+            if (!entry || !entry.name || entry.name.startsWith('.')) continue; // hide hidden entries at all levels
+            const entryPath = path.join(currentDir, entry.name);
+            if (entry.isDirectory()) {
+              // Recurse into subfolder
+              const nextPrefix = relativePrefix ? `${relativePrefix}/${entry.name}` : entry.name;
+              await walk(entryPath, nextPrefix);
+            } else {
+              // File: validate and add
+              if (AppUtils.validateMediaFileType(entry.name)) {
+                const rel = relativePrefix ? `${categoryName}/${relativePrefix}/${entry.name}` : `${categoryName}/${entry.name}`;
+                tempMediaCache.push({
+                  name: path.basename(entry.name, path.extname(entry.name)),
+                  filename: entry.name,
+                  category: categoryName,
+                  relativePath: rel,
+                  mimeType: AppUtils.determineMimeType(entry.name),
+                  mediaType: AppUtils.getMediaType(entry.name)
+                });
+              }
+            }
+          }
+        };
+
+        await walk(categoryPath);
       }
     }
-    
-    // Add files from root media directory to 'homepage' category
-    const rootFiles = items.filter(item => item.isFile() && AppUtils.validateMediaFileType(item.name));
-    if (rootFiles.length > 0) {
-        tempCategoriesCache.add('homepage');
-        for (const file of rootFiles) {
-            tempMediaCache.push({
-                name: path.basename(file.name, path.extname(file.name)),
-                filename: file.name,
-                category: 'homepage',
-                relativePath: file.name,
-                mimeType: AppUtils.determineMimeType(file.name),
-                mediaType: AppUtils.getMediaType(file.name)
-            });
-        }
+
+    // Add synthetic 'all' category aggregating all subfolders (no root files)
+    if (tempCategoriesCache.size > 0) {
+      tempCategoriesCache.add('all');
     }
 
-    mediaCache = tempMediaCache;
-    categoriesCache = Array.from(tempCategoriesCache).map(name => ({
+  mediaCache = tempMediaCache;
+  categoriesCache = Array.from(tempCategoriesCache).map(name => ({
         name,
         displayName: AppUtils.formatRouteNameForDisplay(name)
     }));
@@ -159,7 +171,14 @@ const getRandomMedia = (category = null) => {
   let filteredMedia = mediaCache;
 
   if (category) {
-    filteredMedia = mediaCache.filter(item => item.category.toLowerCase() === category.toLowerCase());
+    const lc = String(category).toLowerCase();
+    if (lc === 'all') {
+      // Any item that belongs to a subfolder (has a slash in relativePath)
+      filteredMedia = mediaCache.filter(item => item && typeof item.relativePath === 'string' && item.relativePath.includes('/'));
+    } else {
+      // Category-specific: include nested subfolders (items keep top-level category field)
+      filteredMedia = mediaCache.filter(item => item.category.toLowerCase() === lc);
+    }
   }
 
   if (filteredMedia.length === 0) {

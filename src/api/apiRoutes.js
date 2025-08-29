@@ -39,7 +39,7 @@ apiRouter.get("/categories", (request, response) => {
   const ENDPOINT_FUNCTION = 'handleCategoriesRequest';
   AppUtils.debugLog(MODULE_NAME, ENDPOINT_FUNCTION, 'Processing categories request');
   
-  const categories = mediaService.getCategories();
+  const categories = (mediaService.getCategories() || []).filter(c => c && c.name && !c.name.startsWith('.'));
   
   AppUtils.infoLog(MODULE_NAME, ENDPOINT_FUNCTION, 'Categories retrieved successfully', { 
     categoryCount: categories.length 
@@ -55,7 +55,7 @@ apiRouter.get("/routes", (request, response) => {
   const ENDPOINT_FUNCTION = 'handleRoutesRequest';
   AppUtils.debugLog(MODULE_NAME, ENDPOINT_FUNCTION, 'Processing routes request');
   
-  const categories = mediaService.getCategories();
+  const categories = (mediaService.getCategories() || []).filter(c => c && c.name && !c.name.startsWith('.'));
   const routes = categories.map(category => category.name);
   
   AppUtils.infoLog(MODULE_NAME, ENDPOINT_FUNCTION, 'Routes retrieved successfully', { 
@@ -74,9 +74,11 @@ apiRouter.get("/categories/:categoryName", (request, response) => {
   
   AppUtils.debugLog(MODULE_NAME, ENDPOINT_FUNCTION, 'Fetching videos for category', { categoryName });
   
-  const categoryMedia = mediaService.getAllMedia().filter(
-    item => item.category.toLowerCase() === categoryName.toLowerCase()
-  );
+  // Include all items under the top-level category, including nested subfolders
+  const categoryMedia = mediaService.getAllMedia().filter(item => {
+    if(!item || !item.category) return false;
+    return item.category.toLowerCase() === categoryName.toLowerCase();
+  });
 
   const formattedMedia = categoryMedia.map(item => ({
     ...item,

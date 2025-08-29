@@ -8,7 +8,9 @@ window.addEventListener('load', async function() {
     
     try {
         const routesResp = await ApplicationUtilities.performSafeFetch(ApplicationUtilities.buildApiUrl('routes'));
-        const routes = routesResp?.data || routesResp || [];
+    let routes = routesResp?.data || routesResp || [];
+    // Ensure 'all' appears first if present
+    routes = Array.isArray(routes) ? routes.slice().sort((a,b)=> (String(a).toLowerCase()==='all'? -1:0) - (String(b).toLowerCase()==='all'? -1:0)) : routes;
         const gridContainer = document.getElementById('categoriesGrid');
 
         if (!gridContainer) {
