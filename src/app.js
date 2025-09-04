@@ -66,6 +66,7 @@ const configureMiddleware = () => {
   const sharedCandidates = [
     process.env.NUDESHARED_DIR,
     '/app/NudeShared',
+    path.join(__dirname, '..', '..', 'NudeShared'),
     path.join(__dirname, '..', '..', 'shared')
   ].filter(Boolean);
   let mountedSharedFrom = '';

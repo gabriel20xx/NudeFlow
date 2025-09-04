@@ -1,8 +1,4 @@
-<%- include('partials/header') %>
+<%- include('partials/header', { title: 'Server Error' }) %>
+<%- include('shared/error', { message }) %>
 <%- include('partials/navbar') %>
-
-<main>
-    <h1>Error</h1>
-    <p><%= message %></p>
-</main>
 
