@@ -1,8 +1,4 @@
-<%- include('partials/header') %>
+<%- include('partials/header', { title: (typeof title !== 'undefined' ? title : 'Page Not Found') }) %>
+<%- include('shared/404', { message: (typeof message !== 'undefined' ? message : undefined) }) %>
 <%- include('partials/navbar') %>
-
-<main>
-    <h1><%= title %></h1>
-    <p>Sorry, the page you are looking for does not exist.</p>
-</main>
 

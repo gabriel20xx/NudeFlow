@@ -55,8 +55,11 @@ const configureMiddleware = () => {
 
   // View engine setup
   expressApplication.set("view engine", "ejs");
-  // Updated views path to new unified structure (views inside public)
-  expressApplication.set("views", path.join(__dirname, "public", "views"));
+  // Updated views path to new unified structure and add shared views
+  expressApplication.set("views", [
+    path.join(__dirname, "public", "views"),
+    path.resolve(__dirname, '..', '..', 'NudeShared', 'views')
+  ]);
   // Serve static assets from src/public (unified monorepo convention)
   expressApplication.use(express.static(path.join(__dirname, 'public')));
   // Mount shared client assets; prefer external NudeShared checkout if provided
