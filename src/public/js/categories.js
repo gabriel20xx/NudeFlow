@@ -33,8 +33,8 @@ window.addEventListener('load', async function() {
 
             // Preview wrapper
             const preview = document.createElement('div');
-            // Use the same thumbnail wrapper as saved cards
-            preview.className = 'video-thumbnail';
+            // Use shared thumbnail wrapper with non-cropping contain behavior
+            preview.className = 'video-thumbnail media-contain';
 
             const title = document.createElement('div');
             // Title styling will inherit from .video-item text rules
