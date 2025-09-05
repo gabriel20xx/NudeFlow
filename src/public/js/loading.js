@@ -15,6 +15,8 @@ let isFullscreen = false;
 let lastKnownKey = null;
 let currentAutoDurationMs = null;
 const SAVED_STORE_KEY = 'nf_savedMedia_v1';
+const LIKES_STORE_KEY = 'nf_likeCounts_v1';
+const LIKED_STATE_STORE_KEY = 'nf_likedByUser_v1';
 
 const preLoadImageCount = ApplicationConfiguration?.userInterfaceSettings?.preLoadImageCount || 5;
 const mediaContainer = document.getElementById("home-container");
@@ -191,7 +193,7 @@ function loadContent() {
         elementType: mediaElement.tagName 
       });
   // If this is the very first media, sync save button state now
-  try { if (toLoadImageIndex === 0) syncSaveUi(); } catch {}
+  try { if (toLoadImageIndex === 0) { syncSaveUi(); syncLikeUi(); } } catch {}
       
       toLoadImageIndex++;
 
@@ -257,8 +259,8 @@ function changeImage(side) {
     }
 
     currentImageIndex = newImageIndex;
-  // Sync save button state for newly active media
-  try { syncSaveUi(); } catch {}
+  // Sync save/like button state for newly active media
+  try { syncSaveUi(); syncLikeUi(); } catch {}
 
     if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
       loadContent();
@@ -299,6 +301,24 @@ function buildFloatingControls() {
     controlsRoot.className = 'floating-controls visible';
 
     // Buttons
+  // Like button with counter badge (wrapper to position badge)
+  const likeWrap = document.createElement('div');
+  likeWrap.className = 'float-like';
+
+  const likeBtn = document.createElement('button');
+  likeBtn.className = 'float-btn float-btn--like';
+  likeBtn.setAttribute('type', 'button');
+  likeBtn.setAttribute('aria-pressed', 'false');
+  likeBtn.setAttribute('aria-label', 'Like this media');
+  likeBtn.innerHTML = '<i class="fas fa-heart" aria-hidden="true"></i>';
+
+  const likeBadge = document.createElement('span');
+  likeBadge.className = 'like-count-badge';
+  likeBadge.textContent = '0';
+
+  likeWrap.appendChild(likeBtn);
+  likeWrap.appendChild(likeBadge);
+
     const fsBtn = document.createElement('button');
     fsBtn.className = 'float-btn float-btn--fs';
     fsBtn.setAttribute('type', 'button');
@@ -340,12 +360,18 @@ function buildFloatingControls() {
 
   // Show fullscreen button on all devices (desktop & mobile)
 
+  controlsRoot.appendChild(likeWrap);
   controlsRoot.appendChild(fsBtn);
   controlsRoot.appendChild(autoBtn);
   controlsRoot.appendChild(saveBtn);
   controlsRoot.appendChild(timerBtn);
   controlsRoot.appendChild(panel);
     mediaContainer.appendChild(controlsRoot);
+
+    likeBtn.addEventListener('click', () => {
+      revealControlsTemporarily();
+      toggleLikeForActive(likeBtn, likeBadge);
+    });
 
     // Handlers
     fsBtn.addEventListener('click', () => {
@@ -392,6 +418,7 @@ function buildFloatingControls() {
     ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Floating controls initialized');
   // initial save button state
   syncSaveUi();
+  syncLikeUi();
   } catch (err) {
     ApplicationUtilities.errorLog(MODULE_NAME, FUNCTION_NAME, 'Failed to build floating controls', { error: err?.message });
   }
@@ -476,6 +503,20 @@ function syncSaveUi() {
   btn.innerHTML = saved
     ? '<i class="fas fa-bookmark" aria-hidden="true" style="color: var(--color-accent, #ff9800);"></i>'
     : '<i class="fas fa-bookmark" aria-hidden="true"></i>';
+}
+
+function syncLikeUi() {
+  const likeBtn = controlsRoot?.querySelector('.float-btn--like');
+  const likeBadge = controlsRoot?.querySelector('.like-count-badge');
+  if (!likeBtn || !likeBadge) return;
+  const key = getCurrentMediaKey();
+  const liked = isLikedByUser(key);
+  const count = getLikeCount(key);
+  likeBtn.setAttribute('aria-pressed', String(!!liked));
+  likeBtn.innerHTML = liked
+    ? '<i class="fas fa-heart" aria-hidden="true" style="color: var(--color-danger, #ff3b30);"></i>'
+    : '<i class="fas fa-heart" aria-hidden="true"></i>';
+  likeBadge.textContent = String(Math.max(0, count || 0));
 }
 
 function setupInactivityAutoHide() {
@@ -699,6 +740,68 @@ function toggleSaveForActive(btn) {
     // Suppress toast on homepage save toggle
   }
   syncSaveUi();
+  if (btn) delete btn.dataset.busy;
+}
+
+// --- Like helpers (localStorage, client-side only for now) ---
+function getLikeCountsMap() {
+  try { const raw = localStorage.getItem(LIKES_STORE_KEY); if (raw) return JSON.parse(raw); } catch {}
+  return {};
+}
+
+function saveLikeCountsMap(map) {
+  try { localStorage.setItem(LIKES_STORE_KEY, JSON.stringify(map)); } catch {}
+}
+
+function getLikeCount(mediaKey) {
+  if (!mediaKey) return 0;
+  const map = getLikeCountsMap();
+  const n = map[mediaKey];
+  return typeof n === 'number' && n > 0 ? n : 0;
+}
+
+function setLikeCount(mediaKey, n) {
+  if (!mediaKey) return;
+  const map = getLikeCountsMap();
+  map[mediaKey] = Math.max(0, Math.floor(Number(n) || 0));
+  saveLikeCountsMap(map);
+}
+
+function getLikedStateMap() {
+  try { const raw = localStorage.getItem(LIKED_STATE_STORE_KEY); if (raw) return JSON.parse(raw); } catch {}
+  return {};
+}
+
+function saveLikedStateMap(map) {
+  try { localStorage.setItem(LIKED_STATE_STORE_KEY, JSON.stringify(map)); } catch {}
+}
+
+function isLikedByUser(mediaKey) {
+  if (!mediaKey) return false;
+  const map = getLikedStateMap();
+  return !!map[mediaKey];
+}
+
+function setLikedForMedia(mediaKey, liked) {
+  if (!mediaKey) return;
+  const map = getLikedStateMap();
+  if (liked) map[mediaKey] = true; else delete map[mediaKey];
+  saveLikedStateMap(map);
+}
+
+function toggleLikeForActive(btn, badge) {
+  const key = getCurrentMediaKey();
+  if (!key) return;
+  if (btn?.dataset?.busy === '1') return;
+  if (btn) btn.dataset.busy = '1';
+  const liked = isLikedByUser(key);
+  const prev = getLikeCount(key);
+  const nextLiked = !liked;
+  const nextCount = Math.max(0, prev + (nextLiked ? 1 : -1));
+  setLikedForMedia(key, nextLiked);
+  setLikeCount(key, nextCount);
+  // Update UI immediately
+  syncLikeUi();
   if (btn) delete btn.dataset.busy;
 }
 
