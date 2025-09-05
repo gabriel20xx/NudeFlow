@@ -10,6 +10,7 @@ import http from 'http';
 import https from 'https';
 import fs from 'fs';
 import AppUtils from './utils/AppUtils.js';
+import { initDb as initPg, query as pgQuery } from '../../NudeShared/db.js';
 import * as mediaService from './services/mediaService.js';
 
 // Load environment variables early
@@ -126,6 +127,15 @@ const configureRoutes = async () => {
   expressApplication.get('/health', (req, res) => {
     res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
   });
+  // DB health probe
+  expressApplication.get('/health/db', async (req, res) => {
+    try {
+      const { rows } = await pgQuery('SELECT 1 as ok');
+      res.json({ status: 'ok', rows });
+    } catch (e) {
+      res.status(500).json({ status: 'error', message: String(e?.message || e) });
+    }
+  });
   
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Application routes configuration completed');
 };
@@ -234,6 +244,17 @@ const startServer = async () => {
         protocol,
         environment: process.env.NODE_ENV || 'development'
       });
+    (async () => {
+      try {
+        if (process.env.DATABASE_URL || process.env.PGHOST || process.env.PGDATABASE) {
+          await initPg();
+        } else {
+          AppUtils.warnLog(MODULE_NAME, 'STARTUP', 'PostgreSQL not configured (DATABASE_URL or PGHOST/PGDATABASE)');
+        }
+      } catch (e) {
+        AppUtils.errorLog(MODULE_NAME, 'STARTUP', 'PostgreSQL initialization failed', e);
+      }
+    })();
   });
 };
 
