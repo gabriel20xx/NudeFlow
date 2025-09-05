@@ -23,7 +23,7 @@ function get(path, base){
   const addr = server.address(); const base = `http://127.0.0.1:${addr.port}`;
 
   // 1. Shared client logger asset
-  { const res = await withTimeout(get('/shared/clientLogger.js', base),3000,'clientLogger'); assert.strictEqual(res.statusCode,200,'clientLogger.js 200'); }
+  { const res = await withTimeout(get('/shared/client/clientLogger.js', base),3000,'clientLogger'); assert.strictEqual(res.statusCode,200,'clientLogger.js 200'); }
 
   // 2. Health
   { const res = await withTimeout(get('/health', base),3000,'health'); assert.strictEqual(res.statusCode,200,'health 200'); const data=JSON.parse(res.body); assert.ok(data.status==='ok'); }
