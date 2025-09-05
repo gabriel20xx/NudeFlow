@@ -11,7 +11,7 @@
     "lint:fix": "eslint \"src/**/*.js\" --fix",
     "check": "npm run lint",
     "prepare": "echo 'No build step'",
-    "test": "powershell -Command \"$env:NODE_ENV='test'; node --experimental-vm-modules test/sharedLogger.test.mjs\""
+  "test": "powershell -Command \"$env:NODE_ENV='test'; node --experimental-vm-modules test/authHealth.test.mjs\""
   },
   "keywords": [
     "video",
@@ -26,10 +26,13 @@
   "description": "Video streaming application similar to TikTok with dynamic content management",
   "type": "module",
   "dependencies": {
+    "better-sqlite3": "^9.6.0",
+    "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.21.2",
+    "express-session": "^1.18.2",
     "helmet": "^7.1.0",
     "pg": "^8.16.3",
     "selfsigned": "^2.4.1",

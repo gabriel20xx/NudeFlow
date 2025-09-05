@@ -2,7 +2,7 @@
 import { promises as fs } from 'fs';
 import fsSync from 'fs';
 import path from 'path';
-import Logger from '../../shared/serverLogger.js';
+import Logger from '../../../NudeShared/server/logger/serverLogger.js';
 
 class AppUtils {
   /**
@@ -139,7 +139,7 @@ class AppUtils {
    */
   static validateInputString(inputString) {
     AppUtils.debugLog('AppUtils', 'validateInputString', 'Validating input string', { inputString });
-    const isValid = /^[a-zA-Z0-9_-]+$/.test(inputString);
+  const isValid = /^[a-zA-Z0-9_-]+$/.test(inputString);
     AppUtils.debugLog('AppUtils', 'validateInputString', 'Input validation result', { isValid });
     return isValid;
   }
@@ -209,7 +209,7 @@ class AppUtils {
     AppUtils.debugLog('AppUtils', 'formatRouteNameForDisplay', 'Formatting route name', { routeName });
     // Replace underscores and hyphens with spaces, collapse multiple spaces, trim, then title-case
     const normalized = String(routeName || '')
-      .replace(/[\-_]+/g, ' ')
+      .replace(/[-_]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
       .toLowerCase();

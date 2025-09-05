@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
-import { createRequire } from 'module';
+// import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,7 +10,11 @@ import http from 'http';
 import https from 'https';
 import fs from 'fs';
 import AppUtils from './utils/AppUtils.js';
-import { initDb as initPg, query as pgQuery } from '../../NudeShared/db.js';
+import { initDb as initPg, query as pgQuery } from '../../NudeShared/server/index.js';
+import { runMigrations } from '../../NudeShared/server/index.js';
+import { buildAuthRouter } from '../../NudeShared/server/index.js';
+import session from 'express-session';
+import connectPg from 'connect-pg-simple';
 import * as mediaService from './services/mediaService.js';
 
 // Load environment variables early
@@ -53,6 +57,18 @@ const configureMiddleware = () => {
   }));
   expressApplication.use(express.json({ limit: process.env.MAX_FILE_SIZE || '10mb' }));
   expressApplication.use(express.urlencoded({ extended: true, limit: process.env.MAX_FILE_SIZE || '10mb' }));
+  // Sessions
+  const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_secret_change_me';
+  const PgStore = connectPg(session);
+  const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
+  expressApplication.set('trust proxy', 1);
+  expressApplication.use(session({
+    store: process.env.DATABASE_URL ? new PgStore({ conString: process.env.DATABASE_URL }) : undefined,
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { httpOnly: true, sameSite: 'lax', secure: (process.env.HTTPS === 'true' || process.env.ENABLE_HTTPS === 'true'), domain: cookieDomain, maxAge: 1000*60*60*24*7 }
+  }));
 
   // View engine setup
   expressApplication.set("view engine", "ejs");
@@ -93,8 +109,10 @@ const configureMiddleware = () => {
     AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Exposed local theme at /assets/theme.css', { themeLocal });
   } else {
     const themeCandidates = [
+      path.resolve(__dirname, '..', '..', 'NudeShared', 'client', 'theme.css'),
       path.resolve(__dirname, '..', '..', 'NudeShared', 'theme.css'),
       path.resolve(__dirname, '..', '..', 'shared', 'theme.css'),
+      '/app/NudeShared/client/theme.css',
       '/app/NudeShared/theme.css'
     ];
     const foundTheme = themeCandidates.find(p => { try { return p && fs.existsSync(p); } catch { return false; } });
@@ -119,6 +137,9 @@ const configureRoutes = async () => {
   const apiRoutesModule = (await import('./api/apiRoutes.js')).default;
 
   expressApplication.use("/media", mediaRoutesModule);
+  expressApplication.use('/auth', buildAuthRouter(express.Router));
+  expressApplication.get('/admin/users', async (req, res) => res.render('admin/users'));
+  expressApplication.get('/auth/reset/request', (req, res) => res.render('auth/request-reset'));
   // Inject siteTitle into all view renders
   expressApplication.use((req, res, next)=>{ res.locals.siteTitle = SITE_TITLE; res.locals.preloadRadius = PRELOAD_RADIUS; next(); });
   expressApplication.use("/", viewRoutesModule);
@@ -246,13 +267,10 @@ const startServer = async () => {
       });
     (async () => {
       try {
-        if (process.env.DATABASE_URL || process.env.PGHOST || process.env.PGDATABASE) {
-          await initPg();
-        } else {
-          AppUtils.warnLog(MODULE_NAME, 'STARTUP', 'PostgreSQL not configured (DATABASE_URL or PGHOST/PGDATABASE)');
-        }
+  await initPg(); // Will use PostgreSQL if available, else SQLite
+  await runMigrations();
       } catch (e) {
-        AppUtils.errorLog(MODULE_NAME, 'STARTUP', 'PostgreSQL initialization failed', e);
+        AppUtils.errorLog(MODULE_NAME, 'STARTUP', 'Database initialization failed', e);
       }
     })();
   });

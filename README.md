@@ -153,3 +153,10 @@ ISC License. Shared assets sourced from NudeShared may have separate licensing d
 ## Support
 
 For issues and questions, please open an issue on the GitHub repository.
+
+## 🔐 Auth & Database
+
+- Real auth is enabled via shared routes at `/auth` with cookie sessions.
+- PostgreSQL is preferred; if unavailable, the app falls back to SQLite (`better-sqlite3`).
+- On startup, migrations create a `users` table automatically.
+- Configure `.env` using the provided `.env.example`. Set `SESSION_SECRET` for cookies. For Postgres, set `DATABASE_URL` or PG* vars; otherwise `SQLITE_PATH` is used.
