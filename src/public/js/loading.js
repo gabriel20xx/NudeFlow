@@ -130,7 +130,7 @@ function loadContent() {
       const mediaType = mediaInfo.mediaType || 'video'; // default to video
       const mediaUrl = mediaInfo.url;
       
-      ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Creating media element', { 
+  ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Creating media element', { 
         mediaType, 
         fileName: mediaInfo.filename 
       });
@@ -151,6 +151,11 @@ function loadContent() {
         mediaElement.controls = mediaConfig.controls === true;
         mediaElement.muted = mediaConfig.muted !== false;
         mediaElement.playsInline = mediaConfig.playsInline !== false;
+        // Keep volume UI in sync when metadata/volume becomes available
+        try {
+          mediaElement.addEventListener('loadedmetadata', () => { try { syncVolumeUi(); } catch {} });
+          mediaElement.addEventListener('volumechange', () => { try { syncVolumeUi(); } catch {} });
+        } catch {}
       }
 
       // Unified sizing / fit
@@ -193,7 +198,7 @@ function loadContent() {
         elementType: mediaElement.tagName 
       });
   // If this is the very first media, sync save button state now
-  try { if (toLoadImageIndex === 0) { syncSaveUi(); syncLikeUi(); } } catch {}
+  try { if (toLoadImageIndex === 0) { syncSaveUi(); syncLikeUi(); syncVolumeUi(); syncServerMediaState(); } } catch {}
       
       toLoadImageIndex++;
 
@@ -259,8 +264,8 @@ function changeImage(side) {
     }
 
     currentImageIndex = newImageIndex;
-  // Sync save/like button state for newly active media
-  try { syncSaveUi(); syncLikeUi(); } catch {}
+  // Sync save/like/volume button state for newly active media
+  try { syncSaveUi(); syncLikeUi(); syncVolumeUi(); syncServerMediaState(); } catch {}
 
     if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
       loadContent();
@@ -301,6 +306,14 @@ function buildFloatingControls() {
     controlsRoot.className = 'floating-controls visible';
 
     // Buttons
+  // Volume (mute/unmute) — shown only for videos with likely audio
+  const volBtn = document.createElement('button');
+  volBtn.className = 'float-btn float-btn--vol';
+  volBtn.setAttribute('type', 'button');
+  volBtn.setAttribute('aria-pressed', 'false');
+  volBtn.setAttribute('aria-label', 'Mute / unmute');
+  volBtn.innerHTML = '<i class="fas fa-volume-xmark" aria-hidden="true"></i>';
+
   // Like button with counter badge (wrapper to position badge)
   const likeWrap = document.createElement('div');
   likeWrap.className = 'float-like';
@@ -363,10 +376,16 @@ function buildFloatingControls() {
   controlsRoot.appendChild(likeWrap);
   controlsRoot.appendChild(fsBtn);
   controlsRoot.appendChild(autoBtn);
+  controlsRoot.appendChild(volBtn);
   controlsRoot.appendChild(saveBtn);
   controlsRoot.appendChild(timerBtn);
   controlsRoot.appendChild(panel);
     mediaContainer.appendChild(controlsRoot);
+
+    volBtn.addEventListener('click', () => {
+      revealControlsTemporarily();
+      toggleMuteForActive(volBtn);
+    });
 
     likeBtn.addEventListener('click', () => {
       revealControlsTemporarily();
@@ -419,6 +438,7 @@ function buildFloatingControls() {
   // initial save button state
   syncSaveUi();
   syncLikeUi();
+  syncVolumeUi();
   } catch (err) {
     ApplicationUtilities.errorLog(MODULE_NAME, FUNCTION_NAME, 'Failed to build floating controls', { error: err?.message });
   }
@@ -732,15 +752,24 @@ function toggleSaveForActive(btn) {
   if (!meta) return;
   if (btn?.dataset?.busy === '1') return; // prevent re-entry
   if (btn) btn.dataset.busy = '1';
-  if (isSaved(meta.id, meta.url)) {
-    removeSavedById(meta.id, meta.url);
-    // Suppress toast on homepage save toggle
-  } else {
-    addSaved(meta);
-    // Suppress toast on homepage save toggle
-  }
-  syncSaveUi();
-  if (btn) delete btn.dataset.busy;
+  const key = getCurrentMediaKey();
+  const currently = isSaved(meta.id, meta.url);
+  const desired = !currently;
+  // Try server; fallback to local on 401 or network error
+  (async () => {
+    try {
+      const r = await fetch('/api/media/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mediaKey: key, save: desired }) });
+      if (r.status === 401) throw new Error('unauth');
+      if (!r.ok) throw new Error('failed');
+      // Mirror locally for consistency across UI
+      if (desired) addSaved(meta); else removeSavedById(meta.id, meta.url);
+    } catch {
+      // Fallback to local-only toggle
+      if (desired) addSaved(meta); else removeSavedById(meta.id, meta.url);
+    } finally {
+      syncSaveUi(); if (btn) delete btn.dataset.busy;
+    }
+  })();
 }
 
 // --- Like helpers (localStorage, client-side only for now) ---
@@ -798,11 +827,47 @@ function toggleLikeForActive(btn, badge) {
   const prev = getLikeCount(key);
   const nextLiked = !liked;
   const nextCount = Math.max(0, prev + (nextLiked ? 1 : -1));
-  setLikedForMedia(key, nextLiked);
-  setLikeCount(key, nextCount);
-  // Update UI immediately
-  syncLikeUi();
-  if (btn) delete btn.dataset.busy;
+  // Try server; on 401 or error, fallback to local-only
+  (async () => {
+    try {
+      const r = await fetch('/api/media/like', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mediaKey: key, like: nextLiked }) });
+      if (r.status === 401) throw new Error('unauth');
+      if (!r.ok) throw new Error('failed');
+      const j = await r.json().catch(() => ({}));
+      const cnt = Number(j?.data?.likeCount ?? nextCount);
+      setLikedForMedia(key, nextLiked);
+      setLikeCount(key, cnt);
+    } catch {
+      setLikedForMedia(key, nextLiked);
+      setLikeCount(key, nextCount);
+    } finally {
+      syncLikeUi(); if (btn) delete btn.dataset.busy;
+    }
+  })();
+}
+
+// Fetch server-side state (if logged in) and sync UI and local cache
+async function syncServerMediaState() {
+  try {
+    const key = getCurrentMediaKey(); if (!key) return;
+    const r = await fetch(`/api/media/state?mediaKey=${encodeURIComponent(key)}`);
+    if (!r.ok) return; // anonymous still gets counts
+    const j = await r.json().catch(() => ({}));
+    const d = j?.data; if (!d) return;
+    // Like count and user like state
+    setLikeCount(key, Number(d.likeCount || 0));
+    if (typeof d.likedByUser === 'boolean') setLikedForMedia(key, d.likedByUser);
+    // Saved state: mirror to local saved list so UI stays consistent
+    const meta = getActiveMediaMeta();
+    if (meta && typeof d.savedByUser === 'boolean') {
+      const cur = isSaved(meta.id, meta.url);
+      if (d.savedByUser && !cur) addSaved(meta);
+      if (!d.savedByUser && cur) removeSavedById(meta.id, meta.url);
+    }
+    // Finally refresh buttons
+    syncLikeUi();
+    syncSaveUi();
+  } catch {}
 }
 
 function notify(type, message) {
@@ -825,5 +890,51 @@ function getEffectiveDurationMs(key) {
 }
 
 function clamp(n, min, max){ return Math.min(max, Math.max(min, n)); }
+
+// --- Volume/mute helpers ---
+function getActiveMediaEl() {
+  const list = document.querySelectorAll('#home-container .media');
+  return list && list[currentImageIndex] ? list[currentImageIndex] : document.querySelector('#home-container .media.active');
+}
+
+function videoLikelyHasAudio(video) {
+  try {
+    if (!video || video.tagName !== 'VIDEO') return false;
+    if (typeof video.mozHasAudio === 'boolean') return video.mozHasAudio;
+    if (typeof video.webkitAudioDecodedByteCount === 'number') return video.webkitAudioDecodedByteCount > 0;
+    if (video.audioTracks && typeof video.audioTracks.length === 'number') return video.audioTracks.length > 0;
+  } catch {}
+  // Fallback: assume true for videos when unknown
+  return !!video && video.tagName === 'VIDEO';
+}
+
+function syncVolumeUi() {
+  const btn = controlsRoot?.querySelector('.float-btn--vol');
+  if (!btn) return;
+  const el = getActiveMediaEl();
+  if (!el || el.tagName !== 'VIDEO') { btn.style.display = 'none'; return; }
+  // Show only when likely to have audio
+  const hasAudio = videoLikelyHasAudio(el);
+  btn.style.display = hasAudio ? 'inline-flex' : 'none';
+  if (!hasAudio) return;
+  const muted = !!el.muted || (el.volume === 0);
+  btn.setAttribute('aria-pressed', String(muted));
+  btn.setAttribute('aria-label', muted ? 'Unmute' : 'Mute');
+  btn.innerHTML = muted
+    ? '<i class="fas fa-volume-xmark" aria-hidden="true"></i>'
+    : '<i class="fas fa-volume-high" aria-hidden="true"></i>';
+}
+
+function toggleMuteForActive(btn) {
+  const el = getActiveMediaEl();
+  if (!el || el.tagName !== 'VIDEO') return;
+  const nextMuted = !el.muted;
+  el.muted = nextMuted;
+  if (!nextMuted) {
+    try { el.play().catch(()=>{}); } catch {}
+    if (el.volume === 0) el.volume = 1.0;
+  }
+  syncVolumeUi();
+}
 
 })(); // End of IIFE

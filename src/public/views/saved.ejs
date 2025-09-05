@@ -17,18 +17,39 @@
     // Guard to prevent accidental opens right after a removal re-renders the list
     window._suppressSavedOpenUntil = 0;
 
-        function getSavedList(){
+        async function getSavedList(){
+            // Try server for logged-in saves; fallback to local storage when 401/failed
+            try {
+                const r = await fetch('/api/media/saved');
+                if (r.ok) {
+                    const j = await r.json();
+                    const arr = Array.isArray(j?.data) ? j.data : [];
+                    return arr;
+                }
+            } catch {}
             try { const raw = localStorage.getItem(SAVED_STORE_KEY); const arr = raw ? JSON.parse(raw) : []; return Array.isArray(arr)?arr:[]; } catch { return []; }
         }
     function canonicalizeUrl(u){ try { const url=new URL(u, window.location?.origin||location?.origin||undefined); return (url.origin+url.pathname).toLowerCase(); } catch { return (u||'').toLowerCase(); } }
     function savedKey(id,url){ if(id!=null && String(id).trim()!=='') return 'id:'+String(id); if(url) return 'url:'+canonicalizeUrl(url); return null; }
     function dedupeSaved(list){ const seen=new Set(); const out=[]; for(const x of Array.isArray(list)?list:[]){ const key = savedKey(x?.id,x?.url) || JSON.stringify(x); if(!seen.has(key)){ seen.add(key); out.push(x);} } return out; }
     function saveSavedList(list){ try { localStorage.setItem(SAVED_STORE_KEY, JSON.stringify(dedupeSaved(list))); } catch{} }
-    function removeSaved(id){
-        const current = getSavedList();
-        const removedItem = current.find(x => x.id === id);
-        const next = current.filter(x=>x.id!==id);
-        saveSavedList(next);
+        async function removeSaved(id){
+        // Try to infer mediaKey from current list
+        const current = await getSavedList();
+        const removedItem = current.find(x => String(x.id) === String(id) || String(x.mediaKey||'') === String(id));
+        const mediaKey = removedItem?.mediaKey || removedItem?.url || null;
+        // Attempt server delete; ignore errors and fall back to local removal
+        try {
+            if (mediaKey) {
+                await fetch('/api/media/save', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mediaKey, save: false }) });
+            }
+        } catch {}
+        // Local fallback to keep UI in sync
+        try {
+            const local = (()=>{ try{ const raw=localStorage.getItem(SAVED_STORE_KEY); const arr=raw?JSON.parse(raw):[]; return Array.isArray(arr)?arr:[]; }catch{return [];} })();
+            const next = local.filter(x=>String(x.id)!==String(id));
+            saveSavedList(next);
+        } catch {}
         const overlayEl = document.getElementById('savedOverlay');
         const overlayOpen = !!(overlayEl && overlayEl.classList.contains('open'));
         renderSaved();
@@ -71,9 +92,9 @@
 
         // Overlay navigation state
         window._currentSavedIndex = -1;
-        function openSavedByIndex(i){
+        async function openSavedByIndex(i){
             if(Date.now() < (window._suppressSavedOpenUntil || 0)) return;
-            const list=getSavedList(); if(!list.length) return;
+            const list=await getSavedList(); if(!list.length) return;
             window._currentSavedIndex = Math.max(0, Math.min(i, list.length-1));
             renderOverlayFromIndex();
         }
@@ -84,8 +105,8 @@
             const p = new Promise((resolve, reject)=>{ const im=new Image(); im.onload=()=>resolve(im); im.onerror=reject; im.src=url; });
             preloadCache.set(url, p); return p;
         }
-        function renderOverlayFromIndex(){
-            const list = getSavedList();
+        async function renderOverlayFromIndex(){
+            const list = await getSavedList();
             const idx = window._currentSavedIndex;
             if(!list.length || idx<0 || idx>=list.length){ closeSavedOverlay(); return; }
             const item = list[idx];
@@ -127,8 +148,8 @@
                 if(ri<list.length && list[ri]) loadFull(list[ri].url).catch(()=>{});
             }
         }
-        function showPrevSaved(){ if(typeof window._currentSavedIndex!=='number') return; if(window._currentSavedIndex>0){ window._currentSavedIndex--; renderOverlayFromIndex(); } }
-        function showNextSaved(){ const list=getSavedList(); if(typeof window._currentSavedIndex!=='number') return; if(window._currentSavedIndex<list.length-1){ window._currentSavedIndex++; renderOverlayFromIndex(); } }
+    function showPrevSaved(){ if(typeof window._currentSavedIndex!=='number') return; if(window._currentSavedIndex>0){ window._currentSavedIndex--; renderOverlayFromIndex(); } }
+    async function showNextSaved(){ const list=await getSavedList(); if(typeof window._currentSavedIndex!=='number') return; if(window._currentSavedIndex<list.length-1){ window._currentSavedIndex++; renderOverlayFromIndex(); } }
         function closeSavedOverlay(){
             const overlay = document.getElementById('savedOverlay');
             const frame = document.getElementById('savedFrame');
@@ -139,8 +160,8 @@
             try { document.body.classList.remove('no-scroll'); document.documentElement.classList.remove('no-scroll'); } catch{}
         }
 
-        function renderSaved(){
-            const data = getSavedList();
+        async function renderSaved(){
+            const data = await getSavedList();
             const container = document.getElementById('savedVideos');
             container.innerHTML = '';
             if(!data.length){ container.innerHTML = '<p>No saved videos yet.</p>'; return; }
@@ -152,17 +173,17 @@
                         <img src="${video.thumbnail || video.url}" alt="${video.name}">
                     </div>
                     <div>
-                        <button type="button" class="btn-download" onclick="downloadSavedClick(event, '${video.id}')">Download</button>
-                        <button type="button" class="btn-danger-solid" onclick="removeSavedClick(event, '${video.id}')">Remove</button>
+                        <button type="button" class="btn-download" onclick="downloadSavedClick(event, '${video.id || video.mediaKey || i}')">Download</button>
+                        <button type="button" class="btn-danger-solid" onclick="removeSavedClick(event, '${video.id || video.mediaKey || i}')">Remove</button>
                     </div>
                 `;
                 container.appendChild(el);
             });
         }
         renderSaved();
-        function downloadSavedClick(ev, id){
+        async function downloadSavedClick(ev, id){
             try{ ev?.stopPropagation(); ev?.preventDefault(); }catch{}
-            const list = getSavedList();
+            const list = await getSavedList();
             const item = list.find(x=>String(x.id)===String(id));
             if(!item || !item.url) return;
             const nameFromMeta = (item.name || item.title || '').trim();
