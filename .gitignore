@@ -1,52 +1,73 @@
+###############################################
+# NudeFlow .gitignore (Unified Template)      #
+###############################################
+
 # Dependencies
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# Environment files
+# Environment
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 
 # Logs
 logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
 
-# Runtime data
+# Runtime / PIDs
 pids/
 *.pid
 *.seed
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
+# Coverage
 coverage/
+.nyc_output/
 
-# IDE files
+# Build / cache
+dist/
+build/
+.cache/
+
+# Generated / media
+uploads/
+temp/
+input/
+output/
+copy/
+processed/
+loras/
+
+# DB artifacts
+database/*.db
+*.sqlite
+*.db
+
+# IDE / OS
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-
-# OS generated files
 .DS_Store
-.DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
 Thumbs.db
 
-# Media files (if you don't want to track them)
-mnt/
-uploads/
-temp/
-
-# Build outputs
-dist/
-build/
-
+# Lockfiles (optional)
 package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Archives
+*.tgz
+*.zip
+*.tar*
+
+# Core dumps
+core*
