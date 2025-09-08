@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 import http from 'http';
 import https from 'https';
 import fs from 'fs';
+import { mountTheme } from '../../NudeShared/server/theme/mountTheme.js';
 import AppUtils from './utils/AppUtils.js';
 import { initDb as initPg, query as pgQuery } from '../../NudeShared/server/index.js';
 import { runMigrations } from '../../NudeShared/server/index.js';
@@ -102,27 +103,12 @@ const configureMiddleware = () => {
     AppUtils.warnLog(MODULE_NAME, 'STARTUP', 'No shared assets directory found; /shared not mounted');
   }
 
-  // Serve theme.css from app public if present (synced from shared), otherwise fall back to NudeShared
-  const themeLocal = path.join(__dirname, 'public', 'css', 'theme.css');
-  if (fs.existsSync(themeLocal)) {
-    expressApplication.get('/assets/theme.css', (req, res) => res.sendFile(themeLocal));
-    AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Exposed local theme at /assets/theme.css', { themeLocal });
-  } else {
-    const themeCandidates = [
-      path.resolve(__dirname, '..', '..', 'NudeShared', 'client', 'theme.css'),
-      path.resolve(__dirname, '..', '..', 'NudeShared', 'theme.css'),
-      path.resolve(__dirname, '..', '..', 'shared', 'theme.css'),
-      '/app/NudeShared/client/theme.css',
-      '/app/NudeShared/theme.css'
-    ];
-    const foundTheme = themeCandidates.find(p => { try { return p && fs.existsSync(p); } catch { return false; } });
-    if (foundTheme) {
-      expressApplication.get('/assets/theme.css', (req, res) => res.sendFile(foundTheme));
-      AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Exposed shared theme at /assets/theme.css', { foundTheme });
-    } else {
-      AppUtils.warnLog(MODULE_NAME, 'STARTUP', 'theme.css not found locally or in shared paths; /assets/theme.css will 404');
-    }
-  }
+  // Unified theme mount
+  mountTheme(expressApplication, { projectDir: __dirname, sharedDir: process.env.NUDESHARED_DIR || path.resolve(__dirname, '..', '..', 'NudeShared'), logger: {
+    info: (...a)=>AppUtils.infoLog(MODULE_NAME, 'THEME', ...a),
+    warn: (...a)=>AppUtils.warnLog(MODULE_NAME, 'THEME', ...a),
+    error: (...a)=>AppUtils.errorLog(MODULE_NAME, 'THEME', ...a)
+  } });
   
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Express middleware configuration completed');
 };
