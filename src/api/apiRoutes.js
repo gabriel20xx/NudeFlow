@@ -6,7 +6,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
-import { query, buildCoreApiRouter, buildMediaInteractionRouter, buildMediaLibraryRouter } from '../../../NudeShared/server/index.js';
+import { query, buildMediaInteractionRouter, buildMediaLibraryRouter } from '../../../NudeShared/server/index.js'; // buildCoreApiRouter removed from shared exports
 // TOTP and QR
 import { authenticator } from 'otplib';
 import qrcode from 'qrcode';
