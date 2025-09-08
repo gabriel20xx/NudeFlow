@@ -6,7 +6,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
-import { query, buildMediaInteractionRouter, buildMediaLibraryRouter } from '../../../NudeShared/server/index.js'; // buildCoreApiRouter removed from shared exports
+import { buildMediaInteractionRouter, buildMediaLibraryRouter } from '../../../NudeShared/server/index.js'; // buildCoreApiRouter removed from shared exports
 // TOTP and QR
 import { authenticator } from 'otplib';
 import qrcode from 'qrcode';
@@ -69,3 +69,6 @@ apiRouter.get("/media/random/:category?", (request, response) => {
 
 // Mount shared media interaction routes (like/save/state/saved)
 apiRouter.use('/', buildMediaInteractionRouter(AppUtils));
+
+// Export router for mounting by app.js
+export default apiRouter;
