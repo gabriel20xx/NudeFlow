@@ -57,7 +57,9 @@ viewsRouter.get("/profile", (request, response) => {
   
   try {
     AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering profile page');
-    response.render("profile", { title: "Profile" });
+  const isAuthenticated = !!(request.session && request.session.userId);
+  const user = request.session?.user || null;
+  response.render("profile", { title: "Profile", isAuthenticated, user });
     AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Profile page rendered successfully');
   } catch (error) {
     AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error rendering profile page', error);
