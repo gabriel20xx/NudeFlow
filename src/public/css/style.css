@@ -63,7 +63,7 @@ body { padding-bottom: 0; }
 
 /* Like overlay badge on floating like button */
 .float-like { position: relative; display: inline-block; }
-.float-like .like-count-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--color-danger, #ff3b30); color: #fff; font-size: 11px; line-height: 18px; text-align: center; box-shadow: var(--shadow-sm); border: 1px solid rgba(0,0,0,.25); }
+.float-like .like-count-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--color-danger, #ff3b30); color: #fff; font-size: 11px; line-height: 18px; box-shadow: var(--shadow-sm); border: 1px solid rgba(0,0,0,.25); }
 .float-btn--like[aria-pressed="true"] i { color: var(--color-danger, #ff3b30); }
 /* Volume toggle pressed state */
 .float-btn--vol[aria-pressed="true"] i { color: var(--color-text-dim); }
@@ -107,7 +107,6 @@ button {
     background: dark-gray;
     padding: 20px;
     border-radius: 10px;
-    text-align: center;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
