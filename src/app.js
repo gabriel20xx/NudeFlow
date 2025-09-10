@@ -63,13 +63,29 @@ const configureMiddleware = () => {
   const PgStore = connectPg(session);
   const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
   expressApplication.set('trust proxy', 1);
+  // Default to non-secure cookies for local HTTP; elevate to secure dynamically on HTTPS requests
   expressApplication.use(session({
     store: process.env.DATABASE_URL ? new PgStore({ conString: process.env.DATABASE_URL }) : undefined,
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { httpOnly: true, sameSite: 'lax', secure: (process.env.HTTPS === 'true' || process.env.ENABLE_HTTPS === 'true'), domain: cookieDomain, maxAge: 1000*60*60*24*7 }
+    cookie: {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false, // will be flipped to true below when req.secure
+      domain: cookieDomain,
+      maxAge: 1000*60*60*24*7
+    }
   }));
+  // If behind a proxy or running HTTPS, mark cookie secure per-request
+  expressApplication.use((req, _res, next) => {
+    try {
+      if (req.secure && req.session && req.session.cookie) {
+        req.session.cookie.secure = true;
+      }
+    } catch {}
+    next();
+  });
 
   // View engine setup
   expressApplication.set("view engine", "ejs");
