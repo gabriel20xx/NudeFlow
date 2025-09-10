@@ -148,6 +148,9 @@ const configureRoutes = async () => {
     res.locals.preloadRadius = PRELOAD_RADIUS;
     // Ensure sign-up is available in shared header for NudeFlow
     res.locals.disableSignup = false;
+  // Provide app stylesheet to shared header and disable socket.io include
+  res.locals.appCssHref = '/css/style.css';
+  res.locals.enableSocketIO = false;
     next();
   });
   expressApplication.use("/", viewRoutesModule);
