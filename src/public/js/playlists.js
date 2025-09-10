@@ -4,12 +4,19 @@
 
   const emptyEl = document.querySelector('#pl-empty');
   const errorEl = document.querySelector('#pl-error');
+  const guardEl = document.querySelector('#pl-auth-guard');
+  const contentEl = document.querySelector('#pl-content');
   let lastAuthIssue = false;
 
   async function fetchPlaylistsSummary(){
     try {
       const r = await fetch('/api/playlists/summary');
-      if (r.status === 401) { lastAuthIssue = true; return []; }
+      if (r.status === 401) {
+        lastAuthIssue = true;
+        if (guardEl) guardEl.style.display = 'flex';
+        if (contentEl) contentEl.style.display = 'none';
+        return [];
+      }
       if(!r.ok) throw 0; const j = await r.json(); return j?.data?.playlists || [];
     } catch { return null; }
   }
@@ -20,18 +27,17 @@
 
   function renderGrid(list){
     grid.innerHTML = '';
-    if (!list) { if (errorEl) { errorEl.style.display='block'; errorEl.textContent = 'Failed to load playlists. Please try again.'; } if (emptyEl) emptyEl.style.display='none'; return; }
+  if (!list) { if (errorEl) { errorEl.style.display='block'; errorEl.textContent = 'Failed to load playlists. Please try again.'; } if (emptyEl) emptyEl.style.display='none'; return; }
     if (!list.length){
       if (emptyEl) {
-        emptyEl.style.display='block';
-        emptyEl.innerHTML = lastAuthIssue
-          ? 'You need to sign in to see playlists. <a href="/auth/login" class="btn" style="margin-left:8px;">Sign in</a>'
-          : 'No playlists yet. Use the form above to create one.';
+    emptyEl.style.display='block';
+    emptyEl.innerHTML = 'No playlists yet. Use the form above to create one.';
       }
       if (errorEl) errorEl.style.display='none';
       return;
     }
-    if (emptyEl) emptyEl.style.display='none'; if (errorEl) errorEl.style.display='none';
+  if (emptyEl) emptyEl.style.display='none'; if (errorEl) errorEl.style.display='none';
+  if (guardEl) guardEl.style.display = 'none'; if (contentEl) contentEl.style.display = '';
     for (const p of list){
       const item = document.createElement('div');
       item.className = 'video-item';
@@ -90,12 +96,21 @@
 
   async function refresh(){
     const list = await fetchPlaylistsSummary();
+    // Disable create when auth guard visible
+    try {
+      const createInput = document.querySelector('#pl-name');
+      const createBtn = document.querySelector('#pl-create-btn');
+      const isUnauth = guardEl && getComputedStyle(guardEl).display !== 'none';
+      if (createInput) createInput.disabled = !!isUnauth;
+      if (createBtn) createBtn.disabled = !!isUnauth;
+    } catch {}
     renderGrid(list || []);
   }
 
   const input = document.querySelector('#pl-name');
   const btn = document.querySelector('#pl-create-btn');
   if (btn) btn.addEventListener('click', async ()=>{
+    if (guardEl && getComputedStyle(guardEl).display !== 'none') return;
     const name = String(input.value||'').trim(); if(!name) { input.focus(); return; }
     try { await createPlaylist(name); input.value=''; await refresh(); } catch { if (errorEl) errorEl.style.display='block'; }
   });

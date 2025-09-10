@@ -1,12 +1,46 @@
 <%- include("partials/header") %>
 <main id="playlists-container" class="page-wrapper" aria-label="Your playlists">
-  <div id="pl-create" style="margin: 12px 16px; display: flex; gap: 8px;">
-    <input id="pl-name" type="text" placeholder="New playlist name" />
-    <button id="pl-create-btn" type="button">Create</button>
+  <div id="pl-auth-guard" style="display:none; padding-top:var(--topbar-height);padding-bottom:var(--bottom-nav-height);min-height:50vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;">
+    <p style="font-size:1rem;color:var(--color-text-dim);">You must be logged in to manage playlists.</p>
+    <a href="#" id="plLoginLink" class="btn" role="button">Log In</a>
   </div>
-  <div id="playlistsGrid" class="results-grid" aria-live="polite"></div>
-  <div id="pl-empty" class="empty-state" style="display:none; padding: 24px; text-align:center; opacity:0.8;">No playlists yet.</div>
-  <div id="pl-error" class="empty-state" style="display:none; padding: 24px; text-align:center; color: var(--color-danger);">Failed to load playlists.</div>
+  <div id="pl-content">
+    <div id="pl-create" style="margin: 14px auto; display: flex; gap: 10px; align-items:center; justify-content:center; max-width: 600px; padding: 0 16px;">
+      <input id="pl-name" type="text" class="field-input" placeholder="New playlist name" style="flex:1;" />
+      <button id="pl-create-btn" type="button" class="btn btn-success-solid">Create</button>
+    </div>
+    <div id="playlistsGrid" class="results-grid" aria-live="polite"></div>
+    <div id="pl-empty" class="empty-state" style="display:none; padding: 24px; text-align:center; opacity:0.8;">No playlists yet.</div>
+    <div id="pl-error" class="empty-state" style="display:none; padding: 24px; text-align:center; color: var(--color-danger);">Failed to load playlists.</div>
+  </div>
   <script src="/js/playlists.js"></script>
 </main>
+<script>
+(function(){
+  function wireLoginLink(){
+    var link = document.getElementById('plLoginLink');
+    var opener = document.getElementById('authOpenBtn');
+    if(!link || !opener) return;
+    link.addEventListener('click', function(e){ e.preventDefault(); opener.click(); }, { once:false });
+  }
+  function checkAuth(){
+    fetch('/api/playlists', { method: 'GET' }).then(function(r){
+      var guard = document.getElementById('pl-auth-guard');
+      var content = document.getElementById('pl-content');
+      var createRow = document.getElementById('pl-create');
+      if (r.status === 401) {
+        if (guard) guard.style.display = 'flex';
+        if (content) content.style.display = 'none';
+        if (createRow) createRow.style.display = 'none';
+        wireLoginLink();
+      } else {
+        if (guard) guard.style.display = 'none';
+        if (content) content.style.display = '';
+        if (createRow) createRow.style.display = 'flex';
+      }
+    }).catch(function(){ /* leave default */ });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', checkAuth); else checkAuth();
+})();
+</script>
 <%- include("partials/navbar") %>

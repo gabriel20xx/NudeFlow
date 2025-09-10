@@ -411,28 +411,30 @@ function buildFloatingControls() {
   controlsRoot.appendChild(saveBtn);
   controlsRoot.appendChild(timerBtn);
   controlsRoot.appendChild(panel);
-  // Insert playlist modal container near controls
-  const modal = document.createElement('div');
-  modal.className = 'playlist-modal';
-  modal.setAttribute('role','dialog');
-  modal.setAttribute('aria-modal','true');
-  modal.hidden = true;
-  modal.innerHTML = `
-    <div class="plm-backdrop"></div>
-    <div class="plm-dialog" role="document">
-      <div class="plm-header">Add to playlist</div>
-      <div class="plm-body">
-        <ul class="plm-list" role="listbox" aria-label="Your playlists"></ul>
-        <div class="plm-create">
-          <input type="text" class="plm-input" placeholder="Create new playlist" aria-label="New playlist name" />
-          <button type="button" class="plm-create-btn">Create</button>
+  // Insert playlist modal container at document level to avoid clipping
+  if (!document.querySelector('.playlist-modal')){
+    const modal = document.createElement('div');
+    modal.className = 'playlist-modal';
+    modal.setAttribute('role','dialog');
+    modal.setAttribute('aria-modal','true');
+    modal.hidden = true;
+    modal.innerHTML = `
+      <div class="plm-backdrop"></div>
+      <div class="plm-dialog" role="document">
+        <div class="plm-header">Add to playlist</div>
+        <div class="plm-body">
+          <ul class="plm-list" role="listbox" aria-label="Your playlists"></ul>
+          <div class="plm-create">
+            <input type="text" class="plm-input" placeholder="Create new playlist" aria-label="New playlist name" />
+            <button type="button" class="plm-create-btn">Create</button>
+          </div>
         </div>
-      </div>
-      <div class="plm-footer">
-        <button type="button" class="plm-cancel">Cancel</button>
-      </div>
-    </div>`;
-  controlsRoot.appendChild(modal);
+        <div class="plm-footer">
+          <button type="button" class="plm-cancel">Cancel</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
     mediaContainer.appendChild(controlsRoot);
 
     volBtn.addEventListener('click', () => {
@@ -924,9 +926,15 @@ async function addToPlaylist(playlistId, mediaKey){
   if (!r.ok) throw new Error('failed');
 }
 
-function openPlaylistModal(){
+async function openPlaylistModal(){
   const key = getCurrentMediaKey(); if (!key) return;
-  const modal = controlsRoot?.querySelector('.playlist-modal'); if (!modal) return;
+  // Pre-check auth: if not logged in, do not open modal
+  try {
+    const r = await fetch('/api/playlists');
+    if (r.status === 401) { notify('warn', 'Sign in to use playlists'); return; }
+  } catch { notify('warn','Sign in to use playlists'); return; }
+
+  const modal = document.querySelector('.playlist-modal'); if (!modal) return;
   const listEl = modal.querySelector('.plm-list');
   const inputEl = modal.querySelector('.plm-input');
   const createBtn = modal.querySelector('.plm-create-btn');
