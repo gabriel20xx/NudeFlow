@@ -85,19 +85,34 @@ viewsRouter.get("/search", (request, response) => {
 });
 
 /**
- * Saved videos page route handler
+ * Playlists page route handler (replaces Saved)
  */
-viewsRouter.get("/saved", (request, response) => {
-  const FUNCTION_NAME = 'handleSavedPageRoute';
-  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Processing saved page request');
+viewsRouter.get("/playlists", (request, response) => {
+  const FUNCTION_NAME = 'handlePlaylistsPageRoute';
+  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Processing playlists page request');
   
   try {
-    AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering saved page');
-    response.render("saved", { title: "Saved" });
-    AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Saved page rendered successfully');
+    AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering playlists page');
+    response.render("playlists", { title: "Playlists" });
+    AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Playlists page rendered successfully');
   } catch (error) {
-    AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error rendering saved page', error);
-    response.status(500).render('error', { message: 'Failed to load saved page' });
+    AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error rendering playlists page', error);
+    response.status(500).render('error', { message: 'Failed to load playlists page' });
+  }
+});
+
+/**
+ * Playlist detail page: shows all items in the playlist
+ */
+viewsRouter.get('/playlists/:id', (request, response) => {
+  const FUNCTION_NAME = 'handlePlaylistDetail';
+  try {
+    const id = Number(request.params.id);
+    if (!id || Number.isNaN(id)) return response.status(404).render('error', { message: 'Playlist not found' });
+    return response.render('playlist_view', { title: 'Playlist' });
+  } catch (error) {
+    AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error rendering playlist detail', error);
+    return response.status(500).render('error', { message: 'Failed to load playlist' });
   }
 });
 

@@ -1,0 +1,12 @@
+<%- include("partials/header") %>
+<main id="playlists-container" class="page-wrapper" aria-label="Your playlists">
+  <div id="pl-create" style="margin: 12px 16px; display: flex; gap: 8px;">
+    <input id="pl-name" type="text" placeholder="New playlist name" />
+    <button id="pl-create-btn" type="button">Create</button>
+  </div>
+  <div id="playlistsGrid" class="results-grid" aria-live="polite"></div>
+  <div id="pl-empty" class="empty-state" style="display:none; padding: 24px; text-align:center; opacity:0.8;">No playlists yet.</div>
+  <div id="pl-error" class="empty-state" style="display:none; padding: 24px; text-align:center; color: var(--color-danger);">Failed to load playlists.</div>
+  <script src="/js/playlists.js"></script>
+</main>
+<%- include("partials/navbar") %>

@@ -75,6 +75,11 @@ if (mediaContainer) {
     }
     revealControlsTemporarily();
   });
+
+  // Clear playlist selection when navigating away from the Home page
+  window.addEventListener('beforeunload', () => {
+    try { sessionStorage.removeItem('nf_activePlaylistId'); sessionStorage.removeItem('nf_activePlaylistName'); } catch {}
+  });
 }
 
 function getUrl() {
@@ -83,6 +88,19 @@ function getUrl() {
   
   const baseUrl = ApplicationConfiguration?.baseServerUrl || window.location.origin;
   
+  // Playlist-driven feed (from Play button)
+  try {
+    const plId = sessionStorage.getItem('nf_activePlaylistId');
+    const plName = sessionStorage.getItem('nf_activePlaylistName');
+    if (plId) {
+      const titleEl = document.querySelector('.app-category-title');
+      if (titleEl) titleEl.textContent = plName || 'Playlist';
+      const url = `${baseUrl}/api/playlists/${encodeURIComponent(plId)}/random`;
+      ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Playlist feed detected', { playlistId: plId, url });
+      return url;
+    }
+  } catch {}
+
   if (categoryPattern.test(currentUrl)) {
     const match = currentUrl.match(categoryPattern);
     if (match && match[1]) {
@@ -209,7 +227,9 @@ function loadContent() {
         }
       } catch {}
       
-      toLoadImageIndex++;
+  toLoadImageIndex++;
+
+  // Keep playlist selection active so subsequent loads remain within the playlist
 
       if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
         loadContent();
@@ -360,8 +380,8 @@ function buildFloatingControls() {
   saveBtn.className = 'float-btn float-btn--save';
   saveBtn.setAttribute('type', 'button');
   saveBtn.setAttribute('aria-pressed', 'false');
-  saveBtn.setAttribute('aria-label', 'Save current media');
-  saveBtn.innerHTML = '<i class="fas fa-bookmark" aria-hidden="true"></i>';
+  saveBtn.setAttribute('aria-label', 'Add to playlist');
+  saveBtn.innerHTML = '<i class="fas fa-list-ul" aria-hidden="true"></i>';
 
     const timerBtn = document.createElement('button');
     timerBtn.className = 'float-btn float-btn--timer';
@@ -391,6 +411,28 @@ function buildFloatingControls() {
   controlsRoot.appendChild(saveBtn);
   controlsRoot.appendChild(timerBtn);
   controlsRoot.appendChild(panel);
+  // Insert playlist modal container near controls
+  const modal = document.createElement('div');
+  modal.className = 'playlist-modal';
+  modal.setAttribute('role','dialog');
+  modal.setAttribute('aria-modal','true');
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="plm-backdrop"></div>
+    <div class="plm-dialog" role="document">
+      <div class="plm-header">Add to playlist</div>
+      <div class="plm-body">
+        <ul class="plm-list" role="listbox" aria-label="Your playlists"></ul>
+        <div class="plm-create">
+          <input type="text" class="plm-input" placeholder="Create new playlist" aria-label="New playlist name" />
+          <button type="button" class="plm-create-btn">Create</button>
+        </div>
+      </div>
+      <div class="plm-footer">
+        <button type="button" class="plm-cancel">Cancel</button>
+      </div>
+    </div>`;
+  controlsRoot.appendChild(modal);
     mediaContainer.appendChild(controlsRoot);
 
     volBtn.addEventListener('click', () => {
@@ -416,7 +458,7 @@ function buildFloatingControls() {
 
     saveBtn.addEventListener('click', () => {
       revealControlsTemporarily();
-      toggleSaveForActive(saveBtn);
+      openPlaylistModal();
     });
 
     timerBtn.addEventListener('click', () => {
@@ -528,12 +570,9 @@ function syncFullscreenUi() {
 function syncSaveUi() {
   const btn = controlsRoot?.querySelector('.float-btn--save');
   if (!btn) return;
-  const meta = getActiveMediaMeta();
-  const saved = isSaved(meta?.id, meta?.url);
-  btn.setAttribute('aria-pressed', String(!!saved));
-  btn.innerHTML = saved
-    ? '<i class="fas fa-bookmark" aria-hidden="true" style="color: var(--color-accent, #ff9800);"></i>'
-    : '<i class="fas fa-bookmark" aria-hidden="true"></i>';
+  btn.setAttribute('aria-pressed', 'false');
+  btn.setAttribute('aria-label', 'Add to playlist');
+  btn.innerHTML = '<i class="fas fa-list-ul" aria-hidden="true"></i>';
 }
 
 function syncLikeUi() {
@@ -678,7 +717,7 @@ function toggleDurationPanel(panel) {
   panel.hidden = !willShow;
 }
 
-// --- Saved list helpers (localStorage, client-side) ---
+// --- Saved list helpers (deprecated; replaced by Playlists) ---
 function getActiveMediaMeta() {
   const list = document.querySelectorAll('#home-container .media');
   const el = list && list[currentImageIndex] ? list[currentImageIndex] : document.querySelector('#home-container .media.active');
@@ -693,16 +732,7 @@ function getActiveMediaMeta() {
   };
 }
 
-function getSavedList() {
-  try {
-    const raw = localStorage.getItem(SAVED_STORE_KEY);
-    if (raw) {
-      const arr = JSON.parse(raw);
-      if (Array.isArray(arr)) return arr;
-    }
-  } catch {}
-  return [];
-}
+function getSavedList() { return []; }
 
 function canonicalizeUrl(u) {
   try {
@@ -729,59 +759,15 @@ function dedupeSaved(list) {
   return out;
 }
 
-function saveSavedList(list) {
-  try { localStorage.setItem(SAVED_STORE_KEY, JSON.stringify(dedupeSaved(list))); } catch {}
-}
+function saveSavedList(list) { /* no-op */ }
 
-function isSaved(id, url) {
-  const key = savedKey(id, url);
-  if (!key) return false;
-  const list = getSavedList();
-  return list.some(x => savedKey(x?.id, x?.url) === key);
-}
+function isSaved(id, url) { return false; }
 
-function addSaved(item) {
-  if (!item?.id && !item?.url) return false;
-  const key = savedKey(item.id, item.url);
-  const list = getSavedList();
-  // Remove any existing with same key, then add newest to front
-  const filtered = key ? list.filter(x => savedKey(x?.id, x?.url) !== key) : list.slice();
-  filtered.unshift(item);
-  saveSavedList(filtered);
-  return true;
-}
+function addSaved(_item) { return false; }
 
-function removeSavedById(id, url) {
-  const key = savedKey(id, url);
-  const list = getSavedList();
-  const next = key ? list.filter(x => savedKey(x?.id, x?.url) !== key) : list;
-  saveSavedList(next);
-}
+function removeSavedById(_id, _url) { /* no-op */ }
 
-function toggleSaveForActive(btn) {
-  const meta = getActiveMediaMeta();
-  if (!meta) return;
-  if (btn?.dataset?.busy === '1') return; // prevent re-entry
-  if (btn) btn.dataset.busy = '1';
-  const key = getCurrentMediaKey();
-  const currently = isSaved(meta.id, meta.url);
-  const desired = !currently;
-  // Try server; fallback to local on 401 or network error
-  (async () => {
-    try {
-      const r = await fetch('/api/media/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mediaKey: key, save: desired }) });
-      if (r.status === 401) throw new Error('unauth');
-      if (!r.ok) throw new Error('failed');
-      // Mirror locally for consistency across UI
-      if (desired) addSaved(meta); else removeSavedById(meta.id, meta.url);
-    } catch {
-      // Fallback to local-only toggle
-      if (desired) addSaved(meta); else removeSavedById(meta.id, meta.url);
-    } finally {
-      syncSaveUi(); if (btn) delete btn.dataset.busy;
-    }
-  })();
-}
+function toggleSaveForActive(_btn) { /* deprecated */ }
 
 // --- Like helpers (localStorage, client-side only for now) ---
 function getLikeCountsMap() {
@@ -870,14 +856,7 @@ async function syncServerMediaState() {
     // Like count and user like state
     setLikeCount(key, Number(d.likeCount || 0));
     if (typeof d.likedByUser === 'boolean') setLikedForMedia(key, d.likedByUser);
-    // Saved state: mirror to local saved list so UI stays consistent
-    const meta = getActiveMediaMeta();
-    if (meta && typeof d.savedByUser === 'boolean') {
-      const cur = isSaved(meta.id, meta.url);
-      if (d.savedByUser && !cur) addSaved(meta);
-      if (!d.savedByUser && cur) removeSavedById(meta.id, meta.url);
-    }
-    // Finally refresh buttons
+  // Finally refresh buttons (save is now a playlist action, not a toggle)
     syncLikeUi();
     syncSaveUi();
   } catch {}
@@ -885,7 +864,7 @@ async function syncServerMediaState() {
 
 function notify(type, message) {
   try {
-    if (window.toast && typeof window.toast[type] === 'function') {
+  if (window.toast && typeof window.toast[type] === 'function') {
       window.toast[type](message, { duration: 2200 });
       return;
     }
@@ -918,6 +897,84 @@ function getEffectiveDurationMs(key) {
 }
 
 function clamp(n, min, max){ return Math.min(max, Math.max(min, n)); }
+
+// --- Playlists helpers ---
+async function fetchPlaylists(){
+  try {
+    const r = await fetch('/api/playlists');
+    if (r.status === 401) throw new Error('unauth');
+    if (!r.ok) throw new Error('failed');
+    const j = await r.json();
+    return Array.isArray(j?.data?.playlists) ? j.data.playlists : [];
+  } catch (e) {
+    notify('warn', 'Sign in to use playlists');
+    return [];
+  }
+}
+
+async function createPlaylist(name){
+  const r = await fetch('/api/playlists', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ name }) });
+  if (!r.ok) throw new Error('failed');
+  const j = await r.json();
+  return j?.data?.playlist || null;
+}
+
+async function addToPlaylist(playlistId, mediaKey){
+  const r = await fetch(`/api/playlists/${playlistId}/items`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ mediaKey }) });
+  if (!r.ok) throw new Error('failed');
+}
+
+function openPlaylistModal(){
+  const key = getCurrentMediaKey(); if (!key) return;
+  const modal = controlsRoot?.querySelector('.playlist-modal'); if (!modal) return;
+  const listEl = modal.querySelector('.plm-list');
+  const inputEl = modal.querySelector('.plm-input');
+  const createBtn = modal.querySelector('.plm-create-btn');
+  const cancelBtn = modal.querySelector('.plm-cancel');
+  const backdrop = modal.querySelector('.plm-backdrop');
+
+  function close(){ modal.hidden = true; listEl.innerHTML=''; inputEl.value=''; document.removeEventListener('keydown', onKey); }
+  function onKey(e){ if(e.key==='Escape'){ e.preventDefault(); close(); } }
+  document.addEventListener('keydown', onKey);
+
+  const render = (items)=>{
+    listEl.innerHTML = '';
+    if (!items || !items.length) {
+      const li = document.createElement('li');
+      li.textContent = 'No playlists yet';
+      li.setAttribute('aria-disabled','true');
+      listEl.appendChild(li);
+    } else {
+      for (const p of items) {
+        const li = document.createElement('li');
+        li.className = 'plm-item';
+        li.setAttribute('role','option');
+        li.tabIndex = 0;
+        li.textContent = p.name;
+        li.addEventListener('click', async () => {
+          try { await addToPlaylist(p.id, key); notify('success', `Added to ${p.name}`); close(); }
+          catch { notify('error', 'Failed to add to playlist'); }
+        });
+        li.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); li.click(); } });
+        listEl.appendChild(li);
+      }
+    }
+  };
+
+  createBtn.onclick = async ()=>{
+    const name = String(inputEl.value||'').trim(); if(!name) return inputEl.focus();
+    try {
+      const created = await createPlaylist(name); if(!created) throw new Error('create failed');
+      await addToPlaylist(created.id, key);
+      notify('success', `Added to ${created.name}`);
+      close();
+    } catch { notify('error','Failed to create or add'); }
+  };
+  cancelBtn.onclick = close; backdrop.onclick = close;
+
+  modal.hidden = false; inputEl.value=''; inputEl.placeholder='Create new playlist';
+  fetchPlaylists().then(render).catch(()=> render([]));
+}
 
 // --- Volume/mute helpers ---
 function getActiveMediaEl() {
