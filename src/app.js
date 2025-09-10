@@ -143,7 +143,13 @@ const configureRoutes = async () => {
   expressApplication.get('/admin/users', async (req, res) => res.render('admin/users'));
   expressApplication.get('/auth/reset/request', (req, res) => res.render('auth/request-reset'));
   // Inject siteTitle into all view renders
-  expressApplication.use((req, res, next)=>{ res.locals.siteTitle = SITE_TITLE; res.locals.preloadRadius = PRELOAD_RADIUS; next(); });
+  expressApplication.use((req, res, next)=>{
+    res.locals.siteTitle = SITE_TITLE;
+    res.locals.preloadRadius = PRELOAD_RADIUS;
+    // Ensure sign-up is available in shared header for NudeFlow
+    res.locals.disableSignup = false;
+    next();
+  });
   expressApplication.use("/", viewRoutesModule);
   expressApplication.use("/api", apiRoutesModule);
   // Simple health probe (no heavy deps)
