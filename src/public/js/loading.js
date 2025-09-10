@@ -14,6 +14,8 @@ let isAutoscrollOn = false;
 let isFullscreen = false;
 let lastKnownKey = null;
 let currentAutoDurationMs = null;
+// Track which media keys have been reported as viewed to avoid duplicates
+const reportedViewKeys = new Set();
 const SAVED_STORE_KEY = 'nf_savedMedia_v1';
 const LIKES_STORE_KEY = 'nf_likeCounts_v1';
 const LIKED_STATE_STORE_KEY = 'nf_likedByUser_v1';
@@ -199,6 +201,13 @@ function loadContent() {
       });
   // If this is the very first media, sync save button state now
   try { if (toLoadImageIndex === 0) { syncSaveUi(); syncLikeUi(); syncVolumeUi(); syncServerMediaState(); } } catch {}
+      // For the very first media, also mark a view if not already reported
+      try {
+        if (toLoadImageIndex === 0) {
+          const mk = mediaElement?.dataset?.mediaKey;
+          if (mk) recordView(mk);
+        }
+      } catch {}
       
       toLoadImageIndex++;
 
@@ -266,6 +275,8 @@ function changeImage(side) {
     currentImageIndex = newImageIndex;
   // Sync save/like/volume button state for newly active media
   try { syncSaveUi(); syncLikeUi(); syncVolumeUi(); syncServerMediaState(); } catch {}
+  // Record a view for the newly active media (once per key)
+  try { const mk = newImage?.dataset?.mediaKey; if (mk) recordView(mk); } catch {}
 
     if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
       loadContent();
@@ -849,7 +860,9 @@ function toggleLikeForActive(btn, badge) {
 // Fetch server-side state (if logged in) and sync UI and local cache
 async function syncServerMediaState() {
   try {
-    const key = getCurrentMediaKey(); if (!key) return;
+  const key = getCurrentMediaKey(); if (!key) return;
+  // Ensure a view is recorded for this media key (no-op if already recorded)
+  recordView(key);
     const r = await fetch(`/api/media/state?mediaKey=${encodeURIComponent(key)}`);
     if (!r.ok) return; // anonymous still gets counts
     const j = await r.json().catch(() => ({}));
@@ -878,6 +891,21 @@ function notify(type, message) {
     }
   } catch {}
   try { alert(message); } catch {}
+}
+
+// --- View tracking (server-side metric) ---
+function recordView(mediaKey) {
+  try {
+    const key = String(mediaKey || '').trim();
+    if (!key || reportedViewKeys.has(key)) return;
+    reportedViewKeys.add(key);
+    // Fire and forget; endpoint does not require auth
+    fetch('/api/media/view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-App': 'NudeFlow' },
+      body: JSON.stringify({ mediaKey: key })
+    }).catch(() => {});
+  } catch {}
 }
 
 function getEffectiveDurationMs(key) {
