@@ -182,3 +182,14 @@ Returns current ETag mode and cache policy matrix (unauthenticated; restrict if 
 Hardening Options:
 - `REQUIRE_CACHE_POLICY_AUTH=true` forces an authenticated session (otherwise returns 404).
 - Built‑in rate limit: 60 req/min/IP (HTTP 429 on exceed).
+
+### Shared Helpers
+NudeFlow mounts shared assets and adds the cache policy endpoint via:
+
+```js
+import { mountSharedStatic, defaultSharedCandidates, registerCachePolicyEndpoint } from '../../NudeShared/server/index.js';
+mountSharedStatic(app, { candidates: defaultSharedCandidates(__dirname), logger });
+registerCachePolicyEndpoint(app, { service: 'NudeFlow', getPolicies: () => ({ /* tiers */ }) });
+```
+
+Extend `getPolicies()` when introducing additional static tiers (fonts, video previews, etc.) for consistent ops visibility.

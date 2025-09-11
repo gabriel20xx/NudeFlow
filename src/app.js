@@ -10,6 +10,7 @@ import http from 'http';
 import https from 'https';
 import fs from 'fs';
 import { mountTheme } from '../../NudeShared/server/theme/mountTheme.js';
+import { mountSharedStatic, defaultSharedCandidates, registerCachePolicyEndpoint } from '../../NudeShared/server/index.js';
 import AppUtils from './utils/AppUtils.js';
 import { initDb as initPg, query as pgQuery } from '../../NudeShared/server/index.js';
 import { runMigrations } from '../../NudeShared/server/index.js';
@@ -97,38 +98,11 @@ const configureMiddleware = () => {
   ]);
   // Serve static assets from src/public (unified monorepo convention)
   expressApplication.use(express.static(path.join(__dirname, 'public')));
-  // Mount shared client assets; prefer external NudeShared checkout if provided
-  const sharedCandidates = [
-    process.env.NUDESHARED_DIR,
-    '/app/NudeShared',
-    path.join(__dirname, '..', '..', 'NudeShared'),
-    path.join(__dirname, '..', '..', 'shared')
-  ].filter(Boolean);
-  let mountedSharedFrom = '';
-  for (const candidate of sharedCandidates) {
-    try {
-      if (candidate && fs.existsSync(candidate)) {
-        expressApplication.use('/shared', express.static(candidate, {
-          etag: true,
-          lastModified: true,
-          setHeaders: (res, filePath) => {
-            if (/\.(css|js)$/i.test(filePath)) {
-              res.setHeader('Cache-Control', 'public, max-age=3600');
-            } else if (/\.(png|jpe?g|gif|webp|svg)$/i.test(filePath)) {
-              res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
-            }
-          }
-        }));
-        mountedSharedFrom = candidate;
-        break;
-      }
-    } catch { /* no-op */ }
-  }
-  if (mountedSharedFrom) {
-    AppUtils.infoLog(MODULE_NAME, 'STARTUP', 'Mounted shared static assets at /shared', { from: mountedSharedFrom });
-  } else {
-    AppUtils.warnLog(MODULE_NAME, 'STARTUP', 'No shared assets directory found; /shared not mounted');
-  }
+  // Shared static assets (tiered caching)
+  mountSharedStatic(expressApplication, { candidates: defaultSharedCandidates(__dirname), logger: {
+    info: (...a)=>AppUtils.infoLog(MODULE_NAME,'SHARED_STATIC',...a),
+    warn: (...a)=>AppUtils.warnLog(MODULE_NAME,'SHARED_STATIC',...a)
+  }});
 
   // Unified theme mount
   mountTheme(expressApplication, { projectDir: __dirname, sharedDir: process.env.NUDESHARED_DIR || path.resolve(__dirname, '..', '..', 'NudeShared'), logger: {
@@ -179,36 +153,18 @@ const configureRoutes = async () => {
       res.status(500).json({ status: 'error', message: String(e?.message || e) });
     }
   });
-  // Cache policy introspection (parity with other services)
-  const __flowCacheHits = new Map();
-  function cachePolicyRateLimitedFlow(req){
-    const key = (req.headers['x-forwarded-for'] || req.ip || 'local').toString().split(',')[0].trim();
-    const now = Date.now();
-    const windowMs = 60_000; const max = 60;
-    const arr = __flowCacheHits.get(key) || [];
-    const recent = arr.filter(ts => now - ts < windowMs);
-    recent.push(now);
-    __flowCacheHits.set(key, recent);
-    return recent.length <= max;
-  }
-  expressApplication.get('/__cache-policy', (req, res) => {
-    if (!cachePolicyRateLimitedFlow(req)) return res.status(429).json({ error: 'Too many requests' });
-    if (process.env.REQUIRE_CACHE_POLICY_AUTH === 'true' && !req.session?.user?.id) {
-      return res.status(404).json({ error: 'Not found' });
-    }
-    res.json({
-      etag: expressApplication.get('etag') || 'strong',
-      service: 'NudeFlow',
-      policies: {
-        shared: {
-          cssJs: 'public, max-age=3600',
-          images: 'public, max-age=86400, stale-while-revalidate=604800'
-        },
-        themeCss: 'public, max-age=3600',
-        localPublic: 'default (no explicit overrides)'
+  // Cache policy endpoint
+  registerCachePolicyEndpoint(expressApplication, {
+    service: 'NudeFlow',
+    getPolicies: () => ({
+      shared: {
+        cssJs: 'public, max-age=3600',
+        images: 'public, max-age=86400, stale-while-revalidate=604800'
       },
-      note: 'Adjust in NudeFlow/src/app.js when modifying static caching.'
-    });
+      themeCss: 'public, max-age=3600',
+      localPublic: 'default (no explicit overrides)'
+    }),
+    note: 'Adjust in NudeFlow/src/app.js when modifying static caching.'
   });
   
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Application routes configuration completed');
@@ -238,9 +194,8 @@ const configureErrorHandling = () => {
     return response.status(404).type('txt').send('Not Found');
   });
 
-  // Global error handler (must have 4 args)
-  // eslint-disable-next-line no-unused-vars
-  expressApplication.use((error, request, response, next) => {
+  // Global error handler (must have 4 args). Prefix unused 'next' to satisfy no-unused-vars without directive.
+  expressApplication.use((error, request, response, _next) => {
     AppUtils.errorLog(MODULE_NAME, 'GLOBAL_ERROR_HANDLER', 'Unhandled application error', error, { 
       requestUrl: request.url,
       requestMethod: request.method

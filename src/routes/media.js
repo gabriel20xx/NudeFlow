@@ -4,6 +4,8 @@ import * as mediaService from '../services/mediaService.js';
 import AppUtils from '../utils/AppUtils.js';
 import fs from 'fs';
 import sharp from 'sharp';
+// Record simple view metrics so Admin can aggregate cross-service usage
+import { query as dbQuery, getDriver } from '../../../NudeShared/server/db/db.js';
 
 const mediaRouter = express.Router();
 /**
@@ -79,7 +81,18 @@ mediaRouter.get("/random/:category?", (request, response) => {
             fileName: randomMedia.name 
         });
         
-        response.sendFile(mediaPath);
+        response.sendFile(mediaPath, (err)=>{
+            if(!err){
+                try {
+                    const driver = getDriver();
+                    const sql = driver === 'pg'
+                      ? 'INSERT INTO media_views (user_id, media_key, app) VALUES ($1,$2,$3)'
+                      : 'INSERT INTO media_views (user_id, media_key, app) VALUES (?,?,?)';
+                    const userId = (request.session?.user?.id) || null;
+                    dbQuery(sql, [userId, randomMedia.relativePath, 'NudeFlow']).catch(()=>{});
+                } catch { /* ignore metrics errors */ }
+            }
+        });
     } catch (error) {
         AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error serving random media', { category, error: error.message });
         response.status(500).json(AppUtils.createErrorResponse("Internal server error"));
@@ -127,6 +140,15 @@ mediaRouter.get("/*", (request, response) => {
                 }
             } else {
                 AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Specific media served successfully', { path: mediaPath });
+                // Fire-and-forget metric insert
+                try {
+                    const driver = getDriver();
+                    const sql = driver === 'pg'
+                      ? 'INSERT INTO media_views (user_id, media_key, app) VALUES ($1,$2,$3)'
+                      : 'INSERT INTO media_views (user_id, media_key, app) VALUES (?,?,?)';
+                    const userId = (request.session?.user?.id) || null;
+                    dbQuery(sql, [userId, decodedPath, 'NudeFlow']).catch(()=>{});
+                } catch { /* ignore metrics errors */ }
             }
         });
     } catch (error) {
