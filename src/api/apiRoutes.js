@@ -6,7 +6,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
-import { buildMediaInteractionRouter, buildMediaLibraryRouter, buildPlaylistsRouter } from '../../../NudeShared/server/index.js'; // buildCoreApiRouter removed from shared exports
+import { buildMediaInteractionRouter, buildMediaLibraryRouter, buildPlaylistsRouter, buildProfileRouter } from '../../../NudeShared/server/index.js'; // Added buildProfileRouter for /api/profile contract
 // TOTP and QR
 import { authenticator } from 'otplib';
 import qrcode from 'qrcode';
@@ -33,6 +33,8 @@ const upload = multer({ storage, limits: { fileSize: Number(process.env.MAX_FILE
 
 // Shared media library/discovery endpoints
 apiRouter.use('/', buildMediaLibraryRouter({ utils: AppUtils, mediaService }));
+// Profile API (GET /profile, PUT /profile, etc.) – required for tests expecting /api/profile
+apiRouter.use('/', buildProfileRouter({ utils: AppUtils }));
 
 /**
  * Saved videos endpoint (placeholder)
