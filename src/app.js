@@ -38,9 +38,10 @@ let expressApplication; // lazily created
 // Configuration
 const serverPort = process.env.PORT || 8080;
 
-AppUtils.infoLog(MODULE_NAME, 'SERVER_INIT', 'Starting NudeFlow server initialization', {
-  serverPort
-});
+if (!globalThis.__NUDEFLOW_INIT_LOGGED) {
+  AppUtils.infoLog(MODULE_NAME, 'SERVER_INIT', 'Starting NudeFlow server initialization', { serverPort });
+  globalThis.__NUDEFLOW_INIT_LOGGED = true;
+}
 
 // Middleware configuration
 const configureMiddleware = () => {
