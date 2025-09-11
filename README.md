@@ -160,3 +160,25 @@ For issues and questions, please open an issue on the GitHub repository.
 - PostgreSQL is preferred; if unavailable, the app falls back to SQLite (`better-sqlite3`).
 - On startup, migrations create a `users` table automatically.
 - Configure `.env` using the provided `.env.example`. Set `SESSION_SECRET` for cookies. For Postgres, set `DATABASE_URL` or PG* vars; otherwise `SQLITE_PATH` is used.
+
+## Static Caching & Introspection
+
+NudeFlow adopts the shared caching tier used across services:
+
+| Asset Type | Policy |
+|------------|--------|
+| `/shared/*.css` & `/shared/*.js` | `public, max-age=3600` |
+| `/shared/*.(png|jpg|jpeg|gif|webp|svg)` | `public, max-age=86400, stale-while-revalidate=604800` |
+| Theme CSS (`/assets/theme.css`) | `public, max-age=3600` |
+| Local `public/` assets (no overrides) | default express static |
+
+Introspection endpoint:
+
+```
+GET /__cache-policy
+```
+
+Returns current ETag mode and cache policy matrix (unauthenticated; restrict if needed in production).
+Hardening Options:
+- `REQUIRE_CACHE_POLICY_AUTH=true` forces an authenticated session (otherwise returns 404).
+- Built‑in rate limit: 60 req/min/IP (HTTP 429 on exceed).

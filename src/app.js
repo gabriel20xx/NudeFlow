@@ -108,7 +108,17 @@ const configureMiddleware = () => {
   for (const candidate of sharedCandidates) {
     try {
       if (candidate && fs.existsSync(candidate)) {
-        expressApplication.use('/shared', express.static(candidate));
+        expressApplication.use('/shared', express.static(candidate, {
+          etag: true,
+          lastModified: true,
+          setHeaders: (res, filePath) => {
+            if (/\.(css|js)$/i.test(filePath)) {
+              res.setHeader('Cache-Control', 'public, max-age=3600');
+            } else if (/\.(png|jpe?g|gif|webp|svg)$/i.test(filePath)) {
+              res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+            }
+          }
+        }));
         mountedSharedFrom = candidate;
         break;
       }
@@ -168,6 +178,37 @@ const configureRoutes = async () => {
     } catch (e) {
       res.status(500).json({ status: 'error', message: String(e?.message || e) });
     }
+  });
+  // Cache policy introspection (parity with other services)
+  const __flowCacheHits = new Map();
+  function cachePolicyRateLimitedFlow(req){
+    const key = (req.headers['x-forwarded-for'] || req.ip || 'local').toString().split(',')[0].trim();
+    const now = Date.now();
+    const windowMs = 60_000; const max = 60;
+    const arr = __flowCacheHits.get(key) || [];
+    const recent = arr.filter(ts => now - ts < windowMs);
+    recent.push(now);
+    __flowCacheHits.set(key, recent);
+    return recent.length <= max;
+  }
+  expressApplication.get('/__cache-policy', (req, res) => {
+    if (!cachePolicyRateLimitedFlow(req)) return res.status(429).json({ error: 'Too many requests' });
+    if (process.env.REQUIRE_CACHE_POLICY_AUTH === 'true' && !req.session?.user?.id) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    res.json({
+      etag: expressApplication.get('etag') || 'strong',
+      service: 'NudeFlow',
+      policies: {
+        shared: {
+          cssJs: 'public, max-age=3600',
+          images: 'public, max-age=86400, stale-while-revalidate=604800'
+        },
+        themeCss: 'public, max-age=3600',
+        localPublic: 'default (no explicit overrides)'
+      },
+      note: 'Adjust in NudeFlow/src/app.js when modifying static caching.'
+    });
   });
   
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Application routes configuration completed');
@@ -296,6 +337,7 @@ const initializeServer = async () => {
   try {
     if (!expressApplication) {
       expressApplication = express();
+      expressApplication.set('etag','strong');
       await mediaService.initializeMediaService();
       configureMiddleware();
   await configureRoutes();
@@ -315,6 +357,7 @@ const initializeServer = async () => {
 const createApp = async () => {
   if (!expressApplication) {
     expressApplication = express();
+    expressApplication.set('etag','strong');
     await mediaService.initializeMediaService();
     configureMiddleware();
   await configureRoutes();
