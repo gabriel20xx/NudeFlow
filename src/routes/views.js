@@ -32,20 +32,12 @@ viewsRouter.get("/", (request, response) => {
 });
 
 /**
- * Categories page route handler
+ * Legacy categories route -> redirect to root (tag-based navigation now)
+ * Keep 301 for SEO-ish permanence; can adjust later. Tests will assert redirect.
  */
-viewsRouter.get("/categories", (request, response) => {
-  const FUNCTION_NAME = 'handleCategoriesPageRoute';
-  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Processing categories page request');
-  
-  try {
-    AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering categories page');
-    response.render("categories", { title: "Categories" });
-    AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Categories page rendered successfully');
-  } catch (error) {
-    AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error rendering categories page', error);
-    response.status(500).render('error', { message: 'Failed to load categories page' });
-  }
+viewsRouter.get('/categories', (req, res) => {
+  // Quick response path (skip any expensive pre-work)
+  res.redirect(301, '/');
 });
 
 /**
@@ -116,30 +108,6 @@ viewsRouter.get('/playlists/:id', (request, response) => {
   }
 });
 
-/**
- * Category view route handler (renders Home view but filtered by category)
- * This only handles known categories; otherwise, it defers to next routes (e.g., /api, /profile).
- */
-viewsRouter.get('/:categoryName', (request, response, next) => {
-  const FUNCTION_NAME = 'handleCategoryHomeView';
-  const { categoryName } = request.params;
-
-  try {
-  const categories = mediaService.getCategories() || [];
-  const raw = String(categoryName || '');
-  const decoded = decodeURIComponent(raw);
-  const match = categories.find(c => c.name.toLowerCase() === decoded.toLowerCase());
-    if (!match) return next();
-  // Use formatted display name; special-case 'all' to title-case
-  const display = (String(match.name).toLowerCase() === 'all')
-    ? 'All'
-    : AppUtils.formatRouteNameForDisplay(match.displayName || match.name);
-    AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering home view for category', { categoryName: match.name, display });
-    return response.render('home', { title: 'Home', currentCategoryDisplay: display });
-  } catch (error) {
-    AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error handling category home view', error, { categoryName });
-    return next();
-  }
-});
+// Removed dynamic /:categoryName handler (legacy category filtering) in favor of tag-based client filtering.
 
 export default viewsRouter;
