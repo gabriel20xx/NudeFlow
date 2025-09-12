@@ -74,6 +74,70 @@ apiRouter.use('/', buildMediaInteractionRouter(AppUtils));
 // Mount playlists routes (create/list/add/remove). Requires auth for mutating operations.
 apiRouter.use('/', buildPlaylistsRouter(AppUtils));
 
+// --- Flow media state + view tracking endpoints (ensure presence; avoid 500s when called by client scripts) ---
+import { query as sharedQuery, getDriver } from '../../../NudeShared/server/db/db.js';
+
+// Media state: returns engagement counts + user flags for a given mediaKey
+apiRouter.get('/media/state', async (req, res) => {
+  const mediaKey = String(req.query.mediaKey||'').trim();
+  if(!mediaKey) return res.status(400).json({ ok:false, error:'mediaKey required'});
+  try {
+    AppUtils.infoLog(MODULE_NAME,'MEDIA_STATE_START','begin',{ mediaKey });
+    const driver = getDriver();
+    // Basic counts (views, likes, saves, downloads)
+    const tables = ['media_views','media_likes','media_saves','media_downloads'];
+    const counts = {};
+    for(const t of tables){
+      let sql = `SELECT COUNT(1) AS c FROM ${t} WHERE media_key = ?`;
+      if(driver==='pg') sql = sql.replace(/\?/g,'$1');
+      const { rows } = await sharedQuery(sql, [mediaKey]);
+      counts[t] = Number(rows?.[0]?.c||0);
+    }
+    // User flags
+    const userId = req.session?.user?.id || null;
+    let userFlags = { liked:false, saved:false };
+    if(userId){
+      const likeSql = driver==='pg' ? 'SELECT 1 FROM media_likes WHERE media_key=$1 AND user_id=$2 LIMIT 1' : 'SELECT 1 FROM media_likes WHERE media_key=? AND user_id=? LIMIT 1';
+      const saveSql = driver==='pg' ? 'SELECT 1 FROM media_saves WHERE media_key=$1 AND user_id=$2 LIMIT 1' : 'SELECT 1 FROM media_saves WHERE media_key=? AND user_id=? LIMIT 1';
+      const { rows: lr } = await sharedQuery(likeSql, [mediaKey, userId]);
+      const { rows: sr } = await sharedQuery(saveSql, [mediaKey, userId]);
+      userFlags.liked = !!(lr && lr.length);
+      userFlags.saved = !!(sr && sr.length);
+    }
+    res.json({ ok:true, mediaKey, counts: {
+      views: counts.media_views,
+      likes: counts.media_likes,
+      saves: counts.media_saves,
+      downloads: counts.media_downloads
+    }, user: userFlags });
+    AppUtils.infoLog(MODULE_NAME,'MEDIA_STATE_SUCCESS','done',{ mediaKey, counts });
+  } catch(e){
+    AppUtils.errorLog(MODULE_NAME, 'MEDIA_STATE', 'Failed to load media state', e, { mediaKey });
+    res.status(500).json({ ok:false, error:'state_failed'});
+  }
+});
+
+// Register a view event (idempotence per user+media not enforced here; rely on client throttling)
+apiRouter.post('/media/view', async (req, res) => {
+  const { mediaKey } = req.body||{};
+  if(!mediaKey) return res.status(400).json({ ok:false, error:'mediaKey required'});
+  try {
+    AppUtils.infoLog(MODULE_NAME,'MEDIA_VIEW_START','begin',{ mediaKey });
+    const driver = getDriver();
+    const userId = req.session?.user?.id || null;
+    const now = new Date();
+    const sql = driver==='pg'
+      ? 'INSERT INTO media_views (media_key, user_id, created_at) VALUES ($1,$2,$3)'
+      : 'INSERT INTO media_views (media_key, user_id, created_at) VALUES (?,?,?)';
+    await sharedQuery(sql, [mediaKey, userId, now]);
+    res.json({ ok:true });
+    AppUtils.infoLog(MODULE_NAME,'MEDIA_VIEW_SUCCESS','inserted',{ mediaKey });
+  } catch(e){
+    AppUtils.errorLog(MODULE_NAME, 'MEDIA_VIEW', 'Failed to record view', e, { mediaKey });
+    res.status(500).json({ ok:false, error:'view_failed'});
+  }
+});
+
 // Tag add & vote endpoints (user-facing). Assumes authentication middleware provides req.session.user
 import { addTagToMedia, applyTagVote, getMediaTagsWithScores } from '../../../NudeShared/server/tags/tagHelpers.js';
 

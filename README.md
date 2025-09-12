@@ -7,6 +7,14 @@ Short‑form media (video/image) streaming application (TikTok‑style) built wi
 
  Shared logging and theme via NudeShared. In containers, set `NUDESHARED_DIR=/app/NudeShared/src` so the app can locate `theme.css` and `logger.js` reliably.
 
+## Recent Additions / Guarantees
+* Migrations-before-listen: Server start now awaits DB init + migrations before listening, eliminating race conditions for first API calls.
+* Media State Endpoint: `GET /api/media/state?mediaKey=...` returns `{ ok, mediaKey, counts:{ views, likes, saves, downloads }, user:{ liked, saved } }`.
+* View Registration Endpoint: `POST /api/media/view` body `{ mediaKey }` logs a view event.
+* Tagging & Voting: Endpoints under `/api/media/:mediaKey/tags` for listing (`GET`), adding (`POST { tag }`), and voting (`POST /:tag/vote { direction:-1|0|1 }`). Response includes scores and current user vote.
+* Dynamic Search Tags: Search results asynchronously hydrate tag lists for each media item (MutationObserver-driven) replacing legacy category display.
+* Structured Logging: Media state/view endpoints emit start/success or error logs (MEDIA_STATE_START / MEDIA_VIEW_SUCCESS) via shared AppUtils logging hooks.
+
 - Node.js >= 18.18.0
 - npm >= 10
 - Optional: Docker / container environment using `entrypoint.sh`
@@ -71,6 +79,9 @@ Media files are scanned from the configured media path and categorized based on 
 - `GET /api/profile` - Get user profile (placeholder)
 - `GET /media/random/:category?` - Get random video (optionally from category)
 - `GET /media/:relativePath` - Get specific media file
+ - `GET /api/media/state?mediaKey=...` - Aggregated engagement counts + user flags
+ - `POST /api/media/view` - Record a view event (no idempotency guarantee)
+ - `GET /api/media/:mediaKey/tags` / `POST /api/media/:mediaKey/tags` / `POST /api/media/:mediaKey/tags/:tag/vote` - Tag listing/add/vote
 
 ## Project Structure (Current)
 

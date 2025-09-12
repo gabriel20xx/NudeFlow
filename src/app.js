@@ -263,24 +263,23 @@ let serverRef; // store created server
 
 const startServer = async () => {
   const FUNCTION_NAME = 'startServer';
-  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Starting Express server');
-  
+  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Starting Express server (will await DB readiness)');
+  try {
+    AppUtils.infoLog(MODULE_NAME, 'DB_INIT', 'Initializing database');
+    await initPg();
+    AppUtils.infoLog(MODULE_NAME, 'MIGRATIONS', 'Running migrations');
+    await runMigrations();
+    AppUtils.infoLog(MODULE_NAME, 'DB_READY', 'Database ready');
+  } catch(e){
+    AppUtils.errorLog(MODULE_NAME, 'DB_INIT', 'Database init/migrations failed (continuing but API may error)', e);
+  }
   if (!serverRef) serverRef = await buildServer(expressApplication);
-  serverRef.listen(serverPort, () => {
-    const protocol = ENABLE_HTTPS ? 'https' : 'http';
-    AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'NudeFlow server started successfully', { 
-        serverPort,
-        protocol,
-        environment: process.env.NODE_ENV || 'development'
-      });
-    (async () => {
-      try {
-  await initPg(); // Will use PostgreSQL if available, else SQLite
-  await runMigrations();
-      } catch (e) {
-        AppUtils.errorLog(MODULE_NAME, 'STARTUP', 'Database initialization failed', e);
-      }
-    })();
+  await new Promise(resolve => serverRef.listen(serverPort, resolve));
+  const protocol = ENABLE_HTTPS ? 'https' : 'http';
+  AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'NudeFlow server started successfully', { 
+    serverPort,
+    protocol,
+    environment: process.env.NODE_ENV || 'development'
   });
 };
 

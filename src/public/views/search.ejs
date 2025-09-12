@@ -35,7 +35,7 @@
                                             <img src="${video.thumbnail || video.url}" alt="${video.name}">
                                         </div>
                                         <p title="${video.name}">${video.name}</p>
-                                        <small>Category: ${video.category}</small>
+                                        <small class="search-tags" data-media-key="${video.media_key||video.name}">Tags: <em>loading…</em></small>
                                     `;
                                     resultsContainer.appendChild(videoElement);
                                 });
@@ -50,10 +50,40 @@
         }
 
         // Allow search on Enter key
-    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 searchVideos();
             }
         });
+        // Observe added tag placeholders & resolve tags asynchronously
+        (function(){
+            try {
+                var results = document.getElementById('searchResults');
+                if(!results) return;
+                var tagObserver = new MutationObserver(function(muts){
+                    muts.forEach(function(m){
+                        Array.from(m.addedNodes||[]).forEach(function(n){
+                            if(!(n instanceof HTMLElement)) return;
+                            var placeholders = (n.matches && n.matches('.search-tags')) ? [n] : Array.from(n.querySelectorAll ? n.querySelectorAll('.search-tags') : []);
+                            placeholders.forEach(function(ph){
+                                var key = ph.getAttribute('data-media-key');
+                                if(!key){ ph.innerHTML = 'Tags: <em>none</em>'; return; }
+                                fetch('/api/media/' + encodeURIComponent(key) + '/tags')
+                                    .then(function(r){ return r.json(); })
+                                    .then(function(js){
+                                        if(js && Array.isArray(js.tags) && js.tags.length){
+                                            ph.textContent = 'Tags: ' + js.tags.slice(0,6).map(function(t){ return t.tag; }).join(', ');
+                                        } else {
+                                            ph.textContent = 'Tags: —';
+                                        }
+                                    })
+                                    .catch(function(){ ph.textContent = 'Tags: —'; });
+                            });
+                        });
+                    });
+                });
+                tagObserver.observe(results, { childList:true, subtree:true });
+            } catch(e) { /* silent */ }
+        })();
     </script>
 <%- include("partials/navbar") %>
