@@ -74,5 +74,53 @@ apiRouter.use('/', buildMediaInteractionRouter(AppUtils));
 // Mount playlists routes (create/list/add/remove). Requires auth for mutating operations.
 apiRouter.use('/', buildPlaylistsRouter(AppUtils));
 
+// Tag add & vote endpoints (user-facing). Assumes authentication middleware provides req.session.user
+import { addTagToMedia, applyTagVote, getMediaTagsWithScores } from '../../../NudeShared/server/tags/tagHelpers.js';
+
+// List tags for a media key with scores (for dynamic reload)
+apiRouter.get('/media/:mediaKey/tags', async (req, res) => {
+  try {
+    const mediaKey = decodeURIComponent(req.params.mediaKey || '');
+    const userId = req.session?.user?.id || null;
+    const tags = await getMediaTagsWithScores(mediaKey, userId);
+    res.json({ ok: true, tags });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Add a tag to a media item
+apiRouter.post('/media/:mediaKey/tags', async (req, res) => {
+  const userId = req.session?.user?.id;
+  if (!userId) return res.status(401).json({ ok: false, error: 'auth_required' });
+  try {
+    const mediaKey = decodeURIComponent(req.params.mediaKey || '');
+    const { tag } = req.body || {};
+    const result = await addTagToMedia(mediaKey, tag, userId);
+    if (!result.ok) return res.status(400).json(result);
+    const tags = await getMediaTagsWithScores(mediaKey, userId);
+    res.json({ ok: true, added: result.tag, tags });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Vote on a tag (direction: -1, 0, 1)
+apiRouter.post('/media/:mediaKey/tags/:tag/vote', async (req, res) => {
+  const userId = req.session?.user?.id;
+  if (!userId) return res.status(401).json({ ok: false, error: 'auth_required' });
+  try {
+    const mediaKey = decodeURIComponent(req.params.mediaKey || '');
+    const tagRaw = decodeURIComponent(req.params.tag || '');
+    const { direction } = req.body || {};
+    const result = await applyTagVote(mediaKey, tagRaw, userId, direction);
+    if (!result.ok) return res.status(400).json(result);
+    const tags = await getMediaTagsWithScores(mediaKey, userId);
+    res.json({ ok: true, tags });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // Export router for mounting by app.js
 export default apiRouter;
