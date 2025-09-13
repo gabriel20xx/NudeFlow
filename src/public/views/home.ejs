@@ -3,67 +3,10 @@
 <section id="tag-interactions" class="tag-interactions" aria-label="Tag interactions" style="padding:1rem;">
 	<div class="add-tag-form" aria-label="Add a tag">
 		<input type="text" id="new-tag-input" maxlength="40" placeholder="Add a tag" aria-label="New tag" />
-		<button id="add-tag-btn" type="button">Add Tag</button>
+		<button id="add-tag-btn" type="button" class="btn-small">Add Tag</button>
 	</div>
+	<div id="tag-status" class="sr-only" aria-live="polite"></div>
 	<ul id="media-tags" class="media-tags" aria-live="polite" aria-label="Media tags list"></ul>
 </section>
-<script>
-// Minimal client logic: expects a global currentMediaKey variable set when media loads (reuse existing feed logic later)
-(function(){
-	const tagListEl = document.getElementById('media-tags');
-	const inputEl = document.getElementById('new-tag-input');
-	const addBtn = document.getElementById('add-tag-btn');
-	let currentMediaKey = null;
-	// Placeholder: attempt to derive from first media element if available later
-	function inferMediaKey(){
-		const first = document.querySelector('[data-media-key]');
-		if(first) currentMediaKey = first.getAttribute('data-media-key');
-	}
-	inferMediaKey();
-	async function api(path, opts){
-		opts = opts || {}; opts.headers = Object.assign({ 'Content-Type':'application/json' }, opts.headers||{});
-		const res = await fetch(path, opts);
-		return { status: res.status, json: await res.json().catch(()=>({})) };
-	}
-	function renderTags(tags){
-		tagListEl.innerHTML='';
-		tags.forEach(t=>{
-			const li = document.createElement('li');
-			li.className='tag-item';
-			const btnUp = document.createElement('button');
-			btnUp.type='button'; btnUp.textContent='▲';
-			btnUp.className = 'vote-up' + (t.myVote===1?' active':'');
-			const btnDown = document.createElement('button');
-			btnDown.type='button'; btnDown.textContent='▼';
-			btnDown.className = 'vote-down' + (t.myVote===-1?' active':'');
-			const score = document.createElement('span'); score.className='tag-score'; score.textContent = t.score;
-			const label = document.createElement('span'); label.className='tag-label'; label.textContent = t.tag;
-			btnUp.addEventListener('click', ()=>vote(t.tag, t.myVote===1?0:1));
-			btnDown.addEventListener('click', ()=>vote(t.tag, t.myVote===-1?0:-1));
-			li.append(btnUp, score, btnDown, label);
-			tagListEl.appendChild(li);
-		});
-	}
-	async function refresh(){
-		if(!currentMediaKey) return;
-		const { json } = await api(`/api/media/${encodeURIComponent(currentMediaKey)}/tags`);
-		if(json && json.tags) renderTags(json.tags);
-	}
-	async function addTag(){
-		if(!currentMediaKey) { inferMediaKey(); if(!currentMediaKey) return; }
-		const tag = inputEl.value.trim(); if(!tag) return;
-		const { status, json } = await api(`/api/media/${encodeURIComponent(currentMediaKey)}/tags`, { method:'POST', body: JSON.stringify({ tag }) });
-		if(status===200) { inputEl.value=''; renderTags(json.tags || []); }
-	}
-	async function vote(tag, direction){
-		if(!currentMediaKey) return;
-		const { json } = await api(`/api/media/${encodeURIComponent(currentMediaKey)}/tags/${encodeURIComponent(tag)}/vote`, { method:'POST', body: JSON.stringify({ direction }) });
-		if(json && json.tags) renderTags(json.tags);
-	}
-	addBtn.addEventListener('click', addTag);
-	inputEl.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addTag(); }});
-	// Initial attempt
-	refresh();
-})();
-</script>
+<script src="/js/home-tags.js"></script>
 <%- include("partials/navbar") %>

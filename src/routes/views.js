@@ -43,6 +43,11 @@ viewsRouter.get('/tags', (req, res) => {
   }
 });
 
+// Legacy categories redirect (tests rely on old path); permanent redirect to /tags
+viewsRouter.get('/categories', (req, res) => {
+  res.redirect(301, '/tags');
+});
+
 /**
  * Profile page route handler
  */
