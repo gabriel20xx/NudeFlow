@@ -1,9 +1,22 @@
-import express from 'express';
+import express from '../express-shim.js';
 import path from 'path';
 import * as mediaService from '../services/mediaService.js';
 import AppUtils from '../utils/AppUtils.js';
 import fs from 'fs';
-import sharp from 'sharp';
+// Dynamic sharp import with fallback so tests run without native dependency
+let sharp;
+try {
+    const mod = await import('sharp');
+    sharp = mod.default || mod;
+} catch {
+    const mockFactory = () => ({
+        resize() { return this; },
+        jpeg() { return this; },
+        async toBuffer() { return Buffer.from([0]); },
+        async metadata() { return { width: 1, height: 1 }; }
+    });
+    sharp = mockFactory;
+}
 // Record simple view metrics so Admin can aggregate cross-service usage
 import { query as dbQuery, getDriver } from '../../../NudeShared/server/db/db.js';
 

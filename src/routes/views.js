@@ -1,4 +1,4 @@
-import express from 'express';
+import express from '../express-shim.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import AppUtils from '../utils/AppUtils.js';
@@ -43,9 +43,10 @@ viewsRouter.get('/tags', (req, res) => {
   }
 });
 
-// Legacy categories redirect (tests rely on old path); permanent redirect to /tags
+// Legacy categories redirect (tests expect 301 to home per migration docs)
 viewsRouter.get('/categories', (req, res) => {
-  res.redirect(301, '/tags');
+  // Permanent redirect to root (home)
+  res.redirect(301, '/');
 });
 
 /**

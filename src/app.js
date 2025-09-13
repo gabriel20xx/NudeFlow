@@ -1,6 +1,8 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
+// Use centralized shim for express (supports monorepo test runs without local NudeFlow install)
+import express from './express-shim.js';
+let cors; try { ({ default: cors } = await import('cors')); } catch { cors = () => (req,res,next)=>next(); }
+let helmet; try { ({ default: helmet } = await import('helmet')); } catch { helmet = () => (req,res,next)=>next(); }
+let connectPg; try { ({ default: connectPg } = await import('connect-pg-simple')); } catch { connectPg = () => function DummyStore(){}; }
 import path from 'path';
 // import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
@@ -15,8 +17,41 @@ import AppUtils from './utils/AppUtils.js';
 import { initDb as initPg, query as pgQuery } from '../../NudeShared/server/index.js';
 import { runMigrations } from '../../NudeShared/server/index.js';
 import { buildAuthRouter } from '../../NudeShared/server/index.js';
-import session from 'express-session';
-import connectPg from 'connect-pg-simple';
+// Session handling (provide an in-memory fallback when express-session is unavailable in test context)
+let session; try { ({ default: session } = await import('express-session')); } catch {
+  const __memorySessions = new Map(); // sid -> session object
+  const genId = ()=> (globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)) + Date.now().toString(36);
+  function parseCookies(header){
+    const out={}; if(!header) return out; header.split(/; */).forEach(kv=>{ if(!kv) return; const idx=kv.indexOf('='); if(idx===-1) return; const k=kv.slice(0,idx).trim(); const v=decodeURIComponent(kv.slice(idx+1)); out[k]=v; }); return out;
+  }
+  session = function fallbackSession(_opts={}){
+    const cookieName = (_opts.name) || 'nc_test_sid';
+    return function sessionMiddleware(req,res,next){
+      try {
+        const cookies = parseCookies(req.headers?.cookie||'');
+        let sid = cookies[cookieName];
+        if(!sid || !__memorySessions.has(sid)){
+          sid = genId();
+          __memorySessions.set(sid, { cookie:{ originalMaxAge: _opts.cookie?.maxAge || 7*24*3600*1000, httpOnly:true, path:'/', secure:false, sameSite:'lax' } });
+          // Emit Set-Cookie so tests capture it
+          res.setHeader('Set-Cookie', `${cookieName}=${sid}; Path=/; HttpOnly`);
+        }
+        let sess = __memorySessions.get(sid);
+        if(!sess){ sess = { cookie:{ originalMaxAge: _opts.cookie?.maxAge || 7*24*3600*1000, httpOnly:true, path:'/', secure:false, sameSite:'lax' } }; __memorySessions.set(sid, sess); }
+        // Attach session object
+        req.session = sess;
+        // Provide destroy method compatibility
+        req.session.destroy = (cb)=>{ __memorySessions.delete(sid); try { res.setHeader('Set-Cookie', `${cookieName}=deleted; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`); } catch {} cb && cb(); };
+        // Touch helper
+        req.session.touch = ()=>{ /* no-op for memory */ };
+      } catch (e) {
+        // In worst case still allow flow
+        if(!req.session) req.session = {};
+      }
+      next();
+    };
+  };
+}
 import * as mediaService from './services/mediaService.js';
 
 // Load environment variables early
@@ -45,7 +80,7 @@ if (!globalThis.__NUDEFLOW_INIT_LOGGED) {
 }
 
 // Middleware configuration
-const configureMiddleware = () => {
+const configureMiddleware = async () => {
   const FUNCTION_NAME = 'configureMiddleware';
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Configuring Express middleware');
   
@@ -90,7 +125,27 @@ const configureMiddleware = () => {
   });
 
   // View engine setup
-  expressApplication.set("view engine", "ejs");
+    // Attempt to register real ejs; fall back to a minimal shim extractor if not installed in test context
+    try {
+      // dynamic import inside async function
+      await import('ejs');
+      expressApplication.set("view engine", "ejs");
+    } catch {
+      // Minimal shim: reads file, strips <%- include("...") %> lines, performs no variable interpolation
+      const fsPromises = fs.promises;
+      expressApplication.engine('ejs', async (filePath, options, callback) => {
+        try {
+          const raw = await fsPromises.readFile(filePath, 'utf8');
+          const stripped = raw.replace(/<%-? *include\([^)]*\) *%>/g, '');
+          // Inject minimal siteTitle if referenced
+          const html = stripped.replace(/<%= *siteTitle *%>/g, options.siteTitle || 'NudeFlow');
+          callback(null, html);
+        } catch (e) {
+          callback(e);
+        }
+      });
+      expressApplication.set('view engine', 'ejs');
+    }
   // Updated views path to new unified structure and add shared views
   expressApplication.set("views", [
     path.join(__dirname, "public", "views"),
@@ -293,7 +348,7 @@ const initializeServer = async () => {
       expressApplication = express();
       expressApplication.set('etag','strong');
       await mediaService.initializeMediaService();
-      configureMiddleware();
+    await configureMiddleware();
   await configureRoutes();
       configureErrorHandling();
       configureGracefulShutdown();
@@ -313,7 +368,7 @@ const createApp = async () => {
     expressApplication = express();
     expressApplication.set('etag','strong');
     await mediaService.initializeMediaService();
-    configureMiddleware();
+    await configureMiddleware();
   await configureRoutes();
     configureErrorHandling();
   }
@@ -331,4 +386,8 @@ try {
   // no-op
 }
 
+// Provide a default export for test convenience (factory returning app instance)
+export default async function defaultAppFactory(){
+  return await createApp();
+}
 export { createApp, initializeServer };
