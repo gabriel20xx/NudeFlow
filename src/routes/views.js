@@ -31,13 +31,16 @@ viewsRouter.get("/", (request, response) => {
   }
 });
 
+
 /**
- * Legacy categories route -> redirect to root (tag-based navigation now)
- * Keep 301 for SEO-ish permanence; can adjust later. Tests will assert redirect.
+ * Tags tab route handler
  */
-viewsRouter.get('/categories', (req, res) => {
-  // Quick response path (skip any expensive pre-work)
-  res.redirect(301, '/');
+viewsRouter.get('/tags', (req, res) => {
+  try {
+    res.render('tags', { title: 'Tags' });
+  } catch (error) {
+    res.status(500).render('error', { message: 'Failed to load tags page' });
+  }
 });
 
 /**
