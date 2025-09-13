@@ -3,20 +3,7 @@ import path from 'path';
 import * as mediaService from '../services/mediaService.js';
 import AppUtils from '../utils/AppUtils.js';
 import fs from 'fs';
-// Dynamic sharp import with fallback so tests run without native dependency
-let sharp;
-try {
-    const mod = await import('sharp');
-    sharp = mod.default || mod;
-} catch {
-    const mockFactory = () => ({
-        resize() { return this; },
-        jpeg() { return this; },
-        async toBuffer() { return Buffer.from([0]); },
-        async metadata() { return { width: 1, height: 1 }; }
-    });
-    sharp = mockFactory;
-}
+import { getOrCreateAdjacentThumbnail } from '../../../NudeShared/server/media/unifiedThumbnails.js';
 // Record simple view metrics so Admin can aggregate cross-service usage
 import { query as dbQuery, getDriver } from '../../../NudeShared/server/db/db.js';
 
@@ -37,29 +24,7 @@ mediaRouter.get('/thumb/*', async (request, response) => {
         if (!mediaPath || (!mediaPath.startsWith(basePath + path.sep) && mediaPath !== basePath)) {
             return response.status(403).send('Forbidden');
         }
-        // Determine cache path
-        const dir = path.dirname(mediaPath);
-        const nameNoExt = path.parse(mediaPath).name;
-        const cacheDir = path.join(dir, '.thumbs');
-        const cacheFile = path.join(cacheDir, `${nameNoExt}.jpg`);
-        await fs.promises.mkdir(cacheDir, { recursive: true });
-        let needsRender = true;
-        try {
-            const [orig, cache] = await Promise.all([fs.promises.stat(mediaPath), fs.promises.stat(cacheFile)]);
-            if (cache.mtimeMs >= orig.mtimeMs) needsRender = false;
-        } catch { needsRender = true; }
-        if (needsRender) {
-            const img = sharp(mediaPath);
-            const meta = await img.metadata();
-            let w = width, h = height || null;
-            if (!height && meta.width && meta.height) {
-                const ar = meta.width / meta.height;
-                if (meta.width >= meta.height) { w = Math.min(width, meta.width); h = Math.round(w / ar); }
-                else { h = Math.min(width, meta.height); w = Math.round(h * ar); }
-            }
-            const buf = await sharp(mediaPath).resize(w, h, { fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 75, progressive: true, mozjpeg: true }).toBuffer();
-            await fs.promises.writeFile(cacheFile, buf);
-        }
+        const cacheFile = await getOrCreateAdjacentThumbnail(mediaPath, { w: width, h: height, quality: 75 });
         response.set({ 'Cache-Control': 'public, max-age=86400', 'Content-Type': 'image/jpeg' });
         return response.sendFile(cacheFile);
     } catch (e) {
