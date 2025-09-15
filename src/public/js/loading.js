@@ -19,6 +19,14 @@ const reportedViewKeys = new Set();
 const SAVED_STORE_KEY = 'nf_savedMedia_v1';
 const LIKES_STORE_KEY = 'nf_likeCounts_v1';
 const LIKED_STATE_STORE_KEY = 'nf_likedByUser_v1';
+const LIKE_REMOTE_DISABLED_KEY = 'nf_disableLikeRemote_v1'; // when set to '1', skip server like requests (anonymous local likes)
+
+function remoteLikesDisabled(){
+  try { return localStorage.getItem(LIKE_REMOTE_DISABLED_KEY) === '1'; } catch { return false; }
+}
+function disableRemoteLikes(){
+  try { localStorage.setItem(LIKE_REMOTE_DISABLED_KEY, '1'); } catch {}
+}
 
 const domainPattern = /^https?:\/\/[^/]+\/?$/;
 const categoryPattern = /^https?:\/\/[^/]+\/(.+[^/])$/;
@@ -783,12 +791,19 @@ function toggleLikeForActive(btn, badge) {
   setLikeCount(key, nextCount);
   syncLikeUi();
 
+  // If remote likes previously disabled (anonymous first 401), skip network entirely.
+  if (remoteLikesDisabled()) {
+    if (btn) delete btn.dataset.busy;
+    return;
+  }
+
   (async () => {
     try {
       const r = await fetch('/api/media/like', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mediaKey: key, like: nextLiked }) });
       if (!r.ok) {
         if (r.status === 401) {
-          // Anonymous: keep optimistic state, no revert
+          // First anonymous attempt: persist local state and disable future remote calls to avoid repeated 401s
+          disableRemoteLikes();
           return;
         }
         throw new Error('like request failed');
@@ -798,7 +813,7 @@ function toggleLikeForActive(btn, badge) {
       setLikedForMedia(key, nextLiked);
       setLikeCount(key, cnt);
     } catch (err) {
-      // Revert only for real errors (network/5xx). 401 already handled above.
+      // Revert only for real errors (network/5xx). 401 handled above.
       setLikedForMedia(key, liked);
       setLikeCount(key, prev);
     } finally {
@@ -1015,7 +1030,21 @@ function initFeed(){
         once(fsBtn, 'click', () => { console.info('[UI] fullscreen toggle'); toggleFullscreen(); syncFullscreenUi(); }, 'fs');
         once(volBtn, 'click', () => { console.info('[UI] volume toggle'); toggleMuteForActive(volBtn); }, 'vol');
         once(timerBtn, 'click', () => { console.info('[UI] timer panel toggle'); if (panel) toggleDurationPanel(panel); }, 'timer');
-        once(tagsBtn, 'click', () => { console.info('[UI] tags overlay open'); /* loading.js overlay open handled later if needed */ }, 'tagslog');
+        once(tagsBtn, 'click', () => {
+          console.info('[UI] tags overlay open');
+          // Prefer existing openTagsOverlay helper if defined (hoisted function in this module)
+          try {
+            if (typeof openTagsOverlay === 'function') {
+              openTagsOverlay();
+              return;
+            }
+          } catch {}
+          // Fallback: directly unhide overlay if controller script not ready
+          try {
+            const ov = document.getElementById('tagsOverlay');
+            if (ov) { ov.hidden = false; ov.setAttribute('aria-hidden','false'); document.body.classList.add('no-scroll'); }
+          } catch {}
+        }, 'tagslog');
         if (!panel) console.warn('[UI] float panel missing at bind time ('+reason+')');
         if (!timerBtn) console.warn('[UI] timer button missing at bind time ('+reason+')');
         if (!tagsBtn) console.warn('[UI] tags button missing at bind time ('+reason+')');
