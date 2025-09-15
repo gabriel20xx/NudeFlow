@@ -24,6 +24,8 @@ const domainPattern = /^https?:\/\/[^/]+\/?$/;
 const categoryPattern = /^https?:\/\/[^/]+\/(.+[^/])$/;
 const mediaContainer = document.getElementById('home-container');
 const currentUrl = window.location.href;
+// Fallback-configured preload count (avoid ReferenceError seen in logs)
+const preLoadImageCount = (window.ApplicationConfiguration && window.ApplicationConfiguration.userInterfaceSettings && Number(window.ApplicationConfiguration.userInterfaceSettings.preLoadImageCount)) || 3;
 
 function getUrl(){
   const FUNCTION_NAME = 'getUrl';
@@ -519,14 +521,17 @@ function toggleDurationPanel(panel) {
   if (willShow) {
     const key = getCurrentMediaKey();
     const ms = getEffectiveDurationMs(key);
-    const range = panel.querySelector('.ap-range');
+    // Template uses class 'apRange'; original code queried '.ap-range' (mismatch)
+    const range = panel.querySelector('.apRange');
     const valueEl = panel.querySelector('.apv');
     const seconds = clamp(Math.round(ms / 1000), 1, 30);
-    range.min = '1';
-    range.max = '30';
-    range.step = '1';
-    range.value = String(seconds);
-    valueEl.textContent = String(seconds);
+    if (range) {
+      range.min = '1';
+      range.max = '30';
+      range.step = '1';
+      range.value = String(seconds);
+    }
+    if (valueEl) valueEl.textContent = String(seconds);
   }
   panel.hidden = !willShow;
 }
@@ -854,12 +859,143 @@ document.addEventListener('DOMContentLoaded', () => {
     const volBtn = document.querySelector('.float-btn--vol');
     const timerBtn = document.querySelector('.float-btn--timer');
     const panel = document.querySelector('.float-panel');
+    // Wire duration panel Apply / Cancel if present
+    if (panel) {
+      const range = panel.querySelector('.apRange');
+      const valueEl = panel.querySelector('.apv');
+      const applyBtn = panel.querySelector('.apApply');
+      const cancelBtn = panel.querySelector('.apCancel');
+      if (range && valueEl) {
+        range.addEventListener('input', () => { valueEl.textContent = String(range.value || ''); });
+      }
+      if (applyBtn) applyBtn.addEventListener('click', () => {
+        try {
+          const key = getCurrentMediaKey();
+          const secs = clamp(Number(range?.value)||6,1,30);
+          if (key) setDurationForMedia(key, secs*1000);
+          panel.hidden = true;
+          scheduleNextAutoAdvance(true);
+        } catch {}
+      });
+      if (cancelBtn) cancelBtn.addEventListener('click', () => { panel.hidden = true; });
+    }
     if (likeBtn) likeBtn.addEventListener('click', () => toggleLikeForActive(likeBtn, document.querySelector('.like-count-badge')));
     if (saveBtn) saveBtn.addEventListener('click', () => openPlaylistModal());
     if (autoBtn) autoBtn.addEventListener('click', () => toggleAutoscroll(autoBtn));
     if (fsBtn) fsBtn.addEventListener('click', () => { toggleFullscreen(); syncFullscreenUi(); });
     if (volBtn) volBtn.addEventListener('click', () => toggleMuteForActive(volBtn));
     if (timerBtn && panel) timerBtn.addEventListener('click', () => toggleDurationPanel(panel));
+
+    // --- Tags Overlay Controller ---
+    const tagsBtn = document.getElementById('tagsOverlayBtn');
+    const tagsOverlay = document.getElementById('tagsOverlay');
+    const tagsOverlayClose = document.getElementById('tagsOverlayClose');
+    const tagsOverlayList = document.getElementById('tagsOverlayList');
+    const tagsOverlayLive = document.getElementById('tagsOverlayLive');
+
+    async function fetchTagSuggestions(limit=50){
+      try {
+        const r = await fetch(`/api/tags/suggestions?limit=${limit}`);
+        if (!r.ok) throw new Error('failed');
+        const j = await r.json().catch(()=>({}));
+        return Array.isArray(j?.tags) ? j.tags : [];
+      } catch { return []; }
+    }
+
+    function renderTagSuggestions(list){
+      if (!tagsOverlayList) return;
+      tagsOverlayList.innerHTML='';
+      if (!list.length){
+        const div=document.createElement('div'); div.className='empty-tags'; div.textContent='No tags yet'; tagsOverlayList.appendChild(div); return;
+      }
+      for (const t of list){
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='tag-pill';
+        btn.textContent = t.tag || t.name || '(tag)';
+        btn.dataset.tag = t.tag || t.name || '';
+        btn.addEventListener('click', ()=>{ try { loadMediaTagsForActive(); } catch {} });
+        tagsOverlayList.appendChild(btn);
+      }
+    }
+
+    function openTagsOverlay(){
+      if (!tagsOverlay) return;
+      tagsOverlay.hidden = false;
+      tagsOverlay.setAttribute('aria-hidden','false');
+      document.body.classList.add('no-scroll');
+      // Populate suggestions + current media tags
+      fetchTagSuggestions().then(list=>{ renderTagSuggestions(list); announce(`Loaded ${list.length} tag suggestions`); });
+      loadMediaTagsForActive();
+    }
+    function closeTagsOverlay(){
+      if (!tagsOverlay) return;
+      tagsOverlay.hidden = true;
+      tagsOverlay.setAttribute('aria-hidden','true');
+      document.body.classList.remove('no-scroll');
+      announce('Closed tag overlay');
+    }
+    function announce(msg){ try { if (tagsOverlayLive) { tagsOverlayLive.textContent=''; setTimeout(()=>{ tagsOverlayLive.textContent=msg; }, 30); } } catch {}
+    }
+
+    async function loadMediaTagsForActive(){
+      const key = getCurrentMediaKey();
+      if (!key) return;
+      try {
+        const r = await fetch(`/api/media/${encodeURIComponent(key)}/tags`);
+        if (!r.ok) throw new Error('failed');
+        const j = await r.json().catch(()=>({}));
+        const list = Array.isArray(j?.tags) ? j.tags : [];
+        // Reuse #media-tags list (if present on page) to show active media tags
+        const ul = document.getElementById('media-tags');
+        if (ul) {
+          ul.innerHTML='';
+          for (const tagObj of list){
+            const li=document.createElement('li');
+            li.className='media-tag-item';
+            li.textContent=`${tagObj.tag} (${tagObj.score ?? 0})`;
+            li.dataset.tag = tagObj.tag;
+            // Voting buttons
+            const up=document.createElement('button'); up.type='button'; up.className='vote-up'; up.textContent='▲'; up.addEventListener('click', ()=>applyTagVote(tagObj.tag,1));
+            const down=document.createElement('button'); down.type='button'; down.className='vote-down'; down.textContent='▼'; down.addEventListener('click', ()=>applyTagVote(tagObj.tag,-1));
+            li.append(' ', up, down);
+            ul.appendChild(li);
+          }
+        }
+      } catch {}
+    }
+
+    async function applyTagVote(tag, direction){
+      const key = getCurrentMediaKey(); if(!key) return;
+      try {
+        await fetch(`/api/media/${encodeURIComponent(key)}/tags/${encodeURIComponent(tag)}/vote`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ direction }) });
+        loadMediaTagsForActive();
+      } catch {}
+    }
+
+    async function addTag(tag){
+      const key = getCurrentMediaKey(); if(!key) return;
+      try {
+        await fetch(`/api/media/${encodeURIComponent(key)}/tags`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ tag }) });
+        loadMediaTagsForActive();
+        announce(`Added tag ${tag}`);
+      } catch { announce('Failed to add tag'); }
+    }
+
+    const addTagBtn = document.getElementById('add-tag-btn');
+    const newTagInput = document.getElementById('new-tag-input');
+    if (addTagBtn && newTagInput){
+      addTagBtn.addEventListener('click', ()=>{ const v=String(newTagInput.value||'').trim(); if(!v) return; addTag(v); newTagInput.value=''; });
+      newTagInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); addTagBtn.click(); } });
+    }
+    if (tagsBtn) tagsBtn.addEventListener('click', openTagsOverlay);
+    if (tagsOverlayClose) tagsOverlayClose.addEventListener('click', closeTagsOverlay);
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && !tagsOverlay?.hidden) closeTagsOverlay(); });
+
+    // Refresh tags when media changes
+    const origChangeImage = changeImage;
+    changeImage = function(side){ origChangeImage(side); try { loadMediaTagsForActive(); } catch {} };
+
     setupInactivityAutoHide();
     preventMobilePullToRefresh();
   } catch {}
