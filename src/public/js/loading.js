@@ -842,4 +842,28 @@ function toggleMuteForActive(btn) {
   syncVolumeUi();
 }
 
+// --- Initialization (was missing; without this nothing loaded and buttons were inert) ---
+document.addEventListener('DOMContentLoaded', () => {
+  try { buildFloatingControls(); } catch {}
+  try {
+    // Wire floating control buttons once present
+    const likeBtn = document.querySelector('.float-btn--like');
+    const saveBtn = document.querySelector('.float-btn--save');
+    const autoBtn = document.querySelector('.float-btn--auto');
+    const fsBtn = document.querySelector('.float-btn--fs');
+    const volBtn = document.querySelector('.float-btn--vol');
+    const timerBtn = document.querySelector('.float-btn--timer');
+    const panel = document.querySelector('.float-panel');
+    if (likeBtn) likeBtn.addEventListener('click', () => toggleLikeForActive(likeBtn, document.querySelector('.like-count-badge')));
+    if (saveBtn) saveBtn.addEventListener('click', () => openPlaylistModal());
+    if (autoBtn) autoBtn.addEventListener('click', () => toggleAutoscroll(autoBtn));
+    if (fsBtn) fsBtn.addEventListener('click', () => { toggleFullscreen(); syncFullscreenUi(); });
+    if (volBtn) volBtn.addEventListener('click', () => toggleMuteForActive(volBtn));
+    if (timerBtn && panel) timerBtn.addEventListener('click', () => toggleDurationPanel(panel));
+    setupInactivityAutoHide();
+    preventMobilePullToRefresh();
+  } catch {}
+  try { loadContent(); } catch {}
+});
+
 })(); // End of IIFE

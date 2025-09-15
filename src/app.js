@@ -249,20 +249,21 @@ const configureRoutes = async () => {
 const configureErrorHandling = () => {
   const FUNCTION_NAME = 'configureErrorHandling';
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Setting up error handling middleware');
-  
-  // Handle 404 routes first (no error object supplied)
-  expressApplication.use((request, response) => {
-    if (request.accepts('html')) {
-      AppUtils.debugLog(MODULE_NAME, '404_HANDLER', 'Route not found (html)', { 
+  // 404 handler (must be registered after all routes). We intentionally keep it
+  // very small; any future content-negotiation changes should remain here.
+  expressApplication.use((request, response, next) => {
+    if (response.headersSent) return next();
+    if (request.accepts && request.accepts('html')) {
+      AppUtils.debugLog(MODULE_NAME, '404_HANDLER', 'Route not found (html)', {
         requestedUrl: request.url,
-        requestMethod: request.method 
+        requestMethod: request.method
       });
       return response.status(404).render('404', { title: 'Page Not Found' });
     }
-    if (request.accepts('json')) {
-      AppUtils.debugLog(MODULE_NAME, '404_HANDLER', 'Route not found (json)', { 
+    if (request.accepts && request.accepts('json')) {
+      AppUtils.debugLog(MODULE_NAME, '404_HANDLER', 'Route not found (json)', {
         requestedUrl: request.url,
-        requestMethod: request.method 
+        requestMethod: request.method
       });
       return response.status(404).json(AppUtils.createErrorResponse('Not Found', 404));
     }
