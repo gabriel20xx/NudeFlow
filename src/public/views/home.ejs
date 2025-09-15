@@ -1,5 +1,14 @@
 <%- include("partials/header") %>
 <div id="home-container" aria-live="polite" aria-label="Media feed"></div>
+<button id="tagsOverlayBtn" class="floating-btn" aria-haspopup="dialog" aria-controls="tagsOverlay" aria-label="Browse tags overlay">#Tags</button>
+<div id="tagsOverlay" class="overlay" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="tagsOverlayTitle">
+	<div class="overlay-content">
+		<h2 id="tagsOverlayTitle">Browse Tags</h2>
+		<div id="tagsOverlayLive" class="sr-only" aria-live="polite"></div>
+		<div id="tagsOverlayList" class="tags-overlay-list" aria-label="Popular tags"></div>
+		<button type="button" id="tagsOverlayClose" class="btn-small" aria-label="Close tags overlay">Close</button>
+	</div>
+</div>
 <section id="tag-interactions" class="tag-interactions" aria-label="Tag interactions" style="padding:1rem;">
 	<div class="add-tag-form" aria-label="Add a tag">
 		<input type="text" id="new-tag-input" maxlength="40" placeholder="Add a tag" aria-label="New tag" />
@@ -9,4 +18,5 @@
 	<ul id="media-tags" class="media-tags" aria-live="polite" aria-label="Media tags list"></ul>
 </section>
 <script src="/js/home-tags.js"></script>
+<script src="/js/home-tags-overlay.js"></script>
 <%- include("partials/navbar") %>

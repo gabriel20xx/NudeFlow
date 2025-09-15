@@ -146,6 +146,33 @@ apiRouter.post('/media/view', async (req, res) => {
 
 // Tag add & vote endpoints (user-facing). Assumes authentication middleware provides req.session.user
 import { addTagToMedia, applyTagVote, getMediaTagsWithScores } from '../../../NudeShared/server/tags/tagHelpers.js';
+// Public tag suggestions (frequency) – read-only, unauth access. Mirrors admin suggestions but without admin guard.
+let tagSuggestionsCache = { at: 0, data: [] };
+apiRouter.get('/tags/suggestions', async (req, res) => {
+  try {
+    const now = Date.now();
+    const ttlMs = 60000; // 60s cache
+    const limitRaw = Number(req.query.limit)||50;
+    const limit = Math.min(Math.max(limitRaw,1), 200);
+    if (now - tagSuggestionsCache.at < ttlMs && tagSuggestionsCache.data.length >= limit) {
+      return res.json({ tags: tagSuggestionsCache.data.slice(0, limit), cached: true });
+    }
+    const driver = getDriver();
+    let sql;
+    if (driver === 'pg') {
+      sql = 'SELECT tag, COUNT(1) AS uses FROM media_tags GROUP BY tag ORDER BY uses DESC, tag ASC LIMIT ' + limit;
+    } else {
+      sql = 'SELECT tag, COUNT(1) AS uses FROM media_tags GROUP BY tag ORDER BY uses DESC, tag ASC LIMIT ' + limit;
+    }
+    const { rows } = await sharedQuery(sql, []);
+    const out = rows.map(r => ({ tag: r.tag, uses: Number(r.uses)||0 }));
+    // Update cache with full result (could be truncated by limit, treat as current set)
+    tagSuggestionsCache = { at: now, data: out };
+    res.json({ tags: out, cached: false });
+  } catch (e) {
+    res.status(500).json({ error: 'failed', message: e.message });
+  }
+});
 
 // List tags for a media key with scores (for dynamic reload)
 apiRouter.get('/media/:mediaKey/tags', async (req, res) => {

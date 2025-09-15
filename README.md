@@ -14,6 +14,7 @@ Short‑form media (video/image) streaming application (TikTok‑style) built wi
 * Tagging & Voting: Endpoints under `/api/media/:mediaKey/tags` for listing (`GET`), adding (`POST { tag }`), and voting (`POST /:tag/vote { direction:-1|0|1 }`). Response includes scores and current user vote.
 * Dynamic Search Tags: Search results asynchronously hydrate tag lists for each media item (MutationObserver-driven) replacing legacy category display.
 * Structured Logging: Media state/view endpoints emit start/success or error logs (MEDIA_STATE_START / MEDIA_VIEW_SUCCESS) via shared AppUtils logging hooks.
+* Public Tag Suggestions: `GET /api/tags/suggestions?limit=50` returns popular tags for discovery (unauthenticated, cached 60s) used by `/tags` page and home overlay.
 
 - Node.js >= 18.18.0
 - npm >= 10
@@ -82,6 +83,7 @@ Media files are scanned from the configured media path and categorized based on 
  - `GET /api/media/state?mediaKey=...` - Aggregated engagement counts + user flags
  - `POST /api/media/view` - Record a view event (no idempotency guarantee)
  - `GET /api/media/:mediaKey/tags` / `POST /api/media/:mediaKey/tags` / `POST /api/media/:mediaKey/tags/:tag/vote` - Tag listing/add/vote
+ - `GET /api/tags/suggestions?limit=50` - Public popular tags (frequency), unauthenticated, 60s cache
 
 ## Project Structure (Current)
 

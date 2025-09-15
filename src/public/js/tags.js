@@ -2,20 +2,26 @@
 (function() {
 const MODULE_NAME = 'TagsModule';
 
-window.addEventListener('load', async function() {
-    const FUNCTION_NAME = 'initializeTagsPage';
-    ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Initializing tags page');
+window.addEventListener('load', function() { loadTags(); });
+
+async function loadTags(retry=false){
+    const FUNCTION_NAME = 'loadTags';
+    const gridContainer = document.getElementById('tagsGrid');
+    if(!gridContainer){
+        ApplicationUtilities.warnLog(MODULE_NAME, FUNCTION_NAME, 'Tags grid container not found');
+        return;
+    }
+    gridContainer.innerHTML = '<div class="loading" aria-live="polite">Loading tags…</div>';
     try {
-        // Fetch tag suggestions from the admin endpoint (publicly readable)
-        const resp = await fetch('/api/admin/media/tags/suggestions?limit=100');
+        const resp = await fetch('/api/tags/suggestions?limit=100');
+        if(!resp.ok) throw new Error('bad_status');
         const data = await resp.json();
-        const tags = (data.tags || []).map(t => t.tag || t);
-        const gridContainer = document.getElementById('tagsGrid');
-        if (!gridContainer) {
-            ApplicationUtilities.warnLog(MODULE_NAME, FUNCTION_NAME, 'Tags grid container not found');
+        const tags = (data.tags||[]).map(t=> t.tag || t);
+        gridContainer.innerHTML='';
+        if(!tags.length){
+            gridContainer.innerHTML = '<div class="empty">No tags yet</div>';
             return;
         }
-        gridContainer.innerHTML = '';
         for (const tag of tags) {
             const item = document.createElement('div');
             item.className = 'video-item';
@@ -29,12 +35,11 @@ window.addEventListener('load', async function() {
             title.textContent = tag;
             item.appendChild(preview);
             item.appendChild(title);
-            // Click/keyboard open: go to home with tag filter param
             const go = () => { window.location.href = `/?tag=${encodeURIComponent(tag)}`; };
             item.addEventListener('click', go);
             item.addEventListener('keypress', (e)=>{ if(e.key==='Enter'){ go(); }});
             gridContainer.appendChild(item);
-            // Optionally: fetch a random media preview for this tag
+            // Optional random preview
             try {
                 const rnd = await fetch(`/api/media/random?tag=${encodeURIComponent(tag)}`);
                 const media = (await rnd.json())?.data;
@@ -54,10 +59,11 @@ window.addEventListener('load', async function() {
                 }
             } catch {}
         }
-    } catch (err) {
-        ApplicationUtilities.errorLog(MODULE_NAME, FUNCTION_NAME, 'Failed to load tags', err);
-        const gridContainer = document.getElementById('tagsGrid');
-        if (gridContainer) gridContainer.innerHTML = '<div class="error">Failed to load tags</div>';
+    } catch (e) {
+        ApplicationUtilities.errorLog(MODULE_NAME, FUNCTION_NAME, 'Failed to load tags', e);
+        gridContainer.innerHTML = '<div class="error" role="alert">Failed to load tags <button type="button" class="btn-small btn-retry" aria-label="Retry loading tags">Retry</button></div>';
+        const retryBtn = gridContainer.querySelector('.btn-retry');
+        if(retryBtn){ retryBtn.addEventListener('click', ()=> loadTags(true)); }
     }
-});
+}
 })();
