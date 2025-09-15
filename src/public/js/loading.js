@@ -23,6 +23,18 @@ const LIKED_STATE_STORE_KEY = 'nf_likedByUser_v1';
 const domainPattern = /^https?:\/\/[^/]+\/?$/;
 const categoryPattern = /^https?:\/\/[^/]+\/(.+[^/])$/;
 const mediaContainer = document.getElementById('home-container');
+// Identify if we are on a feed-enabled page (homepage only for now).
+// Rationale: This shared script was previously creating floating media overlay controls
+// (likes, playlists, tags, mute, timer, etc.) on every page it was included on, leading to
+// UI pollution (buttons appearing on /playlists, /profile, etc.) and incorrect media fetch
+// attempts that triggered spurious "failed to load media" toasts. By scoping all control
+// construction and media loading behind IS_FEED_PAGE we ensure:
+//  1. Overlay buttons + mute only exist on the homepage feed.
+//  2. Non-feed pages no longer invoke random media endpoints or emit load failure toasts.
+//  3. Tests can assert absence of .floating-controls on secondary pages deterministically.
+// Any future page that legitimately needs the feed behavior should include an element with
+// id="home-container" (or this detection can be refactored to an explicit data attribute).
+const IS_FEED_PAGE = !!mediaContainer;
 const currentUrl = window.location.href;
 // Fallback-configured preload count (avoid ReferenceError seen in logs)
 const preLoadImageCount = (window.ApplicationConfiguration && window.ApplicationConfiguration.userInterfaceSettings && Number(window.ApplicationConfiguration.userInterfaceSettings.preLoadImageCount)) || 3;
@@ -71,6 +83,10 @@ function getUrl(){
 function buildFloatingControls(){
   const FUNCTION_NAME = 'buildFloatingControls';
   try {
+    if (!IS_FEED_PAGE) { // Do NOT create controls on non-feed pages
+      ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Skipping build (not feed page)');
+      return;
+    }
     controlsRoot = document.querySelector('.floating-controls');
     if(!controlsRoot){
       controlsRoot = document.createElement('div');
@@ -726,7 +742,12 @@ async function fetchPlaylists(){
     const j = await r.json();
     return Array.isArray(j?.data?.playlists) ? j.data.playlists : [];
   } catch (e) {
-    notify('warn', 'Sign in to use playlists');
+    // Avoid spamming multiple identical toasts within a short window
+    const now = Date.now();
+    if (!window.__nf_lastPlaylistToast || (now - window.__nf_lastPlaylistToast) > 2500) {
+      window.__nf_lastPlaylistToast = now;
+      notify('warn', 'Sign in to use playlists');
+    }
     return [];
   }
 }
@@ -748,7 +769,13 @@ async function openPlaylistModal(){
   // Pre-check auth: if not logged in, do not open modal
   try {
     const r = await fetch('/api/playlists');
-    if (r.status === 401) { notify('warn', 'Sign in to use playlists'); return; }
+    if (r.status === 401) {
+      const now = Date.now();
+      if (!window.__nf_lastPlaylistToast || (now - window.__nf_lastPlaylistToast) > 2500) {
+        window.__nf_lastPlaylistToast = now;
+        notify('warn', 'Sign in to use playlists');
+      }
+      return; }
   } catch { notify('warn','Sign in to use playlists'); return; }
 
   const modal = document.querySelector('.playlist-modal'); if (!modal) return;
@@ -851,6 +878,10 @@ function toggleMuteForActive(btn) {
 document.addEventListener('DOMContentLoaded', () => {
   try { buildFloatingControls(); } catch {}
   try {
+    if (!IS_FEED_PAGE) {
+      // Nothing else to wire on non-feed pages; bail out early.
+      return;
+    }
     // Wire floating control buttons once present
     const likeBtn = document.querySelector('.float-btn--like');
     const saveBtn = document.querySelector('.float-btn--save');
@@ -988,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', () => {
       addTagBtn.addEventListener('click', ()=>{ const v=String(newTagInput.value||'').trim(); if(!v) return; addTag(v); newTagInput.value=''; });
       newTagInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); addTagBtn.click(); } });
     }
-    if (tagsBtn) tagsBtn.addEventListener('click', openTagsOverlay);
+  if (tagsBtn) tagsBtn.addEventListener('click', openTagsOverlay);
     if (tagsOverlayClose) tagsOverlayClose.addEventListener('click', closeTagsOverlay);
     document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && !tagsOverlay?.hidden) closeTagsOverlay(); });
 
@@ -998,8 +1029,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupInactivityAutoHide();
     preventMobilePullToRefresh();
+
+    // --- Scroll / input navigation for media ---
+    // Wheel navigation (throttled by isTransitioning flag already)
+    window.addEventListener('wheel', (e) => {
+      if (!IS_FEED_PAGE) return;
+      if (isTransitioning) return;
+      const dy = e.deltaY;
+      if (Math.abs(dy) < 25) return; // ignore tiny wheel moves
+      if (dy > 0) changeImage(true); else changeImage(false);
+    }, { passive: true });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (!IS_FEED_PAGE) return;
+      if (isTransitioning) return;
+      if (['ArrowDown','PageDown','ArrowRight',' '].includes(e.key)) { e.preventDefault(); changeImage(true); }
+      else if (['ArrowUp','PageUp','ArrowLeft'].includes(e.key)) { e.preventDefault(); changeImage(false); }
+    });
+
+    // Touch swipe navigation
+    let touchStartY = null;
+    window.addEventListener('touchstart', (e) => { if (!IS_FEED_PAGE) return; if (e.touches && e.touches.length===1) touchStartY = e.touches[0].clientY; }, { passive: true });
+    window.addEventListener('touchend', (e) => { if (!IS_FEED_PAGE) return; if (touchStartY == null) return; const endY = (e.changedTouches && e.changedTouches[0]?.clientY) || touchStartY; const dy = endY - touchStartY; touchStartY = null; if (Math.abs(dy) < 40) return; if (dy < 0) changeImage(true); else changeImage(false); }, { passive: true });
   } catch {}
-  try { loadContent(); } catch {}
+  try { if (IS_FEED_PAGE) loadContent(); } catch {}
 });
 
 })(); // End of IIFE

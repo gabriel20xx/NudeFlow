@@ -1,8 +1,12 @@
 <%- include("partials/header") %>
 <main id="playlists-container" class="page-wrapper" aria-label="Your playlists">
-  <div id="pl-auth-guard" style="display:none;">
-    <!-- Inline auth guard (shared partial omitted due to shim stripping) -->
-    <div id="pl-auth-guard-inner" class="auth-guard" role="region" aria-label="Authentication required" aria-describedby="plAuthMsg" style="padding-top:var(--topbar-height);padding-bottom:var(--bottom-nav-height);min-height:50vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;">
+  <div id="pl-auth-guard" style="display:none;align-items:center;justify-content:center;">
+    <!-- Inline auth guard (shared partial omitted due to shim stripping).
+      Centering strategy: outer #pl-auth-guard gets display:flex only when unauth (JS sets display:flex),
+      inner container (#pl-auth-guard-inner) declares display:flex with ordered properties so tests can
+      regex match for display:flex;align-items:center;justify-content:center;flex-direction:column.
+      Ordering matters for the focused centering test; keep display + alignment tokens in this order. -->
+  <div id="pl-auth-guard-inner" class="auth-guard" role="region" aria-label="Authentication required" aria-describedby="plAuthMsg" style="display:flex;align-items:center;justify-content:center;flex-direction:column;padding-top:var(--topbar-height);padding-bottom:var(--bottom-nav-height);min-height:50vh;gap:1rem;">
       <p id="plAuthMsg" class="auth-guard-msg" style="font-size:1rem;color:var(--color-text-dim);text-align:center;">You must be logged in to manage playlists.</p>
       <button id="plLoginLink" type="button" class="auth-btn" aria-describedby="plAuthMsg">Log In / Sign Up</button>
     </div>
