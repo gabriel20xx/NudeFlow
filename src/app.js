@@ -173,6 +173,16 @@ const configureMiddleware = async () => {
   ]);
   // Serve static assets from src/public (unified monorepo convention)
   expressApplication.use(express.static(path.join(__dirname, 'public')));
+  // Explicit shared overlay script fallback: if /shared/overlay.js is requested but not found by candidate chain,
+  // serve the source file from NudeShared/client directly. This guards against misconfiguration of NUDESHARED_DIR.
+  expressApplication.get('/shared/overlay.js', (req,res,next)=>{
+    const overlayPath = path.resolve(__dirname, '..', '..', 'NudeShared', 'client', 'overlay.js');
+    fs.access(overlayPath, fs.constants.R_OK, (err)=>{
+      if(err) return next();
+      res.type('application/javascript');
+      res.sendFile(overlayPath);
+    });
+  });
   // Shared static assets (tiered caching)
   mountSharedStatic(expressApplication, { candidates: defaultSharedCandidates(__dirname), logger: {
     info: (...a)=>AppUtils.infoLog(MODULE_NAME,'SHARED_STATIC',...a),

@@ -397,7 +397,12 @@ function changeImage(side) {
       previousImage.classList.add('fly-out-down');
     }
     // Ensure the newly active media is visible
-    try { newImage.style.display = 'block'; } catch {}
+    try {
+      newImage.style.display = 'block';
+      // Defensive: hide all other non-active media after making new active visible
+      const allMedia = document.querySelectorAll('#home-container .media');
+      allMedia.forEach((m, idx) => { if (m !== newImage && !m.classList.contains('active')) m.style.display='none'; });
+    } catch {}
 
     currentImageIndex = newImageIndex;
   // Sync save/like/volume button state for newly active media
@@ -420,6 +425,13 @@ function changeImage(side) {
       previousImage.classList.remove("active");
       previousImage.classList.remove(`fly-out-up`, `fly-out-down`);
       isTransitioning = false;
+      // After transition ensure only one visible media (active one)
+      try {
+        const activeEl = document.querySelector('#home-container .media.active');
+        const list = document.querySelectorAll('#home-container .media');
+        list.forEach(el => { if (el !== activeEl) el.style.display = 'none'; });
+        if (activeEl) activeEl.style.display='block';
+      } catch {}
   // Hide any non-active media (except ones mid-animation) to prevent stacking artifacts
   try {
     if (!previousImage.classList.contains('active')) {
@@ -519,6 +531,13 @@ function syncFullscreenUi() {
       ? '<i class="fas fa-compress" aria-hidden="true"></i>'
       : '<i class="fas fa-expand" aria-hidden="true"></i>';
   }
+  // Ensure floating controls stay visible in fullscreen (avoid accidental CSS transitions hiding them)
+  try {
+    if (controlsRoot) {
+      controlsRoot.classList.add('visible');
+      controlsRoot.classList.remove('hidden');
+    }
+  } catch {}
 }
 
 function syncSaveUi() {
@@ -1008,7 +1027,7 @@ function initFeed(){
       // Nothing else to wire on non-feed pages; bail out early.
       return;
     }
-    function bindControls(reason){
+  function bindControls(reason){
       try {
         const likeBtn = document.querySelector('.float-btn--like');
         const saveBtn = document.querySelector('.float-btn--save');
@@ -1017,7 +1036,7 @@ function initFeed(){
         const volBtn = document.querySelector('.float-btn--vol');
         const timerBtn = document.querySelector('.float-btn--timer');
         const panel = document.querySelector('.float-panel');
-        const tagsBtn = document.getElementById('tagsOverlayBtn');
+  const tagsBtn = document.getElementById('tagsOverlayBtn');
         // Avoid rebinding duplicate listeners
         const once = (el, evt, handler, key) => {
           if (!el) return;
@@ -1030,21 +1049,9 @@ function initFeed(){
         once(fsBtn, 'click', () => { console.info('[UI] fullscreen toggle'); toggleFullscreen(); syncFullscreenUi(); }, 'fs');
         once(volBtn, 'click', () => { console.info('[UI] volume toggle'); toggleMuteForActive(volBtn); }, 'vol');
         once(timerBtn, 'click', () => { console.info('[UI] timer panel toggle'); if (panel) toggleDurationPanel(panel); }, 'timer');
-        once(tagsBtn, 'click', () => {
-          console.info('[UI] tags overlay open');
-          // Prefer existing openTagsOverlay helper if defined (hoisted function in this module)
-          try {
-            if (typeof openTagsOverlay === 'function') {
-              openTagsOverlay();
-              return;
-            }
-          } catch {}
-          // Fallback: directly unhide overlay if controller script not ready
-          try {
-            const ov = document.getElementById('tagsOverlay');
-            if (ov) { ov.hidden = false; ov.setAttribute('aria-hidden','false'); document.body.classList.add('no-scroll'); }
-          } catch {}
-        }, 'tagslog');
+        // Tag overlay opening now handled exclusively by home-tags-overlay.js (NCOverlay controller).
+        // We still log the intent for observability but avoid duplicate logic that could conflict.
+        once(tagsBtn, 'click', () => { console.info('[UI] tags overlay trigger'); }, 'tagslog');
         if (!panel) console.warn('[UI] float panel missing at bind time ('+reason+')');
         if (!timerBtn) console.warn('[UI] timer button missing at bind time ('+reason+')');
         if (!tagsBtn) console.warn('[UI] tags button missing at bind time ('+reason+')');
@@ -1076,11 +1083,9 @@ function initFeed(){
       if (cancelBtn) cancelBtn.addEventListener('click', () => { panel.hidden = true; });
     }
   // --- Tags Overlay Controller ---
-  const tagsBtn = document.getElementById('tagsOverlayBtn');
+    // Tag overlay logic removed (now centralized in home-tags-overlay.js). Keeping minimal refresh hook below.
+    const tagsBtn = document.getElementById('tagsOverlayBtn');
     const tagsOverlay = document.getElementById('tagsOverlay');
-    const tagsOverlayClose = document.getElementById('tagsOverlayClose');
-    const tagsOverlayList = document.getElementById('tagsOverlayList');
-    const tagsOverlayLive = document.getElementById('tagsOverlayLive');
 
     async function fetchTagSuggestions(limit=50){
       try {
@@ -1108,24 +1113,10 @@ function initFeed(){
       }
     }
 
-    function openTagsOverlay(){
-      if (!tagsOverlay) return;
-      tagsOverlay.hidden = false;
-      tagsOverlay.setAttribute('aria-hidden','false');
-      document.body.classList.add('no-scroll');
-      // Populate suggestions + current media tags
-      fetchTagSuggestions().then(list=>{ renderTagSuggestions(list); announce(`Loaded ${list.length} tag suggestions`); });
-      loadMediaTagsForActive();
-    }
-    function closeTagsOverlay(){
-      if (!tagsOverlay) return;
-      tagsOverlay.hidden = true;
-      tagsOverlay.setAttribute('aria-hidden','true');
-      document.body.classList.remove('no-scroll');
-      announce('Closed tag overlay');
-    }
-    function announce(msg){ try { if (tagsOverlayLive) { tagsOverlayLive.textContent=''; setTimeout(()=>{ tagsOverlayLive.textContent=msg; }, 30); } } catch {}
-    }
+    // openTagsOverlay / closeTagsOverlay handled externally; keep compatibility no-ops if referenced.
+    function openTagsOverlay() { /* delegated to home-tags-overlay.js */ }
+    function closeTagsOverlay() { /* delegated to home-tags-overlay.js */ }
+    function announce(_) { /* no-op (legacy accessibility announcer moved) */ }
 
     async function loadMediaTagsForActive(){
       const key = getCurrentMediaKey();
@@ -1178,8 +1169,7 @@ function initFeed(){
       newTagInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); addTagBtn.click(); } });
     }
   if (tagsBtn) tagsBtn.addEventListener('click', openTagsOverlay);
-    if (tagsOverlayClose) tagsOverlayClose.addEventListener('click', closeTagsOverlay);
-    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && !tagsOverlay?.hidden) closeTagsOverlay(); });
+  // Close handled by dedicated overlay script
 
     // Refresh tags when media changes
     const origChangeImage = changeImage;
@@ -1220,5 +1210,10 @@ if (document.readyState === 'loading') {
   // Run on next microtask to allow other synchronous scripts (config) to populate globals
   Promise.resolve().then(initFeed);
 }
+
+// Global fullscreenchange listener to keep controls present & sync icon state
+['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(evt => {
+  document.addEventListener(evt, () => { try { syncFullscreenUi(); } catch {} });
+});
 
 })(); // End of IIFE

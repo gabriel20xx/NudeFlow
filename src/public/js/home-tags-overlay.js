@@ -14,34 +14,35 @@
   async function loadTags(){
     const c = ensureController();
     if(!c) return;
-    await c.runWithOverlay(async ()=>{
-      listEl.innerHTML = '<div class="loading">Loading tags…</div>';
-      try {
-        const resp = await fetch('/api/tags/suggestions?limit=60');
-        if(!resp.ok) throw new Error('bad_status');
-        const data = await resp.json();
-        const tags = (data.tags||[]).map(t=> t.tag || t.tag || t);
-        if(!tags.length){ listEl.innerHTML = '<div class="empty">No tags yet</div>'; return; }
-        listEl.innerHTML='';
-        const frag = document.createDocumentFragment();
-        tags.forEach(obj => {
-          const tag = obj.tag || obj;
-          const b = document.createElement('button');
-          b.type='button';
-          b.className='tag-pill';
-          b.textContent = tag + (obj.uses!=null? ` (${obj.uses})`: '');
-            b.addEventListener('click', ()=>{ window.location.href='/?tag='+encodeURIComponent(tag); });
-          frag.appendChild(b);
-        });
-        listEl.appendChild(frag);
-        c.announce(tags.length + ' tags loaded');
-      } catch(e){
-        listEl.innerHTML = '<div class="error" role="alert">Failed to load <button class="btn-small retry" type="button">Retry</button></div>';
-        const r = listEl.querySelector('.retry');
-        if(r) r.addEventListener('click', loadTags);
-        c.announceError('Failed to load tags');
-      }
-    });
+    // We want the overlay to REMAIN open for browsing, so we do not use runWithOverlay (which auto-hides).
+    c.showSoon();
+    listEl.innerHTML = '<div class="loading">Loading tags…</div>';
+    try {
+      const resp = await fetch('/api/tags/suggestions?limit=60');
+      if(!resp.ok) throw new Error('bad_status');
+      const data = await resp.json();
+      const tags = (data.tags||[]).map(t=> t.tag || t.tag || t);
+      if(!tags.length){ listEl.innerHTML = '<div class="empty">No tags yet</div>'; c.announce('No tags yet'); return; }
+      listEl.innerHTML='';
+      const frag = document.createDocumentFragment();
+      tags.forEach(obj => {
+        const tag = obj.tag || obj;
+        const b = document.createElement('button');
+        b.type='button';
+        b.className='tag-pill';
+        b.textContent = tag + (obj.uses!=null? ` (${obj.uses})`: '');
+        b.addEventListener('click', ()=>{ window.location.href='/?tag='+encodeURIComponent(tag); });
+        frag.appendChild(b);
+      });
+      listEl.appendChild(frag);
+      c.announce(tags.length + ' tags loaded');
+    } catch(e){
+      listEl.innerHTML = '<div class="error" role="alert">Failed to load <button class="btn-small retry" type="button">Retry</button></div>';
+      const r = listEl.querySelector('.retry');
+      if(r) r.addEventListener('click', loadTags);
+      const c2 = ensureController();
+      if(c2) c2.announceError('Failed to load tags');
+    }
   }
   btn.addEventListener('click', ()=>{ ensureController(); loadTags(); });
   if(closeBtn){ closeBtn.addEventListener('click', ()=> controller && controller.hide()); }
