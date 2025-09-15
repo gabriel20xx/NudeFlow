@@ -1,12 +1,11 @@
 <%- include("partials/header") %>
 <main id="playlists-container" class="page-wrapper" aria-label="Your playlists">
   <div id="pl-auth-guard" style="display:none;">
-    <!-- Inline fallback auth guard (tests rely on these IDs); aligned styling with profile unauth guard for consistent centering. -->
+    <!-- Inline auth guard (shared partial omitted due to shim stripping) -->
     <div id="pl-auth-guard-inner" class="auth-guard" role="region" aria-label="Authentication required" aria-describedby="plAuthMsg" style="padding-top:var(--topbar-height);padding-bottom:var(--bottom-nav-height);min-height:50vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;">
       <p id="plAuthMsg" class="auth-guard-msg" style="font-size:1rem;color:var(--color-text-dim);text-align:center;">You must be logged in to manage playlists.</p>
       <button id="plLoginLink" type="button" class="auth-btn" aria-describedby="plAuthMsg">Log In / Sign Up</button>
     </div>
-    <%- include('shared/auth-guard', { idPrefix: 'pl', containerId: 'pl-auth-guard-inner', message: 'You must be logged in to manage playlists.' }) %>
   </div>
   <div id="pl-content">
     <div id="pl-create" style="margin: 14px auto; display: flex; gap: 10px; align-items:center; justify-content:center; max-width: 600px; padding: 0 16px;">
