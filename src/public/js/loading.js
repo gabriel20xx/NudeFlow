@@ -262,10 +262,23 @@ function changeImage(side) {
   const canChange = !( !side && currentImageIndex <= 0 );
 
   if (canChange) {
+    // Defensive: ensure only one active element at a time before proceeding
+    try {
+      let actives = document.querySelectorAll('#home-container .media.active');
+      if (actives.length > 1) {
+        actives.forEach((el, idx) => { if (idx !== currentImageIndex) el.classList.remove('active','fly-in-up','fly-in-down','fly-out-up','fly-out-down'); });
+      }
+    } catch {}
     isTransitioning = true;
     const previousImage = media[currentImageIndex];
     let newImageIndex = side ? currentImageIndex + 1 : currentImageIndex - 1;
     const newImage = media[newImageIndex];
+
+    // If the new image does not exist yet (fast scroll before preload) abort gracefully
+    if (!newImage) { isTransitioning = false; return; }
+
+    // Prevent duplicate forward navigation showing same media (safety)
+    if (newImage === previousImage) { isTransitioning = false; return; }
 
     ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Changing to new content', { newImageIndex });
     newImage.classList.add("active");
@@ -548,8 +561,12 @@ function toggleDurationPanel(panel) {
       range.value = String(seconds);
     }
     if (valueEl) valueEl.textContent = String(seconds);
+    panel.setAttribute('aria-hidden','false');
+    panel.setAttribute('role','dialog');
+    panel.setAttribute('aria-label','Autoscroll Duration');
   }
   panel.hidden = !willShow;
+  if (!willShow) panel.setAttribute('aria-hidden','true');
 }
 
 // --- Saved list helpers (deprecated; replaced by Playlists) ---
@@ -653,48 +670,41 @@ function setLikedForMedia(mediaKey, liked) {
 function toggleLikeForActive(btn, badge) {
   const key = getCurrentMediaKey();
   if (!key) return;
-  if (btn?.dataset?.busy === '1') return;
+  if (btn && btn.dataset.busy) return;
   if (btn) btn.dataset.busy = '1';
   const liked = isLikedByUser(key);
   const prev = getLikeCount(key);
   const nextLiked = !liked;
   const nextCount = Math.max(0, prev + (nextLiked ? 1 : -1));
-  // Try server; on 401 or error, fallback to local-only
+
+  // Optimistic local update (works for anonymous users too)
+  setLikedForMedia(key, nextLiked);
+  setLikeCount(key, nextCount);
+  syncLikeUi();
+
   (async () => {
     try {
       const r = await fetch('/api/media/like', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mediaKey: key, like: nextLiked }) });
-      if (r.status === 401) throw new Error('unauth');
-      if (!r.ok) throw new Error('failed');
-      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        if (r.status === 401) {
+          // Anonymous: keep optimistic state, no revert
+          return;
+        }
+        throw new Error('like request failed');
+      }
+      const j = await r.json().catch(()=>null);
       const cnt = Number(j?.data?.likeCount ?? nextCount);
       setLikedForMedia(key, nextLiked);
       setLikeCount(key, cnt);
-    } catch {
-      setLikedForMedia(key, nextLiked);
-      setLikeCount(key, nextCount);
+    } catch (err) {
+      // Revert only for real errors (network/5xx). 401 already handled above.
+      setLikedForMedia(key, liked);
+      setLikeCount(key, prev);
     } finally {
-      syncLikeUi(); if (btn) delete btn.dataset.busy;
+      syncLikeUi();
+      if (btn) delete btn.dataset.busy;
     }
   })();
-}
-
-// Fetch server-side state (if logged in) and sync UI and local cache
-async function syncServerMediaState() {
-  try {
-  const key = getCurrentMediaKey(); if (!key) return;
-  // Ensure a view is recorded for this media key (no-op if already recorded)
-  recordView(key);
-    const r = await fetch(`/api/media/state?mediaKey=${encodeURIComponent(key)}`);
-    if (!r.ok) return; // anonymous still gets counts
-    const j = await r.json().catch(() => ({}));
-    const d = j?.data; if (!d) return;
-    // Like count and user like state
-    setLikeCount(key, Number(d.likeCount || 0));
-    if (typeof d.likedByUser === 'boolean') setLikedForMedia(key, d.likedByUser);
-  // Finally refresh buttons (save is now a playlist action, not a toggle)
-    syncLikeUi();
-    syncSaveUi();
-  } catch {}
 }
 
 function notify(type, message) {
