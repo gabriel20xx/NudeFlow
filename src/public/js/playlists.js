@@ -19,6 +19,16 @@
         lastAuthIssue = true;
         if (guardEl) guardEl.style.display = 'flex';
         if (contentEl) contentEl.style.display = 'none';
+        try {
+          const createRow = document.getElementById('pl-create');
+          if (createRow) createRow.style.display = 'none';
+          const loginBtn = document.getElementById('plLoginLink');
+          const opener = document.getElementById('authOpenBtn');
+          if (loginBtn && opener && !loginBtn.__nf_wired) {
+            loginBtn.__nf_wired = true;
+            loginBtn.addEventListener('click', (e)=>{ e.preventDefault(); opener.click(); });
+          }
+        } catch {}
         return [];
       }
       if(!r.ok) throw 0; const j = await r.json(); return j?.data?.playlists || [];

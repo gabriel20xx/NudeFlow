@@ -278,6 +278,17 @@ function loadContent() {
         mediaType,
         elementType: elementRef.tagName 
       });
+        // Visibility management: only the currently active media should be visible to the user.
+        // Previously all appended media (including index 1) were visible (stacked) and the last
+        // appended often appeared to the user as the "first" media. We hide all non-active media
+        // until they become active via changeImage().
+        try {
+          if (!elementRef.classList.contains('active')) {
+            elementRef.style.display = 'none';
+          } else {
+            elementRef.style.display = 'block';
+          }
+        } catch {}
         // If this is the very first media, sync save/like/volume state now
         try { if (toLoadImageIndex === 0) { syncSaveUi(); syncLikeUi(); syncVolumeUi(); syncServerMediaState(); } } catch {}
         // For the very first media, also mark a view if not already reported
@@ -366,6 +377,8 @@ function changeImage(side) {
       newImage.classList.add('fly-in-down');
       previousImage.classList.add('fly-out-down');
     }
+    // Ensure the newly active media is visible
+    try { newImage.style.display = 'block'; } catch {}
 
     currentImageIndex = newImageIndex;
   // Sync save/like/volume button state for newly active media
@@ -388,6 +401,19 @@ function changeImage(side) {
       previousImage.classList.remove("active");
       previousImage.classList.remove(`fly-out-up`, `fly-out-down`);
       isTransitioning = false;
+  // Hide any non-active media (except ones mid-animation) to prevent stacking artifacts
+  try {
+    if (!previousImage.classList.contains('active')) {
+      previousImage.style.display = 'none';
+    }
+    const all = document.querySelectorAll('#home-container .media');
+    all.forEach((m, idx) => {
+      if (!m.classList.contains('active') && m !== previousImage) {
+        // Keep the one that just became active visible
+        if (idx !== currentImageIndex) m.style.display = 'none';
+      }
+    });
+  } catch {}
   // Reschedule autoscroll for the new active media
   if (isAutoscrollOn) scheduleNextAutoAdvance(true);
   }, 520);

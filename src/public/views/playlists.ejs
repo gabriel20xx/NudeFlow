@@ -22,32 +22,4 @@
   </div>
   <script src="/js/playlists.js"></script>
 </main>
-<script>
-(function(){
-  function wireLoginLink(){
-  var link = document.getElementById('plLoginLink');
-  var opener = document.getElementById('authOpenBtn');
-  if(!link || !opener) return;
-  link.addEventListener('click', function(e){ e.preventDefault(); opener.click(); }, { once:true });
-  }
-  function checkAuth(){
-    fetch('/api/playlists', { method: 'GET' }).then(function(r){
-      var guard = document.getElementById('pl-auth-guard');
-      var content = document.getElementById('pl-content');
-      var createRow = document.getElementById('pl-create');
-      if (r.status === 401) {
-        if (guard) guard.style.display = 'flex';
-        if (content) content.style.display = 'none';
-        if (createRow) createRow.style.display = 'none';
-        wireLoginLink();
-      } else {
-        if (guard) guard.style.display = 'none';
-        if (content) content.style.display = '';
-        if (createRow) createRow.style.display = 'flex';
-      }
-    }).catch(function(){ /* leave default */ });
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', checkAuth); else checkAuth();
-})();
-</script>
 <%- include("partials/navbar") %>
