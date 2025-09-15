@@ -13,6 +13,18 @@
   async function fetchPlaylistsSummary(){
     // If we've already determined auth issue, skip further fetches to reduce 401 noise
     if (lastAuthIssue) return [];
+    // Heuristic pre-check: if auth open button exists and no session indicators, assume unauth and skip network call
+    try {
+      const authBtn = document.getElementById('authOpenBtn');
+      // Presence of authOpenBtn plus absence of a known session storage flag can indicate not logged in
+      if (authBtn && !sessionStorage.getItem('nf_session_present')) {
+        lastAuthIssue = true;
+        if (guardEl) guardEl.style.display = 'flex';
+        if (contentEl) contentEl.style.display = 'none';
+        const createRow = document.getElementById('pl-create'); if (createRow) createRow.style.display='none';
+        return [];
+      }
+    } catch {}
     try {
       const r = await fetch('/api/playlists/summary', { headers: { 'X-Playlist-Preflight': '1' } });
       if (r.status === 401) {

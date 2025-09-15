@@ -183,8 +183,9 @@ function loadContent() {
       mediaElement.style.objectFit = 'contain';
       mediaElement.style.background = 'var(--color-bg)';
 
-      if (toLoadImageIndex == 0) {
-        mediaElement.classList.add("active");
+      // Determine active status based on existing media in container (DOM-driven instead of index variable)
+      if (!mediaContainer.querySelector('.media.active')) {
+        mediaElement.classList.add('active');
       }
 
   // Tag element with a stable media key for per-media settings (prefer URL for uniqueness)
@@ -290,16 +291,26 @@ function loadContent() {
           }
         } catch {}
         // If this is the very first media, sync save/like/volume state now
-        try { if (toLoadImageIndex === 0) { syncSaveUi(); syncLikeUi(); syncVolumeUi(); syncServerMediaState(); } } catch {}
+  try { if (mediaContainer.querySelectorAll('.media').length === 1) { syncSaveUi(); syncLikeUi(); syncVolumeUi(); syncServerMediaState(); } } catch {}
         // For the very first media, also mark a view if not already reported
         try {
-          if (toLoadImageIndex === 0) {
+          if (mediaContainer.querySelectorAll('.media').length === 1) {
             const mk = elementRef?.dataset?.mediaKey;
             if (mk) recordView(mk);
           }
         } catch {}
 
         toLoadImageIndex++;
+        // After increment ensure only one active element, others hidden
+        try {
+          const all = mediaContainer.querySelectorAll('.media');
+          let activeFound = false;
+          all.forEach(elm => {
+            if (elm.classList.contains('active') && !activeFound) { elm.style.display='block'; activeFound = true; }
+            else if (elm.classList.contains('active') && activeFound) { elm.classList.remove('active'); elm.style.display='none'; }
+            else if (!elm.classList.contains('active')) { elm.style.display='none'; }
+          });
+        } catch {}
 
   // Keep playlist selection active so subsequent loads remain within the playlist
 
@@ -982,13 +993,38 @@ function initFeed(){
       // Nothing else to wire on non-feed pages; bail out early.
       return;
     }
-    // Wire floating control buttons once present
-    const likeBtn = document.querySelector('.float-btn--like');
-    const saveBtn = document.querySelector('.float-btn--save');
-    const autoBtn = document.querySelector('.float-btn--auto');
-    const fsBtn = document.querySelector('.float-btn--fs');
-    const volBtn = document.querySelector('.float-btn--vol');
-    const timerBtn = document.querySelector('.float-btn--timer');
+    function bindControls(reason){
+      try {
+        const likeBtn = document.querySelector('.float-btn--like');
+        const saveBtn = document.querySelector('.float-btn--save');
+        const autoBtn = document.querySelector('.float-btn--auto');
+        const fsBtn = document.querySelector('.float-btn--fs');
+        const volBtn = document.querySelector('.float-btn--vol');
+        const timerBtn = document.querySelector('.float-btn--timer');
+        const panel = document.querySelector('.float-panel');
+        const tagsBtn = document.getElementById('tagsOverlayBtn');
+        // Avoid rebinding duplicate listeners
+        const once = (el, evt, handler, key) => {
+          if (!el) return;
+          const flag = '__nfBound_'+evt+(key||'');
+          if (el[flag]) return; el[flag] = true; el.addEventListener(evt, handler);
+        };
+        once(likeBtn, 'click', () => { console.info('[UI] like click'); toggleLikeForActive(likeBtn, document.querySelector('.like-count-badge')); }, 'like');
+        once(saveBtn, 'click', () => { console.info('[UI] save click'); openPlaylistModal(); }, 'save');
+        once(autoBtn, 'click', () => { console.info('[UI] autoscroll toggle'); toggleAutoscroll(autoBtn); }, 'auto');
+        once(fsBtn, 'click', () => { console.info('[UI] fullscreen toggle'); toggleFullscreen(); syncFullscreenUi(); }, 'fs');
+        once(volBtn, 'click', () => { console.info('[UI] volume toggle'); toggleMuteForActive(volBtn); }, 'vol');
+        once(timerBtn, 'click', () => { console.info('[UI] timer panel toggle'); if (panel) toggleDurationPanel(panel); }, 'timer');
+        once(tagsBtn, 'click', () => { console.info('[UI] tags overlay open'); /* loading.js overlay open handled later if needed */ }, 'tagslog');
+        if (!panel) console.warn('[UI] float panel missing at bind time ('+reason+')');
+        if (!timerBtn) console.warn('[UI] timer button missing at bind time ('+reason+')');
+        if (!tagsBtn) console.warn('[UI] tags button missing at bind time ('+reason+')');
+      } catch (e) { try { console.error('[UI] bindControls failed', e); } catch {} }
+    }
+    bindControls('initial');
+    // Rebind after a short delay in case controls are injected late by other scripts
+    setTimeout(()=>bindControls('retry-150ms'),150);
+    setTimeout(()=>bindControls('retry-500ms'),500);
     const panel = document.querySelector('.float-panel');
     // Wire duration panel Apply / Cancel if present
     if (panel) {
@@ -1010,15 +1046,8 @@ function initFeed(){
       });
       if (cancelBtn) cancelBtn.addEventListener('click', () => { panel.hidden = true; });
     }
-    if (likeBtn) likeBtn.addEventListener('click', () => toggleLikeForActive(likeBtn, document.querySelector('.like-count-badge')));
-    if (saveBtn) saveBtn.addEventListener('click', () => openPlaylistModal());
-    if (autoBtn) autoBtn.addEventListener('click', () => toggleAutoscroll(autoBtn));
-    if (fsBtn) fsBtn.addEventListener('click', () => { toggleFullscreen(); syncFullscreenUi(); });
-    if (volBtn) volBtn.addEventListener('click', () => toggleMuteForActive(volBtn));
-    if (timerBtn && panel) timerBtn.addEventListener('click', () => toggleDurationPanel(panel));
-
-    // --- Tags Overlay Controller ---
-    const tagsBtn = document.getElementById('tagsOverlayBtn');
+  // --- Tags Overlay Controller ---
+  const tagsBtn = document.getElementById('tagsOverlayBtn');
     const tagsOverlay = document.getElementById('tagsOverlay');
     const tagsOverlayClose = document.getElementById('tagsOverlayClose');
     const tagsOverlayList = document.getElementById('tagsOverlayList');
