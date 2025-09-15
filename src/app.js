@@ -125,27 +125,47 @@ const configureMiddleware = async () => {
   });
 
   // View engine setup
-    // Attempt to register real ejs; fall back to a minimal shim extractor if not installed in test context
+  // Attempt to register real EJS ONLY if resolvable without introducing a literal dynamic import('ejs') token (avoids Vite pre-bundle failures in tests).
+  {
+    let installedEjsPath = null;
     try {
-      // dynamic import inside async function
-      await import('ejs');
-      expressApplication.set("view engine", "ejs");
+      const { createRequire } = await import('module');
+      const req = createRequire(import.meta.url);
+      // resolve may throw; we catch and fallback
+      installedEjsPath = req.resolve('ejs');
+      // Use resolved absolute path to load; this prevents bundlers from seeing a bare specifier and trying to transform it.
+      const ejsMod = req(installedEjsPath);
+      if (ejsMod && (typeof ejsMod.__express === 'function')) {
+        expressApplication.engine('ejs', ejsMod.__express);
+        expressApplication.set('view engine', 'ejs');
+      } else {
+        installedEjsPath = null; // force fallback if shape unexpected
+      }
     } catch {
-      // Minimal shim: reads file, strips <%- include("...") %> lines, performs no variable interpolation
+      installedEjsPath = null;
+    }
+    if (!installedEjsPath) {
+      // Minimal shim: reads file, strips includes, handles a simple auth conditional pattern used by fallback inline templates.
+      // Supports pattern: <% if (!isAuthenticated) { %> ... <% } else { %> ... <% } %>
+      // Additional EJS tags are stripped afterwards.
       const fsPromises = fs.promises;
       expressApplication.engine('ejs', async (filePath, options, callback) => {
         try {
           const raw = await fsPromises.readFile(filePath, 'utf8');
-          const stripped = raw.replace(/<%-? *include\([^)]*\) *%>/g, '');
-          // Inject minimal siteTitle if referenced
-          const html = stripped.replace(/<%= *siteTitle *%>/g, options.siteTitle || 'NudeFlow');
-          callback(null, html);
-        } catch (e) {
-          callback(e);
-        }
+          let out = raw.replace(/<%-? *include\([^)]*\) *%>/g, '');
+          try {
+            out = out.replace(/<% *if *\(!isAuthenticated\) *\{ *%>([\s\S]*?)<% *\} *else *\{ *%>([\s\S]*?)<% *\} *%>/, (_m, unauth, auth) => {
+              return options && options.isAuthenticated ? auth : unauth;
+            });
+          } catch {}
+          out = out.replace(/<%= *siteTitle *%>/g, options.siteTitle || 'NudeFlow');
+          out = out.replace(/<%[=]?[^%]*%>/g, '');
+          callback(null, out);
+        } catch (e) { callback(e); }
       });
       expressApplication.set('view engine', 'ejs');
     }
+  }
   // Updated views path to new unified structure and add shared views
   expressApplication.set("views", [
     path.join(__dirname, "public", "views"),

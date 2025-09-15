@@ -2,93 +2,34 @@
 (function() {
 const MODULE_NAME = 'LoadingModule';
 
-let toLoadImageIndex = 0; // Track the page number for fetching images
-let currentImageIndex = 0; // Track the current visible image
+// --- State ---
+let toLoadImageIndex = 0;
+let currentImageIndex = 0;
 let isTransitioning = false;
 let startY = 0;
 let lastTouchY = 0;
 let inactivityTimer = null;
 let controlsRoot = null;
-let autoAdvanceTimer = null; // setTimeout id
+let autoAdvanceTimer = null;
 let isAutoscrollOn = false;
 let isFullscreen = false;
 let lastKnownKey = null;
 let currentAutoDurationMs = null;
-// Track which media keys have been reported as viewed to avoid duplicates
 const reportedViewKeys = new Set();
 const SAVED_STORE_KEY = 'nf_savedMedia_v1';
 const LIKES_STORE_KEY = 'nf_likeCounts_v1';
 const LIKED_STATE_STORE_KEY = 'nf_likedByUser_v1';
 
-const preLoadImageCount = ApplicationConfiguration?.userInterfaceSettings?.preLoadImageCount || 5;
-const mediaContainer = document.getElementById("home-container");
-const currentUrl = window.location.href;
-
-ApplicationUtilities.debugLog(MODULE_NAME, 'MODULE_INIT', 'Loading module initialized', { 
-  currentUrl,
-  preLoadImageCount 
-});
-
 const domainPattern = /^https?:\/\/[^/]+\/?$/;
 const categoryPattern = /^https?:\/\/[^/]+\/(.+[^/])$/;
+const mediaContainer = document.getElementById('home-container');
+const currentUrl = window.location.href;
 
-// Only run on pages that have the home feed container
-if (mediaContainer) {
-  // Preload images
-  loadContent();
-
-  // Build floating controls (only on pages with home-container)
-  buildFloatingControls();
-  setupInactivityAutoHide();
-  preventMobilePullToRefresh();
-
-  // Interaction listeners relevant to the feed
-  window.addEventListener("touchstart", e => {
-    startY = e.touches[0].clientY;
-    lastTouchY = startY;
-    revealControlsTemporarily();
-  });
-
-  window.addEventListener("touchend", e => {
-    let endY = e.changedTouches[0].clientY;
-    let diff = startY - endY;
-
-    if (diff > 50) {
-      changeImage(true); // Swipe up
-    } else if (diff < -50) {
-      changeImage(false); // Swipe down
-    }
-    scheduleControlsHide();
-  });
-
-  window.addEventListener("keydown", e => {
-    if (e.key === "ArrowDown") changeImage(true);
-    if (e.key === "ArrowUp") changeImage(false);
-    revealControlsTemporarily();
-  });
-
-  window.addEventListener("wheel", e => {
-    if (e.deltaY > 0) {
-      changeImage(true); // Scroll down
-    } else if (e.deltaY < 0) {
-      changeImage(false); // Scroll up
-    }
-    revealControlsTemporarily();
-  });
-
-  // Clear playlist selection when navigating away from the Home page
-  window.addEventListener('beforeunload', () => {
-    try { sessionStorage.removeItem('nf_activePlaylistId'); sessionStorage.removeItem('nf_activePlaylistName'); } catch {}
-  });
-}
-
-function getUrl() {
+function getUrl(){
   const FUNCTION_NAME = 'getUrl';
   ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Determining URL for content loading', { currentUrl });
-  
   const baseUrl = ApplicationConfiguration?.baseServerUrl || window.location.origin;
-  
-  // Playlist-driven feed (from Play button)
+  // Playlist feed
   try {
     const plId = sessionStorage.getItem('nf_activePlaylistId');
     const plName = sessionStorage.getItem('nf_activePlaylistName');
@@ -100,31 +41,70 @@ function getUrl() {
       return url;
     }
   } catch {}
-
   if (categoryPattern.test(currentUrl)) {
     const match = currentUrl.match(categoryPattern);
     if (match && match[1]) {
-        let category = match[1];
-        // Update header title if present (decode URI components and plus signs)
-        try {
-          const raw = category.replace(/^\//,'');
-          const decoded = decodeURIComponent(raw).replace(/\+/g, ' ');
-          const isAll = decoded.trim().toLowerCase() === 'all';
-          const titleEl = document.querySelector('.app-category-title');
-          if (titleEl) titleEl.textContent = isAll ? 'All' : ApplicationUtilities.formatDisplayText(decoded);
-        } catch {}
-        let url = `${baseUrl}/api/media/random/${category.replace(/^\//,'')}`;
-        ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Category page detected', { category, url });
-        return url;
+      let category = match[1];
+      try {
+        const raw = category.replace(/^\//,'');
+        const decoded = decodeURIComponent(raw).replace(/\+/g,' ');
+        const isAll = decoded.trim().toLowerCase()==='all';
+        const titleEl = document.querySelector('.app-category-title');
+        if (titleEl) titleEl.textContent = isAll ? 'All' : ApplicationUtilities.formatDisplayText(decoded);
+      } catch {}
+      const url = `${baseUrl}/api/media/random/${category.replace(/^\//,'')}`;
+      ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Category page detected', { category, url });
+      return url;
     }
   } else if (domainPattern.test(currentUrl)) {
-        let url = `${baseUrl}/api/media/random/all`;
-        ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Homepage detected', { url });
-        return url;
-  } else {
-    let url = `${baseUrl}/api/media/random/all`;
-    ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'No specific page matched, using homepage', { currentUrl });
+    const url = `${baseUrl}/api/media/random/all`;
+    ApplicationUtilities.infoLog(MODULE_NAME, FUNCTION_NAME, 'Homepage detected', { url });
     return url;
+  }
+  const url = `${baseUrl}/api/media/random/all`;
+  ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Fallback homepage URL', { url });
+  return url;
+}
+
+function buildFloatingControls(){
+  const FUNCTION_NAME = 'buildFloatingControls';
+  try {
+    controlsRoot = document.querySelector('.floating-controls');
+    if(!controlsRoot){
+      controlsRoot = document.createElement('div');
+      controlsRoot.className='floating-controls visible';
+      document.body.appendChild(controlsRoot);
+    }
+    function ensureButton(selector, createFn, insertAfterSel){
+      let el = controlsRoot.querySelector(selector);
+      if(!el){
+        el = createFn();
+        if(insertAfterSel){
+          const after = controlsRoot.querySelector(insertAfterSel);
+          if(after && after.nextSibling) controlsRoot.insertBefore(el, after.nextSibling); else if(after) controlsRoot.appendChild(el); else controlsRoot.appendChild(el);
+        } else controlsRoot.appendChild(el);
+      }
+      return el;
+    }
+    const likeWrap = controlsRoot.querySelector('.float-like') || (function(){
+      const wrap=document.createElement('div'); wrap.className='float-like';
+      const btn=document.createElement('button'); btn.type='button'; btn.className='float-btn float-btn--like'; btn.setAttribute('aria-label','Like this media'); btn.setAttribute('aria-pressed','false'); btn.innerHTML='<i class="fas fa-heart" aria-hidden="true"></i>';
+      const badge=document.createElement('span'); badge.className='like-count-badge'; badge.textContent='0';
+      wrap.append(btn,badge); controlsRoot.insertBefore(wrap, controlsRoot.firstChild); return wrap; })();
+    const fsBtn = ensureButton('.float-btn--fs', ()=>{ const b=document.createElement('button'); b.type='button'; b.className='float-btn float-btn--fs'; b.setAttribute('aria-label','Toggle fullscreen'); b.innerHTML='<i class="fas fa-expand" aria-hidden="true"></i>'; return b; });
+    const saveBtn = ensureButton('.float-btn--save', ()=>{ const b=document.createElement('button'); b.type='button'; b.className='float-btn float-btn--save'; b.setAttribute('aria-label','Add to playlist'); b.setAttribute('aria-pressed','false'); b.innerHTML='<i class="fas fa-list-ul" aria-hidden="true"></i>'; return b; }, '.float-btn--fs');
+    const tagsBtn = ensureButton('#tagsOverlayBtn', ()=>{ const b=document.createElement('button'); b.id='tagsOverlayBtn'; b.type='button'; b.className='float-btn float-btn--tags'; b.setAttribute('aria-label','Browse tags'); b.setAttribute('aria-controls','tagsOverlay'); b.innerHTML='<i class="fas fa-tags" aria-hidden="true"></i>'; return b; }, '.float-btn--save');
+    const autoBtn = ensureButton('.float-btn--auto', ()=>{ const b=document.createElement('button'); b.type='button'; b.className='float-btn float-btn--auto'; b.setAttribute('aria-label','Toggle autoscroll'); b.setAttribute('aria-pressed','false'); b.innerHTML='<i class="fas fa-play" aria-hidden="true"></i>'; return b; }, '#tagsOverlayBtn');
+    const volBtn = ensureButton('.float-btn--vol', ()=>{ const b=document.createElement('button'); b.type='button'; b.className='float-btn float-btn--vol'; b.setAttribute('aria-label','Mute / unmute'); b.setAttribute('aria-pressed','false'); b.innerHTML='<i class="fas fa-volume-xmark" aria-hidden="true"></i>'; return b; });
+    const timerBtn = ensureButton('.float-btn--timer', ()=>{ const b=document.createElement('button'); b.type='button'; b.className='float-btn float-btn--timer'; b.setAttribute('aria-label','Set autoplay duration for this media'); b.innerHTML='<i class="fas fa-clock" aria-hidden="true"></i>'; return b; });
+    let panel = controlsRoot.querySelector('.float-panel');
+    if(!panel){
+      panel = document.createElement('div'); panel.className='float-panel'; panel.setAttribute('role','dialog'); panel.setAttribute('aria-label','Autoplay duration'); panel.hidden=true;
+      panel.innerHTML='<div class="float-panel-row">\n        <label>Autoplay: <span class="apv">6</span>s</label>\n        <input type="range" min="3" max="30" value="6" class="apRange" aria-label="Autoplay duration seconds" />\n      </div>\n      <div class="float-panel-actions">\n        <button type="button" class="btn-small apApply">Apply</button>\n        <button type="button" class="btn-small apCancel">Cancel</button>\n      </div>';
+      controlsRoot.appendChild(panel);
+    }
+  } catch(e){
+    try { ApplicationUtilities.errorLog(MODULE_NAME, 'buildFloatingControls', 'Failed to build controls', { error: e.message }); } catch {}
   }
 }
     
@@ -329,175 +309,7 @@ function changeImage(side) {
 
 // --- Floating Controls & UX Enhancements ---
 
-function buildFloatingControls() {
-  const FUNCTION_NAME = 'buildFloatingControls';
-  try {
-    // Create wrapper
-    controlsRoot = document.createElement('div');
-    controlsRoot.className = 'floating-controls visible';
-
-    // Buttons
-  // Volume (mute/unmute) — shown only for videos with likely audio
-  const volBtn = document.createElement('button');
-  volBtn.className = 'float-btn float-btn--vol';
-  volBtn.setAttribute('type', 'button');
-  volBtn.setAttribute('aria-pressed', 'false');
-  volBtn.setAttribute('aria-label', 'Mute / unmute');
-  volBtn.innerHTML = '<i class="fas fa-volume-xmark" aria-hidden="true"></i>';
-
-  // Like button with counter badge (wrapper to position badge)
-  const likeWrap = document.createElement('div');
-  likeWrap.className = 'float-like';
-
-  const likeBtn = document.createElement('button');
-  likeBtn.className = 'float-btn float-btn--like';
-  likeBtn.setAttribute('type', 'button');
-  likeBtn.setAttribute('aria-pressed', 'false');
-  likeBtn.setAttribute('aria-label', 'Like this media');
-  likeBtn.innerHTML = '<i class="fas fa-heart" aria-hidden="true"></i>';
-
-  const likeBadge = document.createElement('span');
-  likeBadge.className = 'like-count-badge';
-  likeBadge.textContent = '0';
-
-  likeWrap.appendChild(likeBtn);
-  likeWrap.appendChild(likeBadge);
-
-    const fsBtn = document.createElement('button');
-    fsBtn.className = 'float-btn float-btn--fs';
-    fsBtn.setAttribute('type', 'button');
-    fsBtn.setAttribute('aria-label', 'Toggle fullscreen');
-    fsBtn.innerHTML = '<i class="fas fa-expand" aria-hidden="true"></i>';
-
-    const autoBtn = document.createElement('button');
-    autoBtn.className = 'float-btn float-btn--auto';
-    autoBtn.setAttribute('type', 'button');
-    autoBtn.setAttribute('aria-pressed', 'false');
-    autoBtn.setAttribute('aria-label', 'Toggle autoscroll');
-    autoBtn.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i>';
-
-  const saveBtn = document.createElement('button');
-  saveBtn.className = 'float-btn float-btn--save';
-  saveBtn.setAttribute('type', 'button');
-  saveBtn.setAttribute('aria-pressed', 'false');
-  saveBtn.setAttribute('aria-label', 'Add to playlist');
-  saveBtn.innerHTML = '<i class="fas fa-list-ul" aria-hidden="true"></i>';
-
-    const timerBtn = document.createElement('button');
-    timerBtn.className = 'float-btn float-btn--timer';
-    timerBtn.setAttribute('type', 'button');
-    timerBtn.setAttribute('aria-label', 'Set autoplay duration for this media');
-    timerBtn.innerHTML = '<i class="fas fa-clock" aria-hidden="true"></i>';
-
-    // Panel for per-media duration
-    const panel = document.createElement('div');
-    panel.className = 'float-panel';
-    panel.setAttribute('role', 'dialog');
-    panel.setAttribute('aria-label', 'Autoplay duration');
-    panel.hidden = true;
-    panel.innerHTML = `
-      <div class="float-panel-row">
-        <label>Autoplay: <span class="apv">6</span>s</label>
-      </div>
-      <input class="ap-range" type="range" min="1" max="30" step="1" value="6" aria-label="Autoplay seconds">
-    `;
-
-  // Show fullscreen button on all devices (desktop & mobile)
-
-  controlsRoot.appendChild(likeWrap);
-  controlsRoot.appendChild(fsBtn);
-  controlsRoot.appendChild(autoBtn);
-  controlsRoot.appendChild(volBtn);
-  controlsRoot.appendChild(saveBtn);
-  controlsRoot.appendChild(timerBtn);
-  controlsRoot.appendChild(panel);
-  // Insert playlist modal container at document level to avoid clipping
-  if (!document.querySelector('.playlist-modal')){
-    const modal = document.createElement('div');
-    modal.className = 'playlist-modal';
-    modal.setAttribute('role','dialog');
-    modal.setAttribute('aria-modal','true');
-    modal.hidden = true;
-    modal.innerHTML = `
-      <div class="plm-backdrop"></div>
-      <div class="plm-dialog" role="document">
-        <div class="plm-header">Add to playlist</div>
-        <div class="plm-body">
-          <ul class="plm-list" role="listbox" aria-label="Your playlists"></ul>
-          <div class="plm-create">
-            <input type="text" class="plm-input" placeholder="Create new playlist" aria-label="New playlist name" />
-            <button type="button" class="plm-create-btn">Create</button>
-          </div>
-        </div>
-        <div class="plm-footer">
-          <button type="button" class="plm-cancel">Cancel</button>
-        </div>
-      </div>`;
-    document.body.appendChild(modal);
-  }
-    mediaContainer.appendChild(controlsRoot);
-
-    volBtn.addEventListener('click', () => {
-      revealControlsTemporarily();
-      toggleMuteForActive(volBtn);
-    });
-
-    likeBtn.addEventListener('click', () => {
-      revealControlsTemporarily();
-      toggleLikeForActive(likeBtn, likeBadge);
-    });
-
-    // Handlers
-    fsBtn.addEventListener('click', () => {
-      revealControlsTemporarily();
-      toggleFullscreen();
-    });
-
-    autoBtn.addEventListener('click', () => {
-      revealControlsTemporarily();
-      toggleAutoscroll(autoBtn);
-    });
-
-    saveBtn.addEventListener('click', () => {
-      revealControlsTemporarily();
-      openPlaylistModal();
-    });
-
-    timerBtn.addEventListener('click', () => {
-      revealControlsTemporarily();
-      toggleDurationPanel(panel);
-    });
-
-    // Panel interactions
-    const range = panel.querySelector('.ap-range');
-    const valueEl = panel.querySelector('.apv');
-    range.addEventListener('input', () => {
-      const seconds = clamp(Number(range.value) || 6, 1, 30);
-      valueEl.textContent = String(seconds);
-      const key = getCurrentMediaKey();
-      if (key) {
-        const ms = seconds * 1000;
-        setDurationForMedia(key, ms);
-        lastKnownKey = key;
-        currentAutoDurationMs = ms;
-        if (isAutoscrollOn) scheduleNextAutoAdvance(true);
-      }
-    });
-
-    // Fullscreen changes
-    ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(evt => {
-      document.addEventListener(evt, syncFullscreenUi);
-    });
-
-    ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Floating controls initialized');
-  // initial save button state
-  syncSaveUi();
-  syncLikeUi();
-  syncVolumeUi();
-  } catch (err) {
-    ApplicationUtilities.errorLog(MODULE_NAME, FUNCTION_NAME, 'Failed to build floating controls', { error: err?.message });
-  }
-}
+// (Removed legacy duplicate buildFloatingControls implementation stray fragment cleaned)
 
 function toggleAutoscroll(autoBtn) {
   const FUNCTION_NAME = 'toggleAutoscroll';

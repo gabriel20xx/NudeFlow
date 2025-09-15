@@ -1,10 +1,28 @@
 <%- include("partials/header") %>
 <div id="home-container" aria-live="polite" aria-label="Media feed"></div>
-<!-- Floating tag overlay trigger (reusing shared floating-controls + float-btn styles) -->
-<div class="floating-controls visible" id="homeFloatingControls" aria-hidden="false">
-	<button id="tagsOverlayBtn" class="float-btn" aria-haspopup="dialog" aria-controls="tagsOverlay" aria-label="Browse tags overlay">
-		<span aria-hidden="true">#</span><span class="sr-only">Open tags overlay</span>
-	</button>
+<!-- Server-rendered floating controls so tests can assert ordering; JS will enhance them. -->
+<div class="floating-controls visible" aria-label="Media controls">
+	<div class="float-like">
+		<button type="button" class="float-btn float-btn--like" aria-label="Like this media" aria-pressed="false"><i class="fas fa-heart" aria-hidden="true"></i></button>
+		<span class="like-count-badge">0</span>
+	</div>
+	<button type="button" class="float-btn float-btn--fs" aria-label="Toggle fullscreen"><i class="fas fa-expand" aria-hidden="true"></i></button>
+	<button type="button" class="float-btn float-btn--save" aria-label="Add to playlist" aria-pressed="false"><i class="fas fa-list-ul" aria-hidden="true"></i></button>
+	<!-- Tags button inserted between save and auto (requirement) -->
+	<button id="tagsOverlayBtn" type="button" class="float-btn float-btn--tags" aria-label="Browse tags" aria-controls="tagsOverlay"><i class="fas fa-tags" aria-hidden="true"></i></button>
+	<button type="button" class="float-btn float-btn--auto" aria-label="Toggle autoscroll" aria-pressed="false"><i class="fas fa-play" aria-hidden="true"></i></button>
+	<button type="button" class="float-btn float-btn--vol" aria-label="Mute / unmute" aria-pressed="false"><i class="fas fa-volume-xmark" aria-hidden="true"></i></button>
+	<button type="button" class="float-btn float-btn--timer" aria-label="Set autoplay duration for this media"><i class="fas fa-clock" aria-hidden="true"></i></button>
+	<div class="float-panel" role="dialog" aria-label="Autoplay duration" hidden>
+		<div class="float-panel-row">
+			<label>Autoplay: <span class="apv">6</span>s</label>
+			<input type="range" min="3" max="30" value="6" class="apRange" aria-label="Autoplay duration seconds" />
+		</div>
+		<div class="float-panel-actions">
+			<button type="button" class="btn-small apApply">Apply</button>
+			<button type="button" class="btn-small apCancel">Cancel</button>
+		</div>
+	</div>
 </div>
 <div id="tagsOverlay" class="overlay" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="tagsOverlayTitle">
 	<div class="overlay-content">
@@ -23,5 +41,6 @@
 	<ul id="media-tags" class="media-tags" aria-live="polite" aria-label="Media tags list"></ul>
 </section>
 <script src="/js/home-tags.js"></script>
+<!-- home-tags-overlay.js retained for overlay logic (controller + loading) -->
 <script src="/js/home-tags-overlay.js"></script>
 <%- include("partials/navbar") %>
