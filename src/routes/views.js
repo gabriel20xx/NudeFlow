@@ -58,9 +58,13 @@ viewsRouter.get("/profile", (request, response) => {
   
   try {
     AppUtils.infoLog(MODULE_NAME, FUNCTION_NAME, 'Rendering profile page');
-  const isAuthenticated = !!(request.session && request.session.userId);
-  const user = request.session?.user || null;
-  response.render("profile", { title: "Profile", isAuthenticated, user });
+    // NOTE: Previous implementation checked session.userId which is not set by the shared auth router.
+    // Shared auth stores the authenticated principal at session.user (with .id). For forward + backward
+    // compatibility we derive the auth flag from session.user.id. (A compatibility alias is now also
+    // written in the auth router, but we keep this logic resilient in case of future changes.)
+    const user = request.session?.user || null;
+    const isAuthenticated = !!(user && user.id);
+    response.render("profile", { title: "Profile", isAuthenticated, user });
     AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Profile page rendered successfully');
   } catch (error) {
     AppUtils.errorLog(MODULE_NAME, FUNCTION_NAME, 'Error rendering profile page', error);

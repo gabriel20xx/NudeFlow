@@ -1,6 +1,11 @@
 <%- include("partials/header") %>
 <div id="home-container" aria-live="polite" aria-label="Media feed"></div>
-<button id="tagsOverlayBtn" class="floating-btn" aria-haspopup="dialog" aria-controls="tagsOverlay" aria-label="Browse tags overlay">#Tags</button>
+<!-- Floating tag overlay trigger (reusing shared floating-controls + float-btn styles) -->
+<div class="floating-controls visible" id="homeFloatingControls" aria-hidden="false">
+	<button id="tagsOverlayBtn" class="float-btn" aria-haspopup="dialog" aria-controls="tagsOverlay" aria-label="Browse tags overlay">
+		<span aria-hidden="true">#</span><span class="sr-only">Open tags overlay</span>
+	</button>
+</div>
 <div id="tagsOverlay" class="overlay" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="tagsOverlayTitle">
 	<div class="overlay-content">
 		<h2 id="tagsOverlayTitle">Browse Tags</h2>
