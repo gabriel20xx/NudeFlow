@@ -1,4 +1,6 @@
 (function(){
+  // Prevent double execution if script injected twice
+  if (window.__nf_playlistsInit) return; window.__nf_playlistsInit = true;
   const grid = document.querySelector('#playlistsGrid');
   if (!grid) return;
 
@@ -9,8 +11,10 @@
   let lastAuthIssue = false;
 
   async function fetchPlaylistsSummary(){
+    // If we've already determined auth issue, skip further fetches to reduce 401 noise
+    if (lastAuthIssue) return [];
     try {
-      const r = await fetch('/api/playlists/summary');
+      const r = await fetch('/api/playlists/summary', { headers: { 'X-Playlist-Preflight': '1' } });
       if (r.status === 401) {
         lastAuthIssue = true;
         if (guardEl) guardEl.style.display = 'flex';
@@ -95,7 +99,7 @@
   }
 
   async function refresh(){
-    const list = await fetchPlaylistsSummary();
+    const list = await fetchPlaylistsSummary(); // may be [] if unauth or null on error
     // Disable create when auth guard visible
     try {
       const createInput = document.querySelector('#pl-name');
@@ -104,7 +108,8 @@
       if (createInput) createInput.disabled = !!isUnauth;
       if (createBtn) createBtn.disabled = !!isUnauth;
     } catch {}
-    renderGrid(list || []);
+    // Only render if we either have data or explicitly confirmed unauth; avoid re-triggering fetch on null repeatedly
+    if (list || lastAuthIssue) renderGrid(list || []);
   }
 
   const input = document.querySelector('#pl-name');
@@ -115,5 +120,7 @@
     try { await createPlaylist(name); input.value=''; await refresh(); } catch { if (errorEl) errorEl.style.display='block'; }
   });
 
-  refresh();
+  // Preflight auth check using lightweight /api/playlists (already present inline in template) is redundant;
+  // rely on first summary call. Kick off refresh once after microtask to allow auth UI script to run.
+  Promise.resolve().then(refresh);
 })();

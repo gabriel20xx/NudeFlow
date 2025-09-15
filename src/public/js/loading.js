@@ -144,7 +144,7 @@ function loadContent() {
         throw new Error('Invalid API response');
       }
       
-      const mediaInfo = apiResponse.data;
+  let mediaInfo = apiResponse.data;
       const mediaType = mediaInfo.mediaType || 'video'; // default to video
       const mediaUrl = mediaInfo.url;
       
@@ -209,28 +209,92 @@ function loadContent() {
         }, { once: true });
       }    
 
+      // Duplicate consecutive media defense: if last appended has identical key or URL, skip once
+      try {
+        const existing = mediaContainer.querySelectorAll('.media');
+        if (existing.length) {
+          const last = existing[existing.length-1];
+          const lastKey = last?.dataset?.mediaKey;
+          if (lastKey && mediaElement.dataset.mediaKey && lastKey === mediaElement.dataset.mediaKey) {
+            ApplicationUtilities.warnLog?.(MODULE_NAME, FUNCTION_NAME, 'Duplicate mediaKey detected, refetching', { mediaKey: lastKey });
+            // Attempt up to 3 additional tries to fetch a different media
+            let attempts = 0;
+            const tryRefetch = () => {
+              attempts++;
+              if (attempts > 3) {
+                ApplicationUtilities.warnLog?.(MODULE_NAME, FUNCTION_NAME, 'Exceeded duplicate refetch attempts, appending anyway');
+                mediaContainer.appendChild(mediaElement);
+                finalizeAppend();
+                return;
+              }
+              fetch(url).then(r=> r.ok ? r.json() : Promise.reject(new Error('dup_refetch_failed'))).then(j => {
+                if (j?.success && j?.data) {
+                  const alt = j.data;
+                  const altKey = alt.url || alt.relativePath || alt.id || (alt.category && alt.filename ? `${alt.category}/${alt.filename}` : alt.filename);
+                  if (altKey && altKey !== lastKey) {
+                    // Replace mediaInfo & recreate element
+                    mediaInfo = alt;
+                    const newEl = document.createElement(alt.mediaType === 'static' ? 'img' : 'video');
+                    newEl.src = alt.url;
+                    if (alt.mediaType !== 'static') {
+                      const mediaConfig2 = ApplicationConfiguration?.mediaPlaybackSettings || {};
+                      newEl.autoplay = mediaConfig2.autoplay !== false;
+                      newEl.loop = mediaConfig2.loop !== false;
+                      newEl.controls = mediaConfig2.controls === true;
+                      newEl.muted = mediaConfig2.muted !== false;
+                      newEl.playsInline = mediaConfig2.playsInline !== false;
+                    }
+                    newEl.className = mediaElement.className;
+                    newEl.style.cssText = mediaElement.style.cssText;
+                    newEl.dataset.mediaKey = String(altKey);
+                    newEl.dataset.url = alt.url;
+                    newEl.dataset.name = alt.name || alt.filename || 'Media';
+                    newEl.dataset.category = alt.category || 'homepage';
+                    newEl.dataset.mediaType = alt.mediaType || 'video';
+                    newEl.dataset.thumbnail = alt.thumbnail || alt.url;
+                    mediaContainer.appendChild(newEl);
+                    finalizeAppend(newEl);
+                  } else {
+                    tryRefetch();
+                  }
+                } else {
+                  tryRefetch();
+                }
+              }).catch(()=> tryRefetch());
+            };
+            tryRefetch();
+            return; // Defer finalize until unique fetched
+          }
+        }
+      } catch {}
       mediaContainer.appendChild(mediaElement);
+      finalizeAppend(mediaElement);
+      return; // finalize handles incrementing etc.
+
+      function finalizeAppend(el){
+        const elementRef = el || mediaElement;
       ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Added media element to container', { 
         toLoadImageIndex, 
         mediaType,
-        elementType: mediaElement.tagName 
+        elementType: elementRef.tagName 
       });
-  // If this is the very first media, sync save button state now
-  try { if (toLoadImageIndex === 0) { syncSaveUi(); syncLikeUi(); syncVolumeUi(); syncServerMediaState(); } } catch {}
-      // For the very first media, also mark a view if not already reported
-      try {
-        if (toLoadImageIndex === 0) {
-          const mk = mediaElement?.dataset?.mediaKey;
-          if (mk) recordView(mk);
-        }
-      } catch {}
-      
-  toLoadImageIndex++;
+        // If this is the very first media, sync save/like/volume state now
+        try { if (toLoadImageIndex === 0) { syncSaveUi(); syncLikeUi(); syncVolumeUi(); syncServerMediaState(); } } catch {}
+        // For the very first media, also mark a view if not already reported
+        try {
+          if (toLoadImageIndex === 0) {
+            const mk = elementRef?.dataset?.mediaKey;
+            if (mk) recordView(mk);
+          }
+        } catch {}
+
+        toLoadImageIndex++;
 
   // Keep playlist selection active so subsequent loads remain within the playlist
 
-      if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
-        loadContent();
+        if ((toLoadImageIndex - currentImageIndex) < preLoadImageCount) {
+          loadContent();
+        }
       }
    })
    .catch(error => {
@@ -885,7 +949,7 @@ function toggleMuteForActive(btn) {
 }
 
 // --- Initialization (was missing; without this nothing loaded and buttons were inert) ---
-document.addEventListener('DOMContentLoaded', () => {
+function initFeed(){
   try { buildFloatingControls(); } catch {}
   try {
     if (!IS_FEED_PAGE) {
@@ -1064,6 +1128,13 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('touchend', (e) => { if (!IS_FEED_PAGE) return; if (touchStartY == null) return; const endY = (e.changedTouches && e.changedTouches[0]?.clientY) || touchStartY; const dy = endY - touchStartY; touchStartY = null; if (Math.abs(dy) < 40) return; if (dy < 0) changeImage(true); else changeImage(false); }, { passive: true });
   } catch {}
   try { if (IS_FEED_PAGE) loadContent(); } catch {}
-});
+}
+// Ensure initialization even if script loaded after DOMContentLoaded (e.g., cached inline defer)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initFeed);
+} else {
+  // Run on next microtask to allow other synchronous scripts (config) to populate globals
+  Promise.resolve().then(initFeed);
+}
 
 })(); // End of IIFE
