@@ -1,8 +1,14 @@
 <%- include('partials/header', { title: 'Profile' }) %>
 <!-- Use shared/profile for canonical rendering; provide minimal unauth fallback only (avoid duplicate authed markup) -->
 <% if (!isAuthenticated) { %>
-  <main>
-    <%- include('../../../../NudeShared/views/shared/auth-guard', { idPrefix: 'profile', message: 'You must be logged in to view your profile.' }) %>
+  <main id="profile-auth-wrapper" style="display:flex;align-items:center;justify-content:center;min-height:calc(100vh - (var(--topbar-height) + var(--bottom-nav-height)));padding-top:var(--topbar-height);padding-bottom:var(--bottom-nav-height);">
+    <div style="width:100%;display:flex;align-items:center;justify-content:center;">
+      <!-- Reuse shared auth guard markup so tests can find #profileLoginLink -->
+      <div id="profile-auth-guard" class="auth-guard flex-center" role="region" aria-label="Authentication required" aria-describedby="profileAuthMsg" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;">
+        <p id="profileAuthMsg" class="auth-guard-msg" style="font-size:1rem;color:var(--color-text-dim);text-align:center;">You must be logged in to view your profile.</p>
+        <button id="profileLoginLink" type="button" class="auth-btn" aria-describedby="profileAuthMsg">Log In / Sign Up</button>
+      </div>
+    </div>
   </main>
 <% } else { %>
   <main id="profile-container" class="profile-page" aria-label="User profile" style="padding-top:var(--topbar-height);padding-bottom:var(--bottom-nav-height);">
