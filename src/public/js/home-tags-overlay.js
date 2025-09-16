@@ -3,26 +3,38 @@
   const btn = document.getElementById('tagsOverlayBtn');
   const listEl = document.getElementById('tagsOverlayList');
   const closeBtn = document.getElementById('tagsOverlayClose');
-  if(!btn || !listEl) return;
-  let controller;
+  const overlay = document.getElementById('tagsOverlay');
+  if(!btn || !listEl || !overlay) return;
+  let controller; let firstLoad = true; let inflight = false;
   function ensureController(){
     if(!controller && window.NCOverlay){
-      controller = window.NCOverlay.createOverlayController({ overlayId: 'tagsOverlay', liveId: 'tagsOverlayLive', showDelay:150 });
+        controller = window.NCOverlay.createOverlayController({ overlayId: 'tagsOverlay', liveId: 'tagsOverlayLive', showDelay:120, focusSelector:'#tagsOverlayClose' });
     }
     return controller;
   }
-  async function loadTags(){
+  function showOverlay(){
     const c = ensureController();
-    if(!c) return;
-    // We want the overlay to REMAIN open for browsing, so we do not use runWithOverlay (which auto-hides).
-    c.showSoon();
+    if(c){ c.showSoon(); } else {
+      // Fallback manual show if controller not ready
+      overlay.hidden = false; overlay.setAttribute('aria-hidden','false'); overlay.classList.add('active');
+    }
+  }
+  async function loadTags(force){
+    if(inflight) return; // avoid double fetch spam
+    if(!force && !firstLoad) return; // only load once unless forced
+    const c = ensureController();
+    if(!c){
+      listEl.innerHTML = '<div class="error" role="alert">Overlay controller missing</div>';
+      return;
+    }
+    inflight = true;
     listEl.innerHTML = '<div class="loading">Loading tags…</div>';
     try {
       const resp = await fetch('/api/tags/suggestions?limit=60');
       if(!resp.ok) throw new Error('bad_status');
       const data = await resp.json();
-      const tags = (data.tags||[]).map(t=> t.tag || t.tag || t);
-      if(!tags.length){ listEl.innerHTML = '<div class="empty">No tags yet</div>'; c.announce('No tags yet'); return; }
+      const tags = (data.tags||[]).map(t=> t.tag || t);
+      if(!tags.length){ listEl.innerHTML = '<div class="empty">No tags yet</div>'; c.announce('No tags yet'); firstLoad=false; return; }
       listEl.innerHTML='';
       const frag = document.createDocumentFragment();
       tags.forEach(obj => {
@@ -39,11 +51,13 @@
     } catch(e){
       listEl.innerHTML = '<div class="error" role="alert">Failed to load <button class="btn-small retry" type="button">Retry</button></div>';
       const r = listEl.querySelector('.retry');
-      if(r) r.addEventListener('click', loadTags);
+      if(r) r.addEventListener('click', ()=>loadTags(true));
       const c2 = ensureController();
       if(c2) c2.announceError('Failed to load tags');
+    } finally {
+      inflight = false; firstLoad = false;
     }
   }
-  btn.addEventListener('click', ()=>{ ensureController(); loadTags(); });
-  if(closeBtn){ closeBtn.addEventListener('click', ()=> controller && controller.hide()); }
+  btn.addEventListener('click', ()=>{ showOverlay(); loadTags(false); });
+  if(closeBtn) closeBtn.addEventListener('click', ()=>{ if(controller) controller.hide(); else { overlay.setAttribute('aria-hidden','true'); overlay.classList.remove('active'); overlay.hidden = true; } });
 })();
