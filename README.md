@@ -174,6 +174,23 @@ For issues and questions, please open an issue on the GitHub repository.
 - On startup, migrations create a `users` table automatically.
 - Configure `.env` using the provided `.env.example`. Set `SESSION_SECRET` for cookies. For Postgres, set `DATABASE_URL` or PG* vars; otherwise `SQLITE_PATH` is used.
 
+## Session Management (Shared Factory)
+Flow uses the shared `createStandardSessionMiddleware` from `NudeShared/server/index.js` to unify cookie/session behavior across services.
+
+Highlights:
+- Auto-selects Postgres store when `DATABASE_URL` present; otherwise ephemeral in-memory store (dev/test) with a WARN (acceptable for local use only).
+- Standard cookie: httpOnly, sameSite=lax, 7 day maxAge; secure flag auto when request is HTTPS.
+- Factory signature: `createStandardSessionMiddleware({ serviceName, secret, cookieName, domain, maxAgeMs, enablePgStore, secureOverride })` – Flow typically sets just `serviceName` + `secret`.
+- MUST run after JSON/body parsers and before mounting the shared auth routes.
+
+Snippet (already present in `src/app.js`):
+```js
+import { createStandardSessionMiddleware } from '../../NudeShared/server/index.js';
+app.use(createStandardSessionMiddleware({ serviceName: 'NudeFlow', secret: process.env.SESSION_SECRET }));
+```
+
+Any enhancements (e.g., rolling session renewal, stricter sameSite policy) should be added inside the shared factory rather than locally.
+
 ## Static Caching & Introspection
 
 NudeFlow adopts the shared caching tier used across services:

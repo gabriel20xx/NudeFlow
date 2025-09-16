@@ -7,8 +7,8 @@
     "dev": "nodemon src/app.js",
     "debug": "node --inspect src/app.js",
     "sync:shared": "node ../scripts/sync-shared.mjs",
-    "lint": "eslint \"src/**/*.js\" --max-warnings=0",
-    "lint:fix": "eslint \"src/**/*.js\" --fix",
+    "lint": "eslint . --ext .js --max-warnings=0",
+    "lint:fix": "eslint . --ext .js --fix",
     "check": "npm run lint",
     "prepare": "echo 'No build step'",
   "test": "powershell -Command \"$env:NODE_ENV='test'; node --experimental-vm-modules test/authHealth.test.mjs\""

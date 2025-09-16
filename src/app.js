@@ -2,7 +2,7 @@
 import express from './express-shim.js';
 let cors; try { ({ default: cors } = await import('cors')); } catch { cors = () => (req,res,next)=>next(); }
 let helmet; try { ({ default: helmet } = await import('helmet')); } catch { helmet = () => (req,res,next)=>next(); }
-let connectPg; try { ({ default: connectPg } = await import('connect-pg-simple')); } catch { connectPg = () => function DummyStore(){}; }
+// connect-pg-simple handled by shared session factory (kept lazy there)
 import path from 'path';
 // import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
@@ -11,47 +11,13 @@ const __dirname = path.dirname(__filename);
 import http from 'http';
 import https from 'https';
 import fs from 'fs';
-import { mountTheme } from '../../NudeShared/server/theme/mountTheme.js';
-import { mountSharedStatic, defaultSharedCandidates, registerCachePolicyEndpoint } from '../../NudeShared/server/index.js';
+import { applyStandardAppHardening, attachStandardNotFoundAndErrorHandlers } from '../../NudeShared/server/index.js';
+import { applySharedBase } from '../../NudeShared/server/app/applySharedBase.js';
 import AppUtils from './utils/AppUtils.js';
 import { initDb as initPg, query as pgQuery } from '../../NudeShared/server/index.js';
 import { runMigrations } from '../../NudeShared/server/index.js';
 import { buildAuthRouter } from '../../NudeShared/server/index.js';
-// Session handling (provide an in-memory fallback when express-session is unavailable in test context)
-let session; try { ({ default: session } = await import('express-session')); } catch {
-  const __memorySessions = new Map(); // sid -> session object
-  const genId = ()=> (globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2)) + Date.now().toString(36);
-  function parseCookies(header){
-    const out={}; if(!header) return out; header.split(/; */).forEach(kv=>{ if(!kv) return; const idx=kv.indexOf('='); if(idx===-1) return; const k=kv.slice(0,idx).trim(); const v=decodeURIComponent(kv.slice(idx+1)); out[k]=v; }); return out;
-  }
-  session = function fallbackSession(_opts={}){
-    const cookieName = (_opts.name) || 'nc_test_sid';
-    return function sessionMiddleware(req,res,next){
-      try {
-        const cookies = parseCookies(req.headers?.cookie||'');
-        let sid = cookies[cookieName];
-        if(!sid || !__memorySessions.has(sid)){
-          sid = genId();
-          __memorySessions.set(sid, { cookie:{ originalMaxAge: _opts.cookie?.maxAge || 7*24*3600*1000, httpOnly:true, path:'/', secure:false, sameSite:'lax' } });
-          // Emit Set-Cookie so tests capture it
-          res.setHeader('Set-Cookie', `${cookieName}=${sid}; Path=/; HttpOnly`);
-        }
-        let sess = __memorySessions.get(sid);
-        if(!sess){ sess = { cookie:{ originalMaxAge: _opts.cookie?.maxAge || 7*24*3600*1000, httpOnly:true, path:'/', secure:false, sameSite:'lax' } }; __memorySessions.set(sid, sess); }
-        // Attach session object
-        req.session = sess;
-        // Provide destroy method compatibility
-        req.session.destroy = (cb)=>{ __memorySessions.delete(sid); try { res.setHeader('Set-Cookie', `${cookieName}=deleted; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`); } catch {} cb && cb(); };
-        // Touch helper
-        req.session.touch = ()=>{ /* no-op for memory */ };
-      } catch (e) {
-        // In worst case still allow flow
-        if(!req.session) req.session = {};
-      }
-      next();
-    };
-  };
-}
+import { createStandardSessionMiddleware } from '../../NudeShared/server/middleware/sessionFactory.js';
 import * as mediaService from './services/mediaService.js';
 
 // Load environment variables early
@@ -95,34 +61,15 @@ const configureMiddleware = async () => {
   }));
   expressApplication.use(express.json({ limit: process.env.MAX_FILE_SIZE || '10mb' }));
   expressApplication.use(express.urlencoded({ extended: true, limit: process.env.MAX_FILE_SIZE || '10mb' }));
-  // Sessions
-  const SESSION_SECRET = process.env.SESSION_SECRET || 'dev_secret_change_me';
-  const PgStore = connectPg(session);
-  const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
+  // Standardized session middleware (dynamic secure upgrade when HTTPS) via shared factory
   expressApplication.set('trust proxy', 1);
-  // Default to non-secure cookies for local HTTP; elevate to secure dynamically on HTTPS requests
-  expressApplication.use(session({
-    store: process.env.DATABASE_URL ? new PgStore({ conString: process.env.DATABASE_URL }) : undefined,
-    secret: SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: false, // will be flipped to true below when req.secure
-      domain: cookieDomain,
-      maxAge: 1000*60*60*24*7
-    }
+  expressApplication.use(await createStandardSessionMiddleware({
+    serviceName: 'NudeFlow',
+    domain: process.env.COOKIE_DOMAIN || undefined,
+    // secureOverride undefined -> dynamic per-request upgrade like previous logic
   }));
-  // If behind a proxy or running HTTPS, mark cookie secure per-request
-  expressApplication.use((req, _res, next) => {
-    try {
-      if (req.secure && req.session && req.session.cookie) {
-        req.session.cookie.secure = true;
-      }
-    } catch {}
-    next();
-  });
+  // Mount auth routes AFTER session + body parsers
+  expressApplication.use('/auth', buildAuthRouter(express.Router));
 
   // View engine setup
   // Attempt to register real EJS ONLY if resolvable without introducing a literal dynamic import('ejs') token (avoids Vite pre-bundle failures in tests).
@@ -183,18 +130,25 @@ const configureMiddleware = async () => {
       res.sendFile(overlayPath);
     });
   });
-  // Shared static assets (tiered caching)
-  mountSharedStatic(expressApplication, { candidates: defaultSharedCandidates(__dirname), logger: {
-    info: (...a)=>AppUtils.infoLog(MODULE_NAME,'SHARED_STATIC',...a),
-    warn: (...a)=>AppUtils.warnLog(MODULE_NAME,'SHARED_STATIC',...a)
-  }});
-
-  // Unified theme mount
-  mountTheme(expressApplication, { projectDir: __dirname, sharedDir: process.env.NUDESHARED_DIR || path.resolve(__dirname, '..', '..', 'NudeShared'), logger: {
-    info: (...a)=>AppUtils.infoLog(MODULE_NAME, 'THEME', ...a),
-    warn: (...a)=>AppUtils.warnLog(MODULE_NAME, 'THEME', ...a),
-    error: (...a)=>AppUtils.errorLog(MODULE_NAME, 'THEME', ...a)
-  } });
+  // Shared base (hardening, /shared, theme, auth, cache policy)
+  applySharedBase(expressApplication, {
+    serviceName: 'NudeFlow',
+    projectDir: __dirname,
+    sharedDir: path.resolve(__dirname, '..', '..', 'NudeShared'),
+    // Defer auth mounting until after sessions established
+    mountAuth: false,
+    cachePolicies: {
+      shared: { cssJs: 'public, max-age=3600', images: 'public, max-age=86400, stale-while-revalidate=604800' },
+      themeCss: 'public, max-age=3600',
+      localPublic: 'default (no explicit overrides)'
+    },
+    cachePolicyNote: 'Adjust in NudeFlow/src/app.js when modifying static caching.',
+    logger: {
+      info: (...a)=>AppUtils.infoLog(MODULE_NAME,'SHARED_BASE',...a),
+      warn: (...a)=>AppUtils.warnLog(MODULE_NAME,'SHARED_BASE',...a),
+      error: (...a)=>AppUtils.errorLog(MODULE_NAME,'SHARED_BASE',...a)
+    }
+  });
   
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Express middleware configuration completed');
 };
@@ -209,7 +163,7 @@ const configureRoutes = async () => {
   const apiRoutesModule = (await import('./api/apiRoutes.js')).default;
 
   expressApplication.use("/media", mediaRoutesModule);
-  expressApplication.use('/auth', buildAuthRouter(express.Router));
+  // (Auth router mounted manually earlier after session; shared base skipped it)
   expressApplication.get('/admin/users', async (req, res) => res.render('admin/users'));
   expressApplication.get('/auth/reset/request', (req, res) => res.render('auth/request-reset'));
   // Inject siteTitle into all view renders
@@ -225,78 +179,23 @@ const configureRoutes = async () => {
   });
   expressApplication.use("/", viewRoutesModule);
   expressApplication.use("/api", apiRoutesModule);
-  // Simple health probe (no heavy deps)
-  expressApplication.get('/health', (req, res) => {
-    res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+  // Legacy /health and /health/db retained for backward compatibility: now provided /health alias via hardening middleware.
+  // If future deprecation desired, remove these after external monitors adopt /healthz.
+  if (!expressApplication._router?.stack.some(r=> r.route?.path === '/health')) {
+    expressApplication.get('/health', (req,res)=> res.redirect(302,'/healthz'));
+  }
+  expressApplication.get('/health/db', async (req,res)=>{
+    try { const { rows } = await pgQuery('SELECT 1 as ok'); res.json({ status:'ok', rows }); }
+    catch(e){ res.status(500).json({ status:'error', message: String(e?.message||e) }); }
   });
-  // DB health probe
-  expressApplication.get('/health/db', async (req, res) => {
-    try {
-      const { rows } = await pgQuery('SELECT 1 as ok');
-      res.json({ status: 'ok', rows });
-    } catch (e) {
-      res.status(500).json({ status: 'error', message: String(e?.message || e) });
-    }
-  });
-  // Cache policy endpoint
-  registerCachePolicyEndpoint(expressApplication, {
-    service: 'NudeFlow',
-    getPolicies: () => ({
-      shared: {
-        cssJs: 'public, max-age=3600',
-        images: 'public, max-age=86400, stale-while-revalidate=604800'
-      },
-      themeCss: 'public, max-age=3600',
-      localPublic: 'default (no explicit overrides)'
-    }),
-    note: 'Adjust in NudeFlow/src/app.js when modifying static caching.'
-  });
+  // (Cache policy endpoint registered via applySharedBase)
   
   AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Application routes configuration completed');
 };
 
 // Error handling middleware
-const configureErrorHandling = () => {
-  const FUNCTION_NAME = 'configureErrorHandling';
-  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Setting up error handling middleware');
-  // 404 handler (must be registered after all routes). We intentionally keep it
-  // very small; any future content-negotiation changes should remain here.
-  expressApplication.use((request, response, next) => {
-    if (response.headersSent) return next();
-    if (request.accepts && request.accepts('html')) {
-      AppUtils.debugLog(MODULE_NAME, '404_HANDLER', 'Route not found (html)', {
-        requestedUrl: request.url,
-        requestMethod: request.method
-      });
-      return response.status(404).render('404', { title: 'Page Not Found' });
-    }
-    if (request.accepts && request.accepts('json')) {
-      AppUtils.debugLog(MODULE_NAME, '404_HANDLER', 'Route not found (json)', {
-        requestedUrl: request.url,
-        requestMethod: request.method
-      });
-      return response.status(404).json(AppUtils.createErrorResponse('Not Found', 404));
-    }
-    return response.status(404).type('txt').send('Not Found');
-  });
-
-  // Global error handler (must have 4 args). Prefix unused 'next' to satisfy no-unused-vars without directive.
-  expressApplication.use((error, request, response, _next) => {
-    AppUtils.errorLog(MODULE_NAME, 'GLOBAL_ERROR_HANDLER', 'Unhandled application error', error, { 
-      requestUrl: request.url,
-      requestMethod: request.method
-    });
-    if (response.headersSent) return; // If headers already sent, let Express handle
-    const wantsJson = request.accepts('json') && !request.accepts('html');
-    if (wantsJson) {
-      response.status(500).json(AppUtils.createErrorResponse('Internal Server Error', 500));
-    } else {
-      response.status(500).render('error', { title: 'Server Error', message: 'Something went wrong!' });
-    }
-  });
-  
-  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Error handling middleware configured');
-};
+// Legacy custom error handling removed in favor of standardized shared handlers.
+const configureErrorHandling = () => { /* intentionally noop, retained for call-site parity */ };
 
 // Graceful shutdown handling
 const configureGracefulShutdown = () => {
@@ -379,10 +278,13 @@ const initializeServer = async () => {
       expressApplication = express();
       expressApplication.set('etag','strong');
       await mediaService.initializeMediaService();
-    await configureMiddleware();
-  await configureRoutes();
+      // Enhanced readiness check handled by defaultReadinessCheck in shared hardening middleware
+      applyStandardAppHardening(expressApplication, { serviceName:'NudeFlow' });
+      await configureMiddleware();
+      await configureRoutes();
       configureErrorHandling();
       configureGracefulShutdown();
+      attachStandardNotFoundAndErrorHandlers(expressApplication, { serviceName:'NudeFlow' });
     }
   await startServer();
     
@@ -399,9 +301,11 @@ const createApp = async () => {
     expressApplication = express();
     expressApplication.set('etag','strong');
     await mediaService.initializeMediaService();
+    applyStandardAppHardening(expressApplication, { serviceName:'NudeFlow' });
     await configureMiddleware();
-  await configureRoutes();
+    await configureRoutes();
     configureErrorHandling();
+    attachStandardNotFoundAndErrorHandlers(expressApplication, { serviceName:'NudeFlow' });
   }
   return expressApplication;
 };
