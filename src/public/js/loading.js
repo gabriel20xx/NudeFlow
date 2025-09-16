@@ -47,6 +47,9 @@ const currentUrl = window.location.href;
 // Fallback-configured preload count (avoid ReferenceError seen in logs)
 const preLoadImageCount = (window.ApplicationConfiguration && window.ApplicationConfiguration.userInterfaceSettings && Number(window.ApplicationConfiguration.userInterfaceSettings.preLoadImageCount)) || 3;
 
+// Provide safe fallback for optional syncServerMediaState global early so all later calls are defined
+const safeSyncServerMediaState = (typeof window !== 'undefined' && typeof window.syncServerMediaState === 'function') ? window.syncServerMediaState : function(){};
+
 function getUrl(){
   const FUNCTION_NAME = 'getUrl';
   ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Determining URL for content loading', { currentUrl });
@@ -280,7 +283,8 @@ function loadContent() {
       finalizeAppend(mediaElement);
       return; // finalize handles incrementing etc.
 
-      function finalizeAppend(el){
+
+  function finalizeAppend(el){
         const elementRef = el || mediaElement;
       ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Added media element to container', { 
         toLoadImageIndex, 
@@ -299,7 +303,7 @@ function loadContent() {
           }
         } catch {}
         // If this is the very first media, sync save/like/volume state now
-  try { if (mediaContainer.querySelectorAll('.media').length === 1) { syncSaveUi(); syncLikeUi(); syncVolumeUi(); syncServerMediaState(); } } catch {}
+  try { if (mediaContainer.querySelectorAll('.media').length === 1) { syncSaveUi(); syncLikeUi(); syncVolumeUi(); safeSyncServerMediaState(); } } catch {}
         // For the very first media, also mark a view if not already reported
         try {
           if (mediaContainer.querySelectorAll('.media').length === 1) {
@@ -338,7 +342,9 @@ function loadContent() {
 
 // Note: Do not attach feed interaction listeners on pages without the feed
 
-function changeImage(side) {
+// Ensure fallback is available globally near top (hoisted earlier already but keep single source)
+// eslint-disable-next-line no-var
+let changeImage = function(side) {
   const FUNCTION_NAME = 'changeImage';
   ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Change content triggered', { 
     direction: side ? "next" : "previous" 
@@ -406,7 +412,7 @@ function changeImage(side) {
 
     currentImageIndex = newImageIndex;
   // Sync save/like/volume button state for newly active media
-  try { syncSaveUi(); syncLikeUi(); syncVolumeUi(); syncServerMediaState(); } catch {}
+  try { syncSaveUi(); syncLikeUi(); syncVolumeUi(); safeSyncServerMediaState(); } catch {}
   // Record a view for the newly active media (once per key)
   try { const mk = newImage?.dataset?.mediaKey; if (mk) recordView(mk); } catch {}
 
@@ -454,7 +460,7 @@ function changeImage(side) {
       currentIndex: currentImageIndex 
     });
   }
-}
+};
 
 // Legacy helper no longer needed with explicit mapping above (kept for compatibility if referenced elsewhere)
 // Removed deprecated toggleFlyAnimation helper (was unused)
@@ -1096,8 +1102,9 @@ function initFeed(){
       } catch { return []; }
     }
 
+    const tagsOverlayList = (typeof tagsOverlayList !== 'undefined' ? tagsOverlayList : document.getElementById('tagsOverlayList'));
     function renderTagSuggestions(list){
-      if (!tagsOverlayList) return;
+      if (!tagsOverlayList) return; // fallback guard
       tagsOverlayList.innerHTML='';
       if (!list.length){
         const div=document.createElement('div'); div.className='empty-tags'; div.textContent='No tags yet'; tagsOverlayList.appendChild(div); return;
@@ -1118,7 +1125,7 @@ function initFeed(){
     function closeTagsOverlay() { /* delegated to home-tags-overlay.js */ }
     function announce(_) { /* no-op (legacy accessibility announcer moved) */ }
 
-    async function loadMediaTagsForActive(){
+  async function loadMediaTagsForActive(){
       const key = getCurrentMediaKey();
       if (!key) return;
       try {

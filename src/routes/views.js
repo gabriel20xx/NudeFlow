@@ -2,7 +2,6 @@ import express from '../express-shim.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import AppUtils from '../utils/AppUtils.js';
-import * as mediaService from '../services/mediaService.js';
 
 // __dirname shim for ESM
 const __filename = fileURLToPath(import.meta.url);

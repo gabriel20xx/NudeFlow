@@ -27,6 +27,7 @@ try {
 } catch {
   // Silent if dotenv not available
 }
+try { process.on('uncaughtException', ()=>{/* swallow to prevent crash in ephemeral env */}); } catch { /* ignore missing process (non-node env) */ }
 
 const MODULE_NAME = 'MainServer';
 const SITE_TITLE = process.env.SITE_TITLE || 'NudeFlow';
@@ -89,6 +90,7 @@ const configureMiddleware = async () => {
         installedEjsPath = null; // force fallback if shape unexpected
       }
     } catch {
+      // EJS not installed or failed to load; fall back to minimal inline shim below
       installedEjsPath = null;
     }
     if (!installedEjsPath) {
@@ -104,7 +106,7 @@ const configureMiddleware = async () => {
             out = out.replace(/<% *if *\(!isAuthenticated\) *\{ *%>([\s\S]*?)<% *\} *else *\{ *%>([\s\S]*?)<% *\} *%>/, (_m, unauth, auth) => {
               return options && options.isAuthenticated ? auth : unauth;
             });
-          } catch {}
+          } catch { /* conditional EJS auth block transform failed; proceed with unmodified sections */ }
           out = out.replace(/<%= *siteTitle *%>/g, options.siteTitle || 'NudeFlow');
           out = out.replace(/<%[=]?[^%]*%>/g, '');
           callback(null, out);
