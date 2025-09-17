@@ -11,13 +11,11 @@ const __dirname = path.dirname(__filename);
 import http from 'http';
 import https from 'https';
 import fs from 'fs';
-import { applyStandardAppHardening, attachStandardNotFoundAndErrorHandlers } from '../../NudeShared/server/index.js';
-import { applySharedBase } from '../../NudeShared/server/app/applySharedBase.js';
+import { attachStandardNotFoundAndErrorHandlers } from '../../NudeShared/server/index.js';
+import { createStandardApp } from '../../NudeShared/server/app/createStandardApp.js';
 import AppUtils from './utils/AppUtils.js';
 import { initDb as initPg, query as pgQuery } from '../../NudeShared/server/index.js';
 import { runMigrations } from '../../NudeShared/server/index.js';
-import { buildAuthRouter } from '../../NudeShared/server/index.js';
-import { createStandardSessionMiddleware } from '../../NudeShared/server/middleware/sessionFactory.js';
 import * as mediaService from './services/mediaService.js';
 
 // Load environment variables early
@@ -46,113 +44,12 @@ if (!globalThis.__NUDEFLOW_INIT_LOGGED) {
   globalThis.__NUDEFLOW_INIT_LOGGED = true;
 }
 
-// Middleware configuration
+// Flow-specific additional middleware (only CORS + helmet + public static now; body parsers, session, auth, view engine handled by factory)
 const configureMiddleware = async () => {
-  const FUNCTION_NAME = 'configureMiddleware';
-  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Configuring Express middleware');
-  
-  // CORS configuration from environment
-  const corsOptions = {
-    origin: process.env.CORS_ORIGIN || "*"
-  };
-  
+  const corsOptions = { origin: process.env.CORS_ORIGIN || '*' };
   expressApplication.use(cors(corsOptions));
-  expressApplication.use(helmet({
-    contentSecurityPolicy: false // Disable CSP by default; can be configured later
-  }));
-  expressApplication.use(express.json({ limit: process.env.MAX_FILE_SIZE || '10mb' }));
-  expressApplication.use(express.urlencoded({ extended: true, limit: process.env.MAX_FILE_SIZE || '10mb' }));
-  // Standardized session middleware (dynamic secure upgrade when HTTPS) via shared factory
-  expressApplication.set('trust proxy', 1);
-  expressApplication.use(await createStandardSessionMiddleware({
-    serviceName: 'NudeFlow',
-    domain: process.env.COOKIE_DOMAIN || undefined,
-    // secureOverride undefined -> dynamic per-request upgrade like previous logic
-  }));
-  // Mount auth routes AFTER session + body parsers
-  expressApplication.use('/auth', buildAuthRouter(express.Router));
-
-  // View engine setup
-  // Attempt to register real EJS ONLY if resolvable without introducing a literal dynamic import('ejs') token (avoids Vite pre-bundle failures in tests).
-  {
-    let installedEjsPath = null;
-    try {
-      const { createRequire } = await import('module');
-      const req = createRequire(import.meta.url);
-      // resolve may throw; we catch and fallback
-      installedEjsPath = req.resolve('ejs');
-      // Use resolved absolute path to load; this prevents bundlers from seeing a bare specifier and trying to transform it.
-      const ejsMod = req(installedEjsPath);
-      if (ejsMod && (typeof ejsMod.__express === 'function')) {
-        expressApplication.engine('ejs', ejsMod.__express);
-        expressApplication.set('view engine', 'ejs');
-      } else {
-        installedEjsPath = null; // force fallback if shape unexpected
-      }
-    } catch {
-      // EJS not installed or failed to load; fall back to minimal inline shim below
-      installedEjsPath = null;
-    }
-    if (!installedEjsPath) {
-      // Minimal shim: reads file, strips includes, handles a simple auth conditional pattern used by fallback inline templates.
-      // Supports pattern: <% if (!isAuthenticated) { %> ... <% } else { %> ... <% } %>
-      // Additional EJS tags are stripped afterwards.
-      const fsPromises = fs.promises;
-      expressApplication.engine('ejs', async (filePath, options, callback) => {
-        try {
-          const raw = await fsPromises.readFile(filePath, 'utf8');
-          let out = raw.replace(/<%-? *include\([^)]*\) *%>/g, '');
-          try {
-            out = out.replace(/<% *if *\(!isAuthenticated\) *\{ *%>([\s\S]*?)<% *\} *else *\{ *%>([\s\S]*?)<% *\} *%>/, (_m, unauth, auth) => {
-              return options && options.isAuthenticated ? auth : unauth;
-            });
-          } catch { /* conditional EJS auth block transform failed; proceed with unmodified sections */ }
-          out = out.replace(/<%= *siteTitle *%>/g, options.siteTitle || 'NudeFlow');
-          out = out.replace(/<%[=]?[^%]*%>/g, '');
-          callback(null, out);
-        } catch (e) { callback(e); }
-      });
-      expressApplication.set('view engine', 'ejs');
-    }
-  }
-  // Updated views path to new unified structure and add shared views
-  expressApplication.set("views", [
-    path.join(__dirname, "public", "views"),
-    path.resolve(__dirname, '..', '..', 'NudeShared', 'views')
-  ]);
-  // Serve static assets from src/public (unified monorepo convention)
+  expressApplication.use(helmet({ contentSecurityPolicy: false }));
   expressApplication.use(express.static(path.join(__dirname, 'public')));
-  // Explicit shared overlay script fallback: if /shared/overlay.js is requested but not found by candidate chain,
-  // serve the source file from NudeShared/client directly. This guards against misconfiguration of NUDESHARED_DIR.
-  expressApplication.get('/shared/overlay.js', (req,res,next)=>{
-    const overlayPath = path.resolve(__dirname, '..', '..', 'NudeShared', 'client', 'overlay.js');
-    fs.access(overlayPath, fs.constants.R_OK, (err)=>{
-      if(err) return next();
-      res.type('application/javascript');
-      res.sendFile(overlayPath);
-    });
-  });
-  // Shared base (hardening, /shared, theme, auth, cache policy)
-  applySharedBase(expressApplication, {
-    serviceName: 'NudeFlow',
-    projectDir: __dirname,
-    sharedDir: path.resolve(__dirname, '..', '..', 'NudeShared'),
-    // Defer auth mounting until after sessions established
-    mountAuth: false,
-    cachePolicies: {
-      shared: { cssJs: 'public, max-age=3600', images: 'public, max-age=86400, stale-while-revalidate=604800' },
-      themeCss: 'public, max-age=3600',
-      localPublic: 'default (no explicit overrides)'
-    },
-    cachePolicyNote: 'Adjust in NudeFlow/src/app.js when modifying static caching.',
-    logger: {
-      info: (...a)=>AppUtils.infoLog(MODULE_NAME,'SHARED_BASE',...a),
-      warn: (...a)=>AppUtils.warnLog(MODULE_NAME,'SHARED_BASE',...a),
-      error: (...a)=>AppUtils.errorLog(MODULE_NAME,'SHARED_BASE',...a)
-    }
-  });
-  
-  AppUtils.debugLog(MODULE_NAME, FUNCTION_NAME, 'Express middleware configuration completed');
 };
 
 // Routes configuration
@@ -277,12 +174,22 @@ const initializeServer = async () => {
   
   try {
     if (!expressApplication) {
-      expressApplication = express();
-      expressApplication.set('etag','strong');
+      // Build shared baseline app (body parsers + session + /auth + shared static/theme)
+      expressApplication = await createStandardApp({
+        serviceName: 'NudeFlow',
+        projectDir: __dirname,
+        sharedDir: path.resolve(__dirname, '..', '..', 'NudeShared'),
+        sessionOptions: { domain: process.env.COOKIE_DOMAIN || undefined },
+        view: { paths: [path.join(__dirname, 'public', 'views'), path.resolve(__dirname, '..', '..', 'NudeShared', 'views')] },
+        cachePolicies: {
+          shared: { cssJs: 'public, max-age=3600', images: 'public, max-age=86400, stale-while-revalidate=604800' },
+          themeCss: 'public, max-age=3600',
+          localPublic: 'default (no explicit overrides)'
+        },
+        cachePolicyNote: 'Adjust in NudeFlow/src/app.js when modifying static caching.'
+      });
       await mediaService.initializeMediaService();
-      // Enhanced readiness check handled by defaultReadinessCheck in shared hardening middleware
-      applyStandardAppHardening(expressApplication, { serviceName:'NudeFlow' });
-      await configureMiddleware();
+      await configureMiddleware(); // retains Flow-specific middleware (CORS, helmet, explicit overlay route)
       await configureRoutes();
       configureErrorHandling();
       configureGracefulShutdown();
@@ -300,10 +207,20 @@ const initializeServer = async () => {
 // Build app (without starting listener) for testing purposes
 const createApp = async () => {
   if (!expressApplication) {
-    expressApplication = express();
-    expressApplication.set('etag','strong');
+    expressApplication = await createStandardApp({
+      serviceName: 'NudeFlow',
+      projectDir: __dirname,
+      sharedDir: path.resolve(__dirname, '..', '..', 'NudeShared'),
+      sessionOptions: { domain: process.env.COOKIE_DOMAIN || undefined },
+      view: { paths: [path.join(__dirname, 'public', 'views'), path.resolve(__dirname, '..', '..', 'NudeShared', 'views')] },
+      cachePolicies: {
+        shared: { cssJs: 'public, max-age=3600', images: 'public, max-age=86400, stale-while-revalidate=604800' },
+        themeCss: 'public, max-age=3600',
+        localPublic: 'default (no explicit overrides)'
+      },
+      cachePolicyNote: 'Adjust in NudeFlow/src/app.js when modifying static caching.'
+    });
     await mediaService.initializeMediaService();
-    applyStandardAppHardening(expressApplication, { serviceName:'NudeFlow' });
     await configureMiddleware();
     await configureRoutes();
     configureErrorHandling();

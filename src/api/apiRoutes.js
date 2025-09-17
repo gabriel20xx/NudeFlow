@@ -3,20 +3,19 @@ import * as mediaService from '../services/mediaService.js';
 import AppUtils from '../utils/AppUtils.js';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 // Optional multer import (avatar uploads not required for playlist tests). Provide no-op stub if absent.
 let multer;
-try {
-  ({ default: multer } = await import('multer'));
-} catch {
-  // Provide lightweight stub when multer (and native deps) are not installed in minimal/test envs
+try { ({ default: multer } = await import('multer')); }
+catch {
   multer = function multerStub(){ return { single: ()=> (req,res,next)=>next(), array: ()=> (req,res,next)=>next(), fields: ()=> (req,res,next)=>next() }; };
   multer.diskStorage = () => ({ });
 }
 import { fileURLToPath } from 'url';
 import { buildMediaInteractionRouter, buildMediaLibraryRouter, buildPlaylistsRouter, buildProfileRouter } from '../../../NudeShared/server/index.js'; // Added buildProfileRouter for /api/profile contract
 // TOTP and QR
-let _authenticator; try { ({ authenticator: _authenticator } = await import('otplib')); } catch { _authenticator = { generate: ()=> '000000', verify: ()=> true }; }
-let _qrcode; try { ({ default: _qrcode } = await import('qrcode')); } catch { _qrcode = { toDataURL: async () => 'data:image/png;base64,' }; }
+let authenticator; try { ({ authenticator } = await import('otplib')); } catch { authenticator = { generate: ()=> '000000', verify: ()=> true }; }
+let qrcode; try { ({ default: qrcode } = await import('qrcode')); } catch { qrcode = { toDataURL: async () => 'data:image/png;base64,' }; }
 
 const MODULE_NAME = 'MainAPIRoutes';
 const apiRouter = express.Router();
@@ -24,11 +23,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Security helpers reused now from shared core router (remaining ensureAuth for media actions if needed)
-function _ensureAuth(req, res, next){ if (!req.session?.user?.id) return res.status(401).json({ error: 'Not authenticated' }); next(); } // prefixed underscore to satisfy unused vars rule
+function ensureAuth(req, res, next){ if (!req.session?.user?.id) return res.status(401).json({ error: 'Not authenticated' }); next(); }
 
 // Multer storage for avatars
 const avatarsDir = path.resolve(__dirname, '..', 'public', 'images', 'avatars');
-try { fs.mkdirSync(avatarsDir, { recursive: true }); } catch { /* directory already exists or cannot be created */ }
+try { fs.mkdirSync(avatarsDir, { recursive: true }); } catch {}
 const storage = multer.diskStorage({
   destination: (req, file, cb)=> cb(null, avatarsDir),
   filename: (req, file, cb)=>{
@@ -36,7 +35,7 @@ const storage = multer.diskStorage({
     cb(null, `u${req.session?.user?.id || 'anon'}_${Date.now()}${ext}`);
   }
 });
-const _upload = multer({ storage, limits: { fileSize: Number(process.env.MAX_FILE_SIZE_BYTES || 2*1024*1024) } }); // underscore indicates currently unused
+const upload = multer({ storage, limits: { fileSize: Number(process.env.MAX_FILE_SIZE_BYTES || 2*1024*1024) } });
 
 // Shared media library/discovery endpoints
 apiRouter.use('/', buildMediaLibraryRouter({ utils: AppUtils, mediaService }));
