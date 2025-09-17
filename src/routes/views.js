@@ -37,7 +37,7 @@ viewsRouter.get("/", (request, response) => {
 viewsRouter.get('/tags', (req, res) => {
   try {
     res.render('tags', { title: 'Tags' });
-  } catch (error) {
+  } catch {
     res.status(500).render('error', { message: 'Failed to load tags page' });
   }
 });

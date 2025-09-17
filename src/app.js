@@ -8,9 +8,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-import http from 'http';
-import https from 'https';
-import fs from 'fs';
+// http module not directly needed; server creation handled by shared helper
+// https & fs no longer required after consolidation via createHttpOrHttpsServer
+import { createHttpOrHttpsServer } from '../../NudeShared/server/http/createHttpOrHttpsServer.js';
 import { attachStandardNotFoundAndErrorHandlers } from '../../NudeShared/server/index.js';
 import { createStandardApp } from '../../NudeShared/server/app/createStandardApp.js';
 import AppUtils from './utils/AppUtils.js';
@@ -115,32 +115,12 @@ const SSL_KEY_PATH = process.env.SSL_KEY_PATH || '';
 const SSL_CERT_PATH = process.env.SSL_CERT_PATH || '';
 
 async function buildServer(appInstance) {
-  if (!ENABLE_HTTPS) return http.createServer(appInstance);
-  let key; let cert;
-  const haveProvided = SSL_KEY_PATH && SSL_CERT_PATH && fs.existsSync(SSL_KEY_PATH) && fs.existsSync(SSL_CERT_PATH);
-  if (haveProvided) {
-    try {
-      key = fs.readFileSync(SSL_KEY_PATH);
-      cert = fs.readFileSync(SSL_CERT_PATH);
-      AppUtils.infoLog(MODULE_NAME, 'HTTPS', 'Loaded provided SSL key & cert', { SSL_KEY_PATH, SSL_CERT_PATH });
-    } catch (e) {
-      AppUtils.errorLog(MODULE_NAME, 'HTTPS', 'Failed reading provided key/cert, will self-sign', e);
-    }
-  }
-  if (!key || !cert) {
-    try {
-  const selfsigned = (await import('selfsigned')).default;
-      const attrs = [{ name: 'commonName', value: 'localhost' }];
-      const pems = selfsigned.generate(attrs, { days: 365, keySize: 2048, algorithm: 'sha256' });
-      key = pems.private;
-      cert = pems.cert;
-      AppUtils.warnLog(MODULE_NAME, 'HTTPS', 'Using generated self-signed certificate (development only)');
-    } catch (e) {
-      AppUtils.errorLog(MODULE_NAME, 'HTTPS', 'Failed to generate self-signed cert. Falling back to HTTP.', e);
-      return http.createServer(appInstance);
-    }
-  }
-  return https.createServer({ key, cert }, appInstance);
+  return await createHttpOrHttpsServer(appInstance, {
+    enableHttps: ENABLE_HTTPS,
+    keyPath: SSL_KEY_PATH,
+    certPath: SSL_CERT_PATH,
+    serviceName: 'NudeFlow'
+  });
 }
 
 let serverRef; // store created server

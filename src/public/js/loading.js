@@ -343,7 +343,6 @@ function loadContent() {
 // Note: Do not attach feed interaction listeners on pages without the feed
 
 // Ensure fallback is available globally near top (hoisted earlier already but keep single source)
-// eslint-disable-next-line no-var
 let changeImage = function(side) {
   const FUNCTION_NAME = 'changeImage';
   ApplicationUtilities.debugLog(MODULE_NAME, FUNCTION_NAME, 'Change content triggered', { 
