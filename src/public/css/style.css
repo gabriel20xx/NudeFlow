@@ -12,7 +12,8 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html, body { height: 100%; }
+/* Avoid locking document height which can prevent normal scrolling on pages with content taller than viewport. */
+html, body { min-height: 100%; }
 
 body { font-family: var(--font-stack); background: var(--color-bg); color: var(--color-text); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 
